@@ -8,6 +8,7 @@ class Rsvp {
     required this.userPhone,
     required this.eventId,
     required this.eventTitle,
+    required this.clubId,
     required this.promoterId,
     required this.promoterCode,
     required this.status,
@@ -21,6 +22,7 @@ class Rsvp {
   final String userPhone;
   final String eventId;
   final String eventTitle;
+  final String? clubId;
   final String? promoterId;
   final String? promoterCode;
   final String status;
@@ -36,6 +38,7 @@ class Rsvp {
       userPhone: data['userPhone'] as String? ?? '',
       eventId: data['eventId'] as String? ?? '',
       eventTitle: data['eventTitle'] as String? ?? '',
+      clubId: data['clubId'] as String?,
       promoterId: data['promoterId'] as String?,
       promoterCode: data['promoterCode'] as String?,
       status: data['status'] as String? ?? 'pending',

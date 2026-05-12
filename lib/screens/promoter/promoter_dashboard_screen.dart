@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/app_user.dart';
+import '../../models/event.dart';
 import '../../models/promoter.dart';
 import '../../models/rsvp.dart';
 import '../../services/auth_service.dart';
@@ -59,103 +60,188 @@ class _PromoterContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final link = Uri.base.replace(queryParameters: {'ref': promoter.referralCode}).toString();
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth > 860;
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Wrap(
-              spacing: 14,
-              runSpacing: 14,
+    return StreamBuilder<List<Rsvp>>(
+      stream: FirestoreService.instance.promoterRsvpsStream(promoter.referralCode),
+      builder: (context, snapshot) {
+        final rsvps = snapshot.data ?? [];
+        final eventCounts = <String, int>{};
+        for (final rsvp in rsvps) {
+          eventCounts[rsvp.eventTitle] = (eventCounts[rsvp.eventTitle] ?? 0) + 1;
+        }
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final wide = constraints.maxWidth > 860;
+            return ListView(
+              padding: const EdgeInsets.all(16),
               children: [
-                _MetricCard(
-                  title: 'Referral code',
-                  value: promoter.referralCode,
-                  icon: Icons.qr_code_2,
-                  action: IconButton(
-                    tooltip: 'Copy code',
-                    onPressed: () => _copy(context, promoter.referralCode),
-                    icon: const Icon(Icons.copy),
+                Wrap(
+                  spacing: 14,
+                  runSpacing: 14,
+                  children: [
+                    _MetricCard(
+                      title: 'Referral code',
+                      value: promoter.referralCode,
+                      icon: Icons.qr_code_2,
+                      action: IconButton(
+                        tooltip: 'Copy code',
+                        onPressed: () => _copy(context, promoter.referralCode),
+                        icon: const Icon(Icons.copy),
+                      ),
+                    ),
+                    _MetricCard(
+                      title: 'Total RSVP credits',
+                      value: snapshot.connectionState == ConnectionState.waiting
+                          ? '...'
+                          : rsvps.length.toString(),
+                      icon: Icons.trending_up,
+                    ),
+                    _MetricCard(
+                      title: 'Status',
+                      value: promoter.isActive ? 'Active' : 'Inactive',
+                      icon: Icons.verified_user_outlined,
+                    ),
+                  ]
+                      .map(
+                        (child) => SizedBox(
+                          width: wide ? (constraints.maxWidth - 60) / 3 : double.infinity,
+                          child: child,
+                        ),
+                      )
+                      .toList(),
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Referral link',
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                        ),
+                        const SizedBox(height: 10),
+                        SelectableText(link, style: const TextStyle(color: AppTheme.neonCyan)),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () => _copy(context, link),
+                          icon: const Icon(Icons.link),
+                          label: const Text('Copy link'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                _MetricCard(
-                  title: 'Total RSVP credits',
-                  value: promoter.totalRsvps.toString(),
-                  icon: Icons.trending_up,
+                const SizedBox(height: 16),
+                Text(
+                  'Assigned events',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w900),
                 ),
-                _MetricCard(
-                  title: 'Status',
-                  value: promoter.isActive ? 'Active' : 'Inactive',
-                  icon: Icons.verified_user_outlined,
+                const SizedBox(height: 10),
+                StreamBuilder<List<NightlifeEvent>>(
+                  stream: FirestoreService.instance
+                      .promoterAssignedEventsStream(promoter.referralCode),
+                  builder: (context, eventSnapshot) {
+                    final events = eventSnapshot.data ?? [];
+                    if (eventSnapshot.connectionState == ConnectionState.waiting) {
+                      return const Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    if (events.isEmpty) {
+                      return const EmptyView(
+                        title: 'No assigned events',
+                        message: 'Super Admin assigned events will appear here.',
+                        icon: Icons.local_activity_outlined,
+                      );
+                    }
+                    return Column(
+                      children: events
+                          .map(
+                            (event) => Card(
+                              child: ListTile(
+                                title: Text(
+                                  event.title,
+                                  style: const TextStyle(fontWeight: FontWeight.w800),
+                                ),
+                                subtitle: Text(
+                                  '${event.city} - ${Formatters.eventDate(event.dateTime)}',
+                                  style: const TextStyle(color: AppTheme.textMuted),
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    );
+                  },
                 ),
-              ]
-                  .map(
-                    (child) => SizedBox(
-                      width: wide ? (constraints.maxWidth - 60) / 3 : double.infinity,
-                      child: child,
-                    ),
+                const SizedBox(height: 16),
+                Text(
+                  'Event-wise performance',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 10),
+                if (eventCounts.isEmpty)
+                  const EmptyView(
+                    title: 'No referral performance yet',
+                    message: 'Referred RSVPs will be grouped by event here.',
+                    icon: Icons.query_stats_outlined,
                   )
-                  .toList(),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Referral link',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                    ),
-                    const SizedBox(height: 10),
-                    SelectableText(link, style: const TextStyle(color: AppTheme.neonCyan)),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: () => _copy(context, link),
-                      icon: const Icon(Icons.link),
-                      label: const Text('Copy link'),
-                    ),
-                  ],
+                else
+                  Column(
+                    children: eventCounts.entries
+                        .map(
+                          (entry) => Card(
+                            child: ListTile(
+                              title: Text(
+                                entry.key,
+                                style: const TextStyle(fontWeight: FontWeight.w800),
+                              ),
+                              trailing: Text(
+                                '${entry.value} referrals',
+                                style: const TextStyle(fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                const SizedBox(height: 16),
+                Text(
+                  'Generated RSVPs',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w900),
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Generated RSVPs',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 10),
-            StreamBuilder<List<Rsvp>>(
-              stream: FirestoreService.instance.promoterRsvpsStream(promoter.id),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Padding(
+                const SizedBox(height: 10),
+                if (snapshot.connectionState == ConnectionState.waiting)
+                  const Padding(
                     padding: EdgeInsets.all(28),
                     child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                if (snapshot.hasError) {
-                  return ErrorStateView(message: snapshot.error.toString());
-                }
-                final rsvps = snapshot.data ?? [];
-                if (rsvps.isEmpty) {
-                  return const EmptyView(
+                  )
+                else if (snapshot.hasError)
+                  ErrorStateView(message: snapshot.error.toString())
+                else if (rsvps.isEmpty)
+                  const EmptyView(
                     title: 'No RSVP credits yet',
                     message: 'Share your referral link or code to start tracking.',
                     icon: Icons.insights_outlined,
-                  );
-                }
-                return Column(
-                  children: rsvps.map((rsvp) => _RsvpRow(rsvp: rsvp)).toList(),
-                );
-              },
-            ),
-          ],
+                  )
+                else
+                  Column(
+                    children: rsvps.map((rsvp) => _RsvpRow(rsvp: rsvp)).toList(),
+                  ),
+              ],
+            );
+          },
         );
       },
     );
@@ -231,7 +317,7 @@ class _RsvpRow extends StatelessWidget {
         child: ListTile(
           title: Text(rsvp.eventTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
           subtitle: Text(
-            '${rsvp.userName} • ${rsvp.userPhone} • ${Formatters.eventDate(rsvp.createdAt)}',
+            '${rsvp.userName} - ${rsvp.userPhone} - ${Formatters.eventDate(rsvp.createdAt)}',
             style: const TextStyle(color: AppTheme.textMuted),
           ),
           trailing: Chip(label: Text(Formatters.titleCase(rsvp.status))),

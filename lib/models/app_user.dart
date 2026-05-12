@@ -7,6 +7,9 @@ class AppUser {
     required this.email,
     required this.phone,
     required this.role,
+    required this.status,
+    required this.clubId,
+    required this.promoterCode,
     required this.createdAt,
     required this.updatedAt,
     required this.isActive,
@@ -17,12 +20,20 @@ class AppUser {
   final String email;
   final String phone;
   final String role;
+  final String status;
+  final String? clubId;
+  final String? promoterCode;
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
 
-  bool get isAdmin => role == 'admin';
+  bool get isUser => role == 'user';
   bool get isPromoter => role == 'promoter';
+  bool get isClubAdmin => role == 'clubAdmin';
+  bool get isSuperAdmin => role == 'superAdmin';
+  bool get isApproved => status == 'approved' && isActive;
+  bool get isPending => status == 'pending';
+  bool get isRejected => status == 'rejected';
 
   factory AppUser.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
@@ -31,7 +42,10 @@ class AppUser {
       name: data['name'] as String? ?? '',
       email: data['email'] as String? ?? '',
       phone: data['phone'] as String? ?? '',
-      role: data['role'] as String? ?? 'user',
+      role: _normalizeRole(data['role'] as String?),
+      status: data['status'] as String? ?? ((data['isActive'] as bool? ?? true) ? 'approved' : 'rejected'),
+      clubId: data['clubId'] as String?,
+      promoterCode: data['promoterCode'] as String?,
       createdAt: _readDate(data['createdAt']),
       updatedAt: _readDate(data['updatedAt']),
       isActive: data['isActive'] as bool? ?? true,
@@ -45,10 +59,18 @@ class AppUser {
       'email': email,
       'phone': phone,
       'role': role,
+      'status': status,
+      'clubId': clubId,
+      'promoterCode': promoterCode,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'isActive': isActive,
     };
+  }
+
+  static String _normalizeRole(String? role) {
+    if (role == 'admin') return 'superAdmin';
+    return role ?? 'user';
   }
 
   static DateTime _readDate(Object? value) {

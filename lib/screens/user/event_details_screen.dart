@@ -88,6 +88,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                             flex: 4,
                             child: _Details(
                               event: event,
+                              currentUser: widget.currentUser,
                               codeController: _codeController,
                               submitting: _submitting,
                               onRsvp: _rsvp,
@@ -102,6 +103,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                           const SizedBox(height: 18),
                           _Details(
                             event: event,
+                            currentUser: widget.currentUser,
                             codeController: _codeController,
                             submitting: _submitting,
                             onRsvp: _rsvp,
@@ -142,12 +144,14 @@ class _Poster extends StatelessWidget {
 class _Details extends StatelessWidget {
   const _Details({
     required this.event,
+    required this.currentUser,
     required this.codeController,
     required this.submitting,
     required this.onRsvp,
   });
 
   final NightlifeEvent event;
+  final AppUser currentUser;
   final TextEditingController codeController;
   final bool submitting;
   final VoidCallback onRsvp;
@@ -196,27 +200,29 @@ class _Details extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: codeController,
-              textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(
-                labelText: 'Promoter code',
-                hintText: 'Optional referral code',
-                prefixIcon: Icon(Icons.qr_code_2),
+            if (currentUser.isUser && currentUser.isApproved) ...[
+              TextField(
+                controller: codeController,
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(
+                  labelText: 'Promoter code',
+                  hintText: 'Optional referral code',
+                  prefixIcon: Icon(Icons.qr_code_2),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: submitting ? null : onRsvp,
-              icon: submitting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.how_to_reg),
-              label: const Text('RSVP now'),
-            ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: submitting ? null : onRsvp,
+                icon: submitting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.how_to_reg),
+                label: const Text('RSVP now'),
+              ),
+            ],
           ],
         ),
       ),

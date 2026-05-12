@@ -40,7 +40,14 @@ class ProfileScreen extends StatelessWidget {
                 Text(currentUser.email, style: const TextStyle(color: AppTheme.textMuted)),
                 Text(currentUser.phone, style: const TextStyle(color: AppTheme.textMuted)),
                 const SizedBox(height: 12),
-                Chip(label: Text('Role: ${currentUser.role}')),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    Chip(label: Text('Role: ${currentUser.role}')),
+                    Chip(label: Text('Status: ${currentUser.status}')),
+                  ],
+                ),
               ],
             ),
           ),

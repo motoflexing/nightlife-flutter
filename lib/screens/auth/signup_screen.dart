@@ -17,6 +17,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _email = TextEditingController();
   final _phone = TextEditingController();
   final _password = TextEditingController();
+  String _selectedRole = 'user';
   bool _loading = false;
   bool _hidePassword = true;
 
@@ -38,6 +39,7 @@ class _SignupScreenState extends State<SignupScreen> {
         email: _email.text,
         phone: _phone.text,
         password: _password.text,
+        requestedRole: _selectedRole,
       );
       if (mounted) Navigator.of(context).pop();
     } on AuthException catch (error) {
@@ -77,10 +79,34 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Promoter and admin access can be enabled after signup.',
+                        'Promoter and club admin access starts as a pending request.',
                         style: TextStyle(color: AppTheme.textMuted),
                       ),
                       const SizedBox(height: 22),
+                      SegmentedButton<String>(
+                        segments: const [
+                          ButtonSegment(
+                            value: 'user',
+                            label: Text('User'),
+                            icon: Icon(Icons.person_outline),
+                          ),
+                          ButtonSegment(
+                            value: 'promoter',
+                            label: Text('Promoter'),
+                            icon: Icon(Icons.campaign_outlined),
+                          ),
+                          ButtonSegment(
+                            value: 'clubAdmin',
+                            label: Text('Club Admin'),
+                            icon: Icon(Icons.storefront_outlined),
+                          ),
+                        ],
+                        selected: {_selectedRole},
+                        onSelectionChanged: _loading
+                            ? null
+                            : (value) => setState(() => _selectedRole = value.first),
+                      ),
+                      const SizedBox(height: 14),
                       TextFormField(
                         controller: _name,
                         textInputAction: TextInputAction.next,

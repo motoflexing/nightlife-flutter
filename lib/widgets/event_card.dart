@@ -48,7 +48,7 @@ class EventCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   _IconLine(
                     icon: Icons.place_outlined,
-                    text: '${event.venueName} • ${event.address}',
+                    text: '${event.venueName} - ${event.address}',
                   ),
                   const SizedBox(height: 6),
                   _IconLine(

@@ -7,6 +7,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/app_user.dart';
+import '../../models/club.dart';
 import '../../models/event.dart';
 import '../../models/promoter.dart';
 import '../../models/rsvp.dart';
@@ -33,16 +34,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     final sections = [
       _AdminOverview(currentUser: widget.currentUser),
+      const _ApprovalsAdmin(),
       _EventsAdmin(currentUser: widget.currentUser),
       const _UsersAdmin(),
+      const _ClubsAdmin(),
       const _PromotersAdmin(),
       const _RsvpsAdmin(),
     ];
-    final labels = ['Dashboard', 'Events', 'Users', 'Promoters', 'RSVPs'];
+    final labels = ['Super Admin', 'Approvals', 'Events', 'Users', 'Clubs', 'Promoters', 'RSVPs'];
     final icons = [
       Icons.dashboard_outlined,
+      Icons.verified_user_outlined,
       Icons.local_activity_outlined,
       Icons.people_outline,
+      Icons.storefront_outlined,
       Icons.campaign_outlined,
       Icons.fact_check_outlined,
     ];
@@ -133,6 +138,11 @@ class _AdminOverview extends StatelessWidget {
               icon: Icons.fact_check,
               stream: FirestoreService.instance.allRsvpsStream(),
             ),
+            _StreamCountCard<Club>(
+              title: 'Clubs',
+              icon: Icons.storefront,
+              stream: FirestoreService.instance.clubsStream(),
+            ),
           ],
         ),
         const SizedBox(height: 18),
@@ -217,6 +227,79 @@ class _StreamCountCard<T> extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _ApprovalsAdmin extends StatelessWidget {
+  const _ApprovalsAdmin();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<AppUser>>(
+      stream: FirestoreService.instance.pendingApprovalsStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const LoadingView(message: 'Loading approvals');
+        }
+        if (snapshot.hasError) return ErrorStateView(message: snapshot.error.toString());
+        final users = snapshot.data ?? [];
+        if (users.isEmpty) {
+          return const EmptyView(
+            title: 'No pending approvals',
+            message: 'Promoter and club admin requests will appear here.',
+            icon: Icons.verified_user_outlined,
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: users.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          itemBuilder: (context, index) {
+            final user = users[index];
+            return Card(
+              child: ListTile(
+                leading: const Icon(Icons.hourglass_top_outlined, color: AppTheme.neonCyan),
+                title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text('${user.email} - ${user.role} - ${user.status}'),
+                trailing: Wrap(
+                  spacing: 8,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => _runAction(
+                        context,
+                        () => FirestoreService.instance.rejectUser(user),
+                      ),
+                      icon: const Icon(Icons.close, color: AppTheme.neonPink),
+                      label: const Text('Reject'),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => _runAction(
+                        context,
+                        () => FirestoreService.instance.approveUser(user),
+                      ),
+                      icon: const Icon(Icons.check),
+                      label: const Text('Approve'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _runAction(BuildContext context, Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString())),
+        );
+      }
+    }
   }
 }
 
@@ -616,11 +699,12 @@ class _UsersAdmin extends StatelessWidget {
             return Card(
               child: ListTile(
                 title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-                subtitle: Text('${user.email} • ${user.phone}'),
+                subtitle: Text('${user.email} - ${user.phone}'),
                 trailing: Wrap(
                   spacing: 10,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
+                    Chip(label: Text(Formatters.titleCase(user.status))),
                     DropdownButton<String>(
                       value: user.role,
                       items: AppConstants.roles
@@ -639,6 +723,47 @@ class _UsersAdmin extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _ClubsAdmin extends StatelessWidget {
+  const _ClubsAdmin();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Club>>(
+      stream: FirestoreService.instance.clubsStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const LoadingView(message: 'Loading clubs');
+        }
+        if (snapshot.hasError) return ErrorStateView(message: snapshot.error.toString());
+        final clubs = snapshot.data ?? [];
+        if (clubs.isEmpty) {
+          return const EmptyView(
+            title: 'No clubs yet',
+            message: 'Club onboarding submissions will appear here.',
+            icon: Icons.storefront_outlined,
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: clubs.length,
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          itemBuilder: (context, index) {
+            final club = clubs[index];
+            return Card(
+              child: ListTile(
+                leading: const Icon(Icons.storefront, color: AppTheme.neonCyan),
+                title: Text(club.clubName, style: const TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text('${club.city} - ${club.businessEmail} - ${club.address}'),
+                trailing: Chip(label: Text(Formatters.titleCase(club.verificationStatus))),
               ),
             );
           },
@@ -677,7 +802,7 @@ class _PromotersAdmin extends StatelessWidget {
               child: ListTile(
                 leading: const Icon(Icons.campaign, color: AppTheme.neonCyan),
                 title: Text(promoter.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-                subtitle: Text('${promoter.referralCode} • ${promoter.email}'),
+                subtitle: Text('${promoter.referralCode} - ${promoter.email}'),
                 trailing: Text(
                   '${promoter.totalRsvps} RSVPs',
                   style: const TextStyle(fontWeight: FontWeight.w800),
@@ -720,7 +845,7 @@ class _RsvpsAdmin extends StatelessWidget {
               child: ListTile(
                 title: Text(rsvp.eventTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
                 subtitle: Text(
-                  '${rsvp.userName} • ${rsvp.userPhone} • ${rsvp.promoterCode ?? 'Direct'}',
+                  '${rsvp.userName} - ${rsvp.userPhone} - ${rsvp.promoterCode ?? 'Direct'}',
                   style: const TextStyle(color: AppTheme.textMuted),
                 ),
                 trailing: Wrap(

@@ -1,14 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme.dart';
 import '../../models/app_user.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
+import '../../screens/club/club_admin_dashboard_screen.dart';
 import '../../screens/promoter/promoter_dashboard_screen.dart';
 import '../../screens/user/user_shell_screen.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/state_views.dart';
+import 'access_state_screen.dart';
+import 'club_onboarding_screen.dart';
 import 'login_screen.dart';
 
 class RoleRouterScreen extends StatelessWidget {
@@ -37,22 +39,59 @@ class RoleRouterScreen extends StatelessWidget {
             }
             final profile = profileSnapshot.data;
             if (profile == null) {
-              return _BlockedState(
-                title: 'Profile missing',
-                message: 'Your auth account exists, but the Firestore profile was not found.',
+              return FutureBuilder<AppUser>(
+                future: AuthService.instance.ensureSafeProfile(user),
+                builder: (context, safeSnapshot) {
+                  if (safeSnapshot.connectionState == ConnectionState.waiting) {
+                    return const NeonScaffold(
+                      child: LoadingView(message: 'Creating safe profile'),
+                    );
+                  }
+                  if (safeSnapshot.hasError) {
+                    return NeonScaffold(
+                      child: ErrorStateView(message: safeSnapshot.error.toString()),
+                    );
+                  }
+                  return const NeonScaffold(
+                    child: LoadingView(message: 'Loading profile'),
+                  );
+                },
               );
             }
-            if (!profile.isActive) {
-              return const _BlockedState(
-                title: 'Account inactive',
-                message: 'Please contact the admin team to reactivate this account.',
+            final requestedRole = AuthService.instance.requestedRole;
+            if (requestedRole != null && requestedRole != profile.role) {
+              return AccessStateScreen(
+                title: 'Access denied',
+                message:
+                    'You selected ${_roleLabel(requestedRole)}, but this account is approved as ${_roleLabel(profile.role)}.',
+                icon: Icons.lock_outline,
+              );
+            }
+            if (profile.isRejected || !profile.isActive) {
+              return const AccessStateScreen(
+                title: 'Account rejected',
+                message: 'This account is not approved for dashboard access.',
+                icon: Icons.block_outlined,
+              );
+            }
+            if (profile.isClubAdmin && profile.clubId == null) {
+              return ClubOnboardingScreen(currentUser: profile);
+            }
+            if (profile.isPending) {
+              return AccessStateScreen(
+                title: 'Pending approval',
+                message:
+                    '${_roleLabel(profile.role)} access is waiting for Super Admin approval.',
+                icon: Icons.hourglass_top_outlined,
               );
             }
             switch (profile.role) {
-              case 'admin':
+              case 'superAdmin':
                 return AdminDashboardScreen(currentUser: profile);
               case 'promoter':
                 return PromoterDashboardScreen(currentUser: profile);
+              case 'clubAdmin':
+                return ClubAdminDashboardScreen(currentUser: profile);
               default:
                 return UserShellScreen(currentUser: profile);
             }
@@ -63,49 +102,11 @@ class RoleRouterScreen extends StatelessWidget {
   }
 }
 
-class _BlockedState extends StatelessWidget {
-  const _BlockedState({required this.title, required this.message});
-
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return NeonScaffold(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.lock_outline, color: AppTheme.neonPink, size: 42),
-                  const SizedBox(height: 12),
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    message,
-                    style: const TextStyle(color: AppTheme.textMuted),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: AuthService.instance.signOut,
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Logout'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+String _roleLabel(String role) {
+  return switch (role) {
+    'promoter' => 'Promoter',
+    'clubAdmin' => 'Club Admin',
+    'superAdmin' => 'Super Admin',
+    _ => 'User',
+  };
 }

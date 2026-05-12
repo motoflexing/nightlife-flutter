@@ -10,10 +10,13 @@ class AuthService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  String? _requestedRole;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   User? get currentFirebaseUser => _auth.currentUser;
+
+  String? get requestedRole => _requestedRole;
 
   Future<AppUser?> getCurrentProfile() async {
     final user = _auth.currentUser;
@@ -34,8 +37,13 @@ class AuthService {
     });
   }
 
-  Future<void> signIn({required String email, required String password}) async {
+  Future<void> signIn({
+    required String email,
+    required String password,
+    required String requestedRole,
+  }) async {
     try {
+      _requestedRole = requestedRole;
       await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
@@ -50,8 +58,10 @@ class AuthService {
     required String email,
     required String phone,
     required String password,
+    required String requestedRole,
   }) async {
     try {
+      _requestedRole = requestedRole;
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password,
@@ -61,22 +71,81 @@ class AuthService {
         throw const AuthException('Unable to create your account right now.');
       }
       await user.updateDisplayName(name.trim());
+      final role = _safeRequestedRole(requestedRole);
+      final status = role == 'user' ? 'approved' : 'pending';
+      final promoterCode = role == 'promoter' ? _makePromoterCode(name, user.uid) : null;
       await _db.collection('users').doc(user.uid).set({
         'uid': user.uid,
         'name': name.trim(),
         'email': email.trim().toLowerCase(),
         'phone': phone.trim(),
-        'role': 'user',
+        'role': role,
+        'status': status,
+        'clubId': null,
+        'promoterCode': promoterCode,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'isActive': true,
       });
+      if (role == 'promoter') {
+        await _db.collection('promoters').doc(user.uid).set({
+          'userId': user.uid,
+          'name': name.trim(),
+          'phone': phone.trim(),
+          'email': email.trim().toLowerCase(),
+          'referralCode': promoterCode,
+          'totalRsvps': 0,
+          'createdAt': FieldValue.serverTimestamp(),
+          'isActive': false,
+        });
+      }
     } on FirebaseAuthException catch (error) {
       throw AuthException(_friendlyAuthError(error));
     }
   }
 
-  Future<void> signOut() => _auth.signOut();
+  Future<AppUser> ensureSafeProfile(User user) async {
+    final ref = _db.collection('users').doc(user.uid);
+    final doc = await ref.get();
+    if (doc.exists) return AppUser.fromDoc(doc);
+    await ref.set({
+      'uid': user.uid,
+      'name': user.displayName ?? 'Nightlife User',
+      'email': user.email ?? '',
+      'phone': user.phoneNumber ?? '',
+      'role': 'user',
+      'status': 'approved',
+      'clubId': null,
+      'promoterCode': null,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'isActive': true,
+    });
+    final next = await ref.get();
+    return AppUser.fromDoc(next);
+  }
+
+  Future<void> signOut() {
+    _requestedRole = null;
+    return _auth.signOut();
+  }
+
+  String _safeRequestedRole(String role) {
+    return switch (role) {
+      'promoter' => 'promoter',
+      'clubAdmin' => 'clubAdmin',
+      _ => 'user',
+    };
+  }
+
+  String _makePromoterCode(String name, String uid) {
+    final base = name
+        .toUpperCase()
+        .replaceAll(RegExp(r'[^A-Z0-9]'), '')
+        .padRight(4, 'X')
+        .substring(0, 4);
+    return '$base${uid.substring(0, 4).toUpperCase()}';
+  }
 
   String _friendlyAuthError(FirebaseAuthException error) {
     switch (error.code) {

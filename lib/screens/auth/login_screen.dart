@@ -17,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  String _selectedRole = 'user';
   bool _loading = false;
   bool _hidePassword = true;
 
@@ -34,6 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await AuthService.instance.signIn(
         email: _email.text,
         password: _password.text,
+        requestedRole: _selectedRole,
       );
     } on AuthException catch (error) {
       _showError(error.message);
@@ -80,6 +82,30 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(color: AppTheme.textMuted),
                       ),
                       const SizedBox(height: 24),
+                      SegmentedButton<String>(
+                        segments: const [
+                          ButtonSegment(
+                            value: 'user',
+                            label: Text('User'),
+                            icon: Icon(Icons.person_outline),
+                          ),
+                          ButtonSegment(
+                            value: 'promoter',
+                            label: Text('Promoter'),
+                            icon: Icon(Icons.campaign_outlined),
+                          ),
+                          ButtonSegment(
+                            value: 'clubAdmin',
+                            label: Text('Club Admin'),
+                            icon: Icon(Icons.storefront_outlined),
+                          ),
+                        ],
+                        selected: {_selectedRole},
+                        onSelectionChanged: _loading
+                            ? null
+                            : (value) => setState(() => _selectedRole = value.first),
+                      ),
+                      const SizedBox(height: 14),
                       TextFormField(
                         controller: _email,
                         keyboardType: TextInputType.emailAddress,

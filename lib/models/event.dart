@@ -15,6 +15,7 @@ class NightlifeEvent {
     required this.posterUrl,
     required this.priceText,
     required this.isActive,
+    required this.clubId,
     required this.createdBy,
     required this.createdAt,
     required this.updatedAt,
@@ -33,6 +34,7 @@ class NightlifeEvent {
   final String posterUrl;
   final String priceText;
   final bool isActive;
+  final String? clubId;
   final String createdBy;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -53,6 +55,7 @@ class NightlifeEvent {
       posterUrl: '',
       priceText: '',
       isActive: true,
+      clubId: null,
       createdBy: createdBy,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
@@ -74,7 +77,8 @@ class NightlifeEvent {
       description: data['description'] as String? ?? '',
       posterUrl: data['posterUrl'] as String? ?? '',
       priceText: data['priceText'] as String? ?? '',
-      isActive: data['isActive'] as bool? ?? true,
+      isActive: data['b3Active'] as bool? ?? data['isActive'] as bool? ?? true,
+      clubId: data['clubId'] as String?,
       createdBy: data['createdBy'] as String? ?? '',
       createdAt: _readDate(data['createdAt']),
       updatedAt: _readDate(data['updatedAt']),
@@ -94,7 +98,9 @@ class NightlifeEvent {
       'description': description,
       'posterUrl': posterUrl,
       'priceText': priceText,
+      'b3Active': isActive,
       'isActive': isActive,
+      'clubId': clubId,
       'createdBy': createdBy,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
@@ -114,7 +120,9 @@ class NightlifeEvent {
       'description': description,
       'posterUrl': posterUrl,
       'priceText': priceText,
+      'b3Active': isActive,
       'isActive': isActive,
+      'clubId': clubId,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }
@@ -133,6 +141,7 @@ class NightlifeEvent {
     String? posterUrl,
     String? priceText,
     bool? isActive,
+    String? clubId,
     String? createdBy,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -151,6 +160,7 @@ class NightlifeEvent {
       posterUrl: posterUrl ?? this.posterUrl,
       priceText: priceText ?? this.priceText,
       isActive: isActive ?? this.isActive,
+      clubId: clubId ?? this.clubId,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

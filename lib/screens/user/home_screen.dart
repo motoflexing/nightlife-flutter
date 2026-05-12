@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _events.addAll(page.events);
         _lastDocument = page.lastDocument;
-        _hasMore = page.events.length == AppConstants.eventPageSize;
+        _hasMore = page.lastDocument != null;
         _loading = false;
         _loadingMore = false;
       });

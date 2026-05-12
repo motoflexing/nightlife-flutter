@@ -62,7 +62,7 @@ class _RsvpTile extends StatelessWidget {
         ),
         title: Text(rsvp.eventTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
         subtitle: Text(
-          '${Formatters.eventDate(rsvp.createdAt)} • ${rsvp.promoterCode ?? 'Direct'}',
+          '${Formatters.eventDate(rsvp.createdAt)} - ${rsvp.promoterCode ?? 'Direct'}',
           style: const TextStyle(color: AppTheme.textMuted),
         ),
         trailing: Text(
