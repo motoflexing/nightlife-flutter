@@ -1,0 +1,31 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "nightlife-platform-geek",
+          "appId": "1:198792802421:android:208f8b5fd98f7cbeda883c",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "nightlife-platform-geek",
+          "configurations": {
+            "android": "1:198792802421:android:208f8b5fd98f7cbeda883c",
+            "ios": "1:198792802421:ios:d87f892e70fa2443da883c",
+            "macos": "1:198792802421:ios:d87f892e70fa2443da883c",
+            "web": "1:198792802421:web:3da59001fceab9f5da883c",
+            "windows": "1:198792802421:web:e71e4d1e63303372da883c"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}

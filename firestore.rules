@@ -1,0 +1,90 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function role(uid) {
+      return userDoc(uid).data.role;
+    }
+
+    function isAdmin() {
+      return signedIn() && role(request.auth.uid) == 'admin';
+    }
+
+    function isPromoter() {
+      return signedIn() && role(request.auth.uid) == 'promoter';
+    }
+
+    function allowedKeys(keys) {
+      return request.resource.data.keys().hasOnly(keys);
+    }
+
+    match /users/{uid} {
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && allowedKeys(['uid', 'name', 'email', 'phone', 'role', 'createdAt', 'updatedAt', 'isActive'])
+        && request.resource.data.uid == uid
+        && request.resource.data.role == 'user'
+        && request.resource.data.isActive == true;
+
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      allow read: if signedIn() && (resource.data.isActive == true || isAdmin());
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /promoters/{promoterId} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /rsvps/{rsvpId} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid)
+        || (isPromoter() && resource.data.promoterId != null
+          && exists(/databases/$(database)/documents/promoters/$(resource.data.promoterId))
+          && get(/databases/$(database)/documents/promoters/$(resource.data.promoterId)).data.userId == request.auth.uid);
+
+      allow create: if signedIn()
+        && rsvpId == request.auth.uid + '_' + request.resource.data.eventId
+        && !exists(/databases/$(database)/documents/rsvps/$(rsvpId))
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly([
+          'userId',
+          'userName',
+          'userPhone',
+          'eventId',
+          'eventTitle',
+          'promoterId',
+          'promoterCode',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && exists(/databases/$(database)/documents/events/$(request.resource.data.eventId))
+        && get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.isActive == true
+        && (
+          request.resource.data.promoterId == null
+          || (
+            exists(/databases/$(database)/documents/promoters/$(request.resource.data.promoterId))
+            && get(/databases/$(database)/documents/promoters/$(request.resource.data.promoterId)).data.isActive == true
+            && get(/databases/$(database)/documents/promoters/$(request.resource.data.promoterId)).data.referralCode == request.resource.data.promoterCode
+          )
+        );
+
+      allow update, delete: if isAdmin();
+    }
+  }
+}
