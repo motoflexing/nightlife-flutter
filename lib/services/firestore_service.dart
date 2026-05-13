@@ -29,12 +29,19 @@ class FirestoreService {
     int limit = AppConstants.eventPageSize,
   }) async {
     Query<Map<String, dynamic>> query = _db.collection('events');
-    if (onlyActive) query = query.where('b3Active', isEqualTo: true);
-    final snapshot = await query.snapshots().first;
-    final events = snapshot.docs.map(NightlifeEvent.fromDoc).where((event) {
-      return city == 'All' || event.city == city;
-    }).toList()
+
+    if (onlyActive) {
+      query = query.where('isActive', isEqualTo: true);
+    }
+
+    final snapshot = await query.get();
+
+    final events = snapshot.docs
+        .map(NightlifeEvent.fromDoc)
+        .where((event) => city == 'All' || event.city == city)
+        .toList()
       ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+
     return PagedEvents(
       events: events,
       lastDocument: null,
@@ -42,19 +49,17 @@ class FirestoreService {
   }
 
   Stream<List<NightlifeEvent>> adminEventsStream() {
-    return _db
-        .collection('events')
-        .snapshots()
-        .map((snap) => snap.docs.map(NightlifeEvent.fromDoc).toList()
-          ..sort((a, b) => b.dateTime.compareTo(a.dateTime)));
+    return _db.collection('events').snapshots().map(
+          (snap) => snap.docs.map(NightlifeEvent.fromDoc).toList()
+            ..sort((a, b) => b.dateTime.compareTo(a.dateTime)),
+        );
   }
 
   Stream<List<AppUser>> usersStream() {
-    return _db
-        .collection('users')
-        .snapshots()
-        .map((snap) => snap.docs.map(AppUser.fromDoc).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+    return _db.collection('users').snapshots().map(
+          (snap) => snap.docs.map(AppUser.fromDoc).toList()
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+        );
   }
 
   Stream<List<AppUser>> pendingApprovalsStream() {
@@ -62,8 +67,10 @@ class FirestoreService {
         .collection('users')
         .where('status', isEqualTo: 'pending')
         .snapshots()
-        .map((snap) => snap.docs.map(AppUser.fromDoc).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+        .map(
+          (snap) => snap.docs.map(AppUser.fromDoc).toList()
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+        );
   }
 
   Stream<List<Club>> clubsStream() {
@@ -83,11 +90,10 @@ class FirestoreService {
   }
 
   Stream<List<Promoter>> promotersStream() {
-    return _db
-        .collection('promoters')
-        .snapshots()
-        .map((snap) => snap.docs.map(Promoter.fromDoc).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+    return _db.collection('promoters').snapshots().map(
+          (snap) => snap.docs.map(Promoter.fromDoc).toList()
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+        );
   }
 
   Stream<List<Rsvp>> allRsvpsStream() {
@@ -102,8 +108,10 @@ class FirestoreService {
         .collection('rsvps')
         .where('userId', isEqualTo: userId)
         .snapshots()
-        .map((snap) => snap.docs.map(Rsvp.fromDoc).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+        .map(
+          (snap) => snap.docs.map(Rsvp.fromDoc).toList()
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+        );
   }
 
   Stream<List<Rsvp>> promoterRsvpsStream(String promoterCode) {
@@ -111,12 +119,20 @@ class FirestoreService {
         .collection('rsvps')
         .where('promoterCode', isEqualTo: promoterCode)
         .snapshots()
-        .map((snap) => snap.docs.map(Rsvp.fromDoc).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)));
+        .map(
+          (snap) => snap.docs.map(Rsvp.fromDoc).toList()
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+        );
   }
 
-  Stream<List<NightlifeEvent>> promoterAssignedEventsStream(String promoterCode) {
-    return _db.collection('events').where('b3Active', isEqualTo: true).snapshots().map(
+  Stream<List<NightlifeEvent>> promoterAssignedEventsStream(
+    String promoterCode,
+  ) {
+    return _db
+        .collection('events')
+        .where('isActive', isEqualTo: true)
+        .snapshots()
+        .map(
           (snap) => snap.docs
               .map(NightlifeEvent.fromDoc)
               .where((event) => event.createdBy == promoterCode)
@@ -128,7 +144,12 @@ class FirestoreService {
   Stream<List<NightlifeEvent>> clubEventsStream(AppUser user) {
     final clubId = user.clubId;
     if (clubId == null) return Stream.value(const <NightlifeEvent>[]);
-    return _db.collection('events').where('clubId', isEqualTo: clubId).snapshots().map(
+
+    return _db
+        .collection('events')
+        .where('clubId', isEqualTo: clubId)
+        .snapshots()
+        .map(
           (snap) => snap.docs.map(NightlifeEvent.fromDoc).toList()
             ..sort((a, b) => b.dateTime.compareTo(a.dateTime)),
         );
@@ -137,7 +158,12 @@ class FirestoreService {
   Stream<List<Rsvp>> clubRsvpsStream(AppUser user) {
     final clubId = user.clubId;
     if (clubId == null) return Stream.value(const <Rsvp>[]);
-    return _db.collection('rsvps').where('clubId', isEqualTo: clubId).snapshots().map(
+
+    return _db
+        .collection('rsvps')
+        .where('clubId', isEqualTo: clubId)
+        .snapshots()
+        .map(
           (snap) => snap.docs.map(Rsvp.fromDoc).toList()
             ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
         );
@@ -165,7 +191,6 @@ class FirestoreService {
 
   Future<void> deactivateEvent(String eventId) async {
     await _db.collection('events').doc(eventId).update({
-      'b3Active': false,
       'isActive': false,
       'updatedAt': FieldValue.serverTimestamp(),
     });
@@ -186,17 +211,21 @@ class FirestoreService {
     if (!user.isUser || !user.isApproved) {
       throw const FirestoreAppException('Only approved user accounts can RSVP.');
     }
+
     final code = promoterCode == null || promoterCode.trim().isEmpty
         ? null
         : ReferralService.normalize(promoterCode);
 
     final rsvpId = '${user.uid}_${event.id}';
     final rsvpRef = _db.collection('rsvps').doc(rsvpId);
+
     await _db.runTransaction((transaction) async {
       final existing = await transaction.get(rsvpRef);
+
       if (existing.exists) {
         throw FirestoreAppException('You have already RSVPed for this event.');
       }
+
       transaction.set(rsvpRef, {
         'userId': user.uid,
         'userName': user.name,
@@ -215,11 +244,13 @@ class FirestoreService {
 
   Future<void> updateUserRole(AppUser user, String role) async {
     final approvedImmediately = role == 'user' || role == 'superAdmin';
+
     await _db.collection('users').doc(user.uid).update({
       'role': role,
       'status': approvedImmediately ? 'approved' : 'pending',
       'updatedAt': FieldValue.serverTimestamp(),
     });
+
     if (role == 'promoter') {
       await _ensurePromoter(user, isActive: false);
     } else {
@@ -228,6 +259,7 @@ class FirestoreService {
           .where('userId', isEqualTo: user.uid)
           .limit(1)
           .get();
+
       for (final doc in existing.docs) {
         await doc.reference.update({'isActive': false});
       }
@@ -248,18 +280,23 @@ class FirestoreService {
       'isActive': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };
+
     if (user.isPromoter) {
       final code = user.promoterCode ?? _makeReferralCode(user);
       updates['promoterCode'] = code;
       await _ensurePromoter(user, isActive: true, referralCode: code);
     }
+
     if (user.isClubAdmin && user.clubId != null) {
       await _db.collection('clubs').doc(user.clubId).update({
         'verificationStatus': 'approved',
       });
     } else if (user.isClubAdmin) {
-      throw const FirestoreAppException('Club onboarding must be completed first.');
+      throw const FirestoreAppException(
+        'Club onboarding must be completed first.',
+      );
     }
+
     await _db.collection('users').doc(user.uid).update(updates);
   }
 
@@ -269,11 +306,13 @@ class FirestoreService {
       'isActive': false,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+
     if (user.isClubAdmin && user.clubId != null) {
       await _db.collection('clubs').doc(user.clubId).update({
         'verificationStatus': 'rejected',
       });
     }
+
     if (user.isPromoter) {
       await _ensurePromoter(user, isActive: false);
     }
@@ -294,6 +333,7 @@ class FirestoreService {
     final clubRef = user.clubId == null
         ? _db.collection('clubs').doc()
         : _db.collection('clubs').doc(user.clubId);
+
     await clubRef.set({
       'ownerId': user.uid,
       'clubName': clubName.trim(),
@@ -308,6 +348,7 @@ class FirestoreService {
       'verificationStatus': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
     await _db.collection('users').doc(user.uid).update({
       'role': 'clubAdmin',
       'status': 'pending',
@@ -318,6 +359,7 @@ class FirestoreService {
 
   Future<void> seedDemoEvents(String adminId) async {
     final batch = _db.batch();
+
     final examples = [
       NightlifeEvent.empty(createdBy: adminId).copyWith(
         title: 'Neon Friday Social',
@@ -332,6 +374,7 @@ class FirestoreService {
             'A high-energy Friday night built for RSVP-driven discovery.',
         priceText: 'Guestlist entry before 10 PM',
         posterUrl: '',
+        isActive: true,
       ),
       NightlifeEvent.empty(createdBy: adminId).copyWith(
         title: 'Delhi Bassline Sessions',
@@ -346,11 +389,14 @@ class FirestoreService {
             'Underground sounds, RSVP credits, and promoter-led distribution.',
         priceText: 'Cover starts at INR 999',
         posterUrl: '',
+        isActive: true,
       ),
     ];
+
     for (final event in examples) {
       batch.set(_db.collection('events').doc(), event.toCreateMap());
     }
+
     await batch.commit();
   }
 
@@ -361,6 +407,7 @@ class FirestoreService {
   }) async {
     final ref = _db.collection('promoters').doc(user.uid);
     final existing = await ref.get();
+
     if (existing.exists) {
       await ref.update({
         'isActive': isActive,
@@ -368,6 +415,7 @@ class FirestoreService {
       });
       return;
     }
+
     await ref.set({
       'userId': user.uid,
       'name': user.name,
@@ -386,6 +434,7 @@ class FirestoreService {
         .replaceAll(RegExp(r'[^A-Z0-9]'), '')
         .padRight(4, 'X')
         .substring(0, 4);
+
     return '$base${user.uid.substring(0, 4).toUpperCase()}';
   }
 }

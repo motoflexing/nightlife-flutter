@@ -41,6 +41,7 @@ class NightlifeEvent {
 
   factory NightlifeEvent.empty({String createdBy = ''}) {
     final now = DateTime.now().add(const Duration(days: 7));
+
     return NightlifeEvent(
       id: '',
       title: '',
@@ -62,8 +63,11 @@ class NightlifeEvent {
     );
   }
 
-  factory NightlifeEvent.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory NightlifeEvent.fromDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final data = doc.data() ?? {};
+
     return NightlifeEvent(
       id: doc.id,
       title: data['title'] as String? ?? '',
@@ -77,7 +81,7 @@ class NightlifeEvent {
       description: data['description'] as String? ?? '',
       posterUrl: data['posterUrl'] as String? ?? '',
       priceText: data['priceText'] as String? ?? '',
-      isActive: data['b3Active'] as bool? ?? data['isActive'] as bool? ?? true,
+      isActive: data['isActive'] as bool? ?? false,
       clubId: data['clubId'] as String?,
       createdBy: data['createdBy'] as String? ?? '',
       createdAt: _readDate(data['createdAt']),
@@ -98,7 +102,6 @@ class NightlifeEvent {
       'description': description,
       'posterUrl': posterUrl,
       'priceText': priceText,
-      'b3Active': isActive,
       'isActive': isActive,
       'clubId': clubId,
       'createdBy': createdBy,
@@ -120,7 +123,6 @@ class NightlifeEvent {
       'description': description,
       'posterUrl': posterUrl,
       'priceText': priceText,
-      'b3Active': isActive,
       'isActive': isActive,
       'clubId': clubId,
       'updatedAt': FieldValue.serverTimestamp(),
