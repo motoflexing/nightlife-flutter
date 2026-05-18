@@ -30,6 +30,10 @@ service cloud.firestore {
       return currentUser().data.promoterCode;
     }
 
+    function referralCodePath(code) {
+      return /databases/$(database)/documents/referralCodes/$(code);
+    }
+
     function isApproved() {
       return signedIn()
         && exists(userPath(request.auth.uid))
@@ -58,9 +62,15 @@ service cloud.firestore {
         && request.resource.data.role in ['user', 'promoter', 'clubAdmin']
         && (
           (request.resource.data.role == 'user'
-            && request.resource.data.status == 'approved')
-          || (request.resource.data.role in ['promoter', 'clubAdmin']
-            && request.resource.data.status == 'pending')
+            && request.resource.data.status == 'approved'
+            && request.resource.data.promoterCode == null)
+          || (request.resource.data.role == 'promoter'
+            && request.resource.data.status == 'approved'
+            && request.resource.data.promoterCode is string
+            && request.resource.data.promoterCode.size() > 0)
+          || (request.resource.data.role == 'clubAdmin'
+            && request.resource.data.status == 'pending'
+            && request.resource.data.promoterCode == null)
         )
         && request.resource.data.isActive == true
         && request.resource.data.keys().hasOnly([
@@ -130,7 +140,7 @@ service cloud.firestore {
 
     match /events/{eventId} {
       allow read: if isSuperAdmin()
-        || (signedIn() && resource.data.b3Active == true)
+        || (signedIn() && resource.data.isActive == true)
         || (isClubAdmin() && (
           resource.data.createdBy == request.auth.uid
           || resource.data.clubId == currentClubId()
@@ -179,19 +189,50 @@ service cloud.firestore {
           'updatedAt'
         ])
         && exists(/databases/$(database)/documents/events/$(request.resource.data.eventId))
-        && get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.b3Active == true
+        && get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.isActive == true
         && request.resource.data.clubId ==
-          get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.clubId;
+          get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.clubId
+        && (
+          (
+            request.resource.data.promoterId == null
+            && request.resource.data.promoterCode == null
+          )
+          || (
+            request.resource.data.promoterId is string
+            && request.resource.data.promoterCode is string
+            && exists(referralCodePath(request.resource.data.promoterCode))
+            && get(referralCodePath(request.resource.data.promoterCode)).data.isActive == true
+            && get(referralCodePath(request.resource.data.promoterCode)).data.promoterId ==
+              request.resource.data.promoterId
+            && get(referralCodePath(request.resource.data.promoterCode)).data.referralCode ==
+              request.resource.data.promoterCode
+          )
+        );
 
       allow update, delete: if isSuperAdmin()
         || (isClubAdmin() && resource.data.clubId == currentClubId());
     }
 
     match /promoters/{promoterId} {
-      allow create: if signedIn()
-        && promoterId == request.auth.uid
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.isActive == false;
+      allow create: if isSuperAdmin()
+        || (
+          signedIn()
+          && promoterId == request.auth.uid
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.referralCode == currentPromoterCode()
+          && request.resource.data.isActive == true
+          && request.resource.data.totalRsvps == 0
+          && request.resource.data.keys().hasOnly([
+            'userId',
+            'name',
+            'phone',
+            'email',
+            'referralCode',
+            'totalRsvps',
+            'createdAt',
+            'isActive'
+          ])
+        );
 
       allow read: if isSuperAdmin()
         || (signedIn() && resource.data.userId == request.auth.uid)
@@ -204,6 +245,28 @@ service cloud.firestore {
       allow read: if isSuperAdmin()
         || (isPromoter() && resource.data.promoterCode == currentPromoterCode());
       allow create, update, delete: if isSuperAdmin();
+    }
+
+    match /referralCodes/{code} {
+      allow read: if signedIn() && resource.data.isActive == true;
+
+      allow create, update: if isSuperAdmin()
+        || (
+          isPromoter()
+          && code == currentPromoterCode()
+          && request.resource.data.promoterId == request.auth.uid
+          && request.resource.data.referralCode == currentPromoterCode()
+          && request.resource.data.isActive == true
+          && request.resource.data.keys().hasOnly([
+            'promoterId',
+            'referralCode',
+            'isActive',
+            'createdAt',
+            'updatedAt'
+          ])
+        );
+
+      allow delete: if isSuperAdmin();
     }
   }
 }

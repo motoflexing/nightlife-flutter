@@ -68,7 +68,10 @@ class FirestoreService {
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .map(
-          (snap) => snap.docs.map(AppUser.fromDoc).toList()
+          (snap) => snap.docs
+              .map(AppUser.fromDoc)
+              .where((user) => user.isClubAdmin)
+              .toList()
             ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
         );
   }
@@ -114,10 +117,10 @@ class FirestoreService {
         );
   }
 
-  Stream<List<Rsvp>> promoterRsvpsStream(String promoterCode) {
+  Stream<List<Rsvp>> promoterRsvpsStream(String promoterId) {
     return _db
         .collection('rsvps')
-        .where('promoterCode', isEqualTo: promoterCode)
+        .where('promoterId', isEqualTo: promoterId)
         .snapshots()
         .map(
           (snap) => snap.docs.map(Rsvp.fromDoc).toList()
@@ -125,20 +128,22 @@ class FirestoreService {
         );
   }
 
-  Stream<List<NightlifeEvent>> promoterAssignedEventsStream(
-    String promoterCode,
-  ) {
+  Stream<List<NightlifeEvent>> activeEventsStream() {
     return _db
         .collection('events')
         .where('isActive', isEqualTo: true)
         .snapshots()
         .map(
-          (snap) => snap.docs
-              .map(NightlifeEvent.fromDoc)
-              .where((event) => event.createdBy == promoterCode)
-              .toList()
+          (snap) => snap.docs.map(NightlifeEvent.fromDoc).toList()
             ..sort((a, b) => a.dateTime.compareTo(b.dateTime)),
         );
+  }
+
+  Stream<NightlifeEvent?> eventStream(String eventId) {
+    return _db.collection('events').doc(eventId).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return NightlifeEvent.fromDoc(doc);
+    });
   }
 
   Stream<List<NightlifeEvent>> clubEventsStream(AppUser user) {
@@ -175,9 +180,20 @@ class FirestoreService {
         .where('userId', isEqualTo: userId)
         .limit(1)
         .snapshots()
-        .map((snap) {
+        .asyncMap((snap) async {
       if (snap.docs.isEmpty) return null;
-      return Promoter.fromDoc(snap.docs.first);
+      final promoter = Promoter.fromDoc(snap.docs.first);
+      try {
+        await _ensureReferralCode(
+          promoterId: promoter.id,
+          referralCode: promoter.referralCode,
+          isActive: promoter.isActive,
+        );
+      } catch (_) {
+        // Existing profiles should still load even if the referral index needs
+        // a privileged backfill.
+      }
+      return promoter;
     });
   }
 
@@ -215,6 +231,23 @@ class FirestoreService {
     final code = promoterCode == null || promoterCode.trim().isEmpty
         ? null
         : ReferralService.normalize(promoterCode);
+    String? promoterId;
+    String? resolvedCode;
+
+    if (code != null) {
+      final referralDoc = await _db.collection('referralCodes').doc(code).get();
+      final referral = referralDoc.data();
+      if (!referralDoc.exists ||
+          referral == null ||
+          referral['isActive'] != true) {
+        throw const FirestoreAppException('Referral code is not active.');
+      }
+      promoterId = referral['promoterId'] as String?;
+      resolvedCode = referral['referralCode'] as String? ?? code;
+      if (promoterId == null || promoterId.trim().isEmpty) {
+        throw const FirestoreAppException('Referral code is not active.');
+      }
+    }
 
     final rsvpId = '${user.uid}_${event.id}';
     final rsvpRef = _db.collection('rsvps').doc(rsvpId);
@@ -233,8 +266,8 @@ class FirestoreService {
         'eventId': event.id,
         'eventTitle': event.title,
         'clubId': event.clubId,
-        'promoterId': null,
-        'promoterCode': code,
+        'promoterId': promoterId,
+        'promoterCode': resolvedCode,
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -243,16 +276,22 @@ class FirestoreService {
   }
 
   Future<void> updateUserRole(AppUser user, String role) async {
-    final approvedImmediately = role == 'user' || role == 'superAdmin';
+    final approvedImmediately = role != 'clubAdmin';
+    final referralCode = role == 'promoter'
+        ? user.promoterCode ?? _makeReferralCode(user)
+        : null;
 
     await _db.collection('users').doc(user.uid).update({
       'role': role,
       'status': approvedImmediately ? 'approved' : 'pending',
+      if (referralCode != null) 'promoterCode': referralCode,
+      if (role != 'promoter') 'promoterCode': null,
+      if (role == 'promoter') 'isActive': true,
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
     if (role == 'promoter') {
-      await _ensurePromoter(user, isActive: false);
+      await _ensurePromoter(user, isActive: true, referralCode: referralCode);
     } else {
       final existing = await _db
           .collection('promoters')
@@ -263,15 +302,24 @@ class FirestoreService {
       for (final doc in existing.docs) {
         await doc.reference.update({'isActive': false});
       }
+      await _deactivateReferralCode(user.promoterCode);
     }
   }
 
   Future<void> setUserActive(String userId, bool isActive) async {
+    final userDoc = await _db.collection('users').doc(userId).get();
+    final user = userDoc.exists ? AppUser.fromDoc(userDoc) : null;
+
     await _db.collection('users').doc(userId).update({
       'isActive': isActive,
       'status': isActive ? 'approved' : 'rejected',
       'updatedAt': FieldValue.serverTimestamp(),
     });
+
+    if (user != null && user.isPromoter) {
+      await _ensurePromoter(user, isActive: isActive);
+      if (!isActive) await _deactivateReferralCode(user.promoterCode);
+    }
   }
 
   Future<void> approveUser(AppUser user) async {
@@ -315,6 +363,7 @@ class FirestoreService {
 
     if (user.isPromoter) {
       await _ensurePromoter(user, isActive: false);
+      await _deactivateReferralCode(user.promoterCode);
     }
   }
 
@@ -413,19 +462,57 @@ class FirestoreService {
         'isActive': isActive,
         if (referralCode != null) 'referralCode': referralCode,
       });
+      final existingReferralCode = existing.data()?['referralCode'] as String?;
+      await _ensureReferralCode(
+        promoterId: user.uid,
+        referralCode: referralCode ?? existingReferralCode,
+        isActive: isActive,
+      );
       return;
     }
 
+    final code = referralCode ?? _makeReferralCode(user);
     await ref.set({
       'userId': user.uid,
       'name': user.name,
       'phone': user.phone,
       'email': user.email,
-      'referralCode': referralCode ?? _makeReferralCode(user),
+      'referralCode': code,
       'totalRsvps': 0,
       'createdAt': FieldValue.serverTimestamp(),
       'isActive': isActive,
     });
+    await _ensureReferralCode(
+      promoterId: user.uid,
+      referralCode: code,
+      isActive: isActive,
+    );
+  }
+
+  Future<void> _ensureReferralCode({
+    required String promoterId,
+    required String? referralCode,
+    required bool isActive,
+  }) async {
+    if (referralCode == null || referralCode.trim().isEmpty) return;
+    final code = ReferralService.normalize(referralCode);
+    await _db.collection('referralCodes').doc(code).set({
+      'promoterId': promoterId,
+      'referralCode': code,
+      'isActive': isActive,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> _deactivateReferralCode(String? referralCode) async {
+    if (referralCode == null || referralCode.trim().isEmpty) return;
+    await _db
+        .collection('referralCodes')
+        .doc(ReferralService.normalize(referralCode))
+        .set({
+      'isActive': false,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   String _makeReferralCode(AppUser user) {

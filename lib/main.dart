@@ -5,6 +5,7 @@ import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
 import 'screens/auth/splash_screen.dart';
+import 'screens/user/event_link_screen.dart';
 import 'services/referral_service.dart';
 
 Future<void> main() async {
@@ -24,6 +25,27 @@ class NightlifePlatformApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark(),
       home: const SplashScreen(),
+      onGenerateRoute: _onGenerateRoute,
+    );
+  }
+
+  Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
+    final uri = Uri.tryParse(settings.name ?? '');
+    if (uri == null) return null;
+    ReferralService.instance.captureFromUri(uri);
+
+    if (uri.pathSegments.length == 2 && uri.pathSegments.first == 'event') {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => EventLinkScreen(
+          eventId: Uri.decodeComponent(uri.pathSegments.last),
+        ),
+      );
+    }
+
+    return MaterialPageRoute<void>(
+      settings: settings,
+      builder: (_) => const SplashScreen(),
     );
   }
 }

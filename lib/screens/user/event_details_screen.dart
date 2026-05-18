@@ -46,6 +46,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         user: widget.currentUser,
         promoterCode: _codeController.text,
       );
+      ReferralService.instance.clear();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('RSVP created. Status is pending approval.')),

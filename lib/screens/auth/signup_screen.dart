@@ -79,7 +79,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Promoter and club admin access starts as a pending request.',
+                        'Promoters get instant access. Club admin access starts as a pending request.',
                         style: TextStyle(color: AppTheme.textMuted),
                       ),
                       const SizedBox(height: 22),

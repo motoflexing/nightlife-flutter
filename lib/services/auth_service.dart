@@ -72,7 +72,7 @@ class AuthService {
       }
       await user.updateDisplayName(name.trim());
       final role = _safeRequestedRole(requestedRole);
-      final status = role == 'user' ? 'approved' : 'pending';
+      final status = role == 'clubAdmin' ? 'pending' : 'approved';
       final promoterCode = role == 'promoter' ? _makePromoterCode(name, user.uid) : null;
       await _db.collection('users').doc(user.uid).set({
         'uid': user.uid,
@@ -96,7 +96,14 @@ class AuthService {
           'referralCode': promoterCode,
           'totalRsvps': 0,
           'createdAt': FieldValue.serverTimestamp(),
-          'isActive': false,
+          'isActive': true,
+        });
+        await _db.collection('referralCodes').doc(promoterCode).set({
+          'promoterId': user.uid,
+          'referralCode': promoterCode,
+          'isActive': true,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
         });
       }
     } on FirebaseAuthException catch (error) {

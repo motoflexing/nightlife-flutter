@@ -77,7 +77,7 @@ class RoleRouterScreen extends StatelessWidget {
             if (profile.isClubAdmin && profile.clubId == null) {
               return ClubOnboardingScreen(currentUser: profile);
             }
-            if (profile.isPending) {
+            if (profile.isClubAdmin && profile.isPending) {
               return AccessStateScreen(
                 title: 'Pending approval',
                 message:

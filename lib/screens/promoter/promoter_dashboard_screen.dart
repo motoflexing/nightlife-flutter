@@ -40,8 +40,8 @@ class PromoterDashboardScreen extends StatelessWidget {
           final promoter = snapshot.data;
           if (promoter == null) {
             return const EmptyView(
-              title: 'Promoter profile pending',
-              message: 'Ask an admin to switch your role to promoter again to create the referral profile.',
+              title: 'Promoter profile unavailable',
+              message: 'Sign out and back in to refresh your referral profile.',
               icon: Icons.campaign_outlined,
             );
           }
@@ -59,14 +59,13 @@ class _PromoterContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final link = Uri.base.replace(queryParameters: {'ref': promoter.referralCode}).toString();
     return StreamBuilder<List<Rsvp>>(
-      stream: FirestoreService.instance.promoterRsvpsStream(promoter.referralCode),
+      stream: FirestoreService.instance.promoterRsvpsStream(promoter.id),
       builder: (context, snapshot) {
         final rsvps = snapshot.data ?? [];
         final eventCounts = <String, int>{};
         for (final rsvp in rsvps) {
-          eventCounts[rsvp.eventTitle] = (eventCounts[rsvp.eventTitle] ?? 0) + 1;
+          eventCounts[rsvp.eventId] = (eventCounts[rsvp.eventId] ?? 0) + 1;
         }
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -109,41 +108,21 @@ class _PromoterContent extends StatelessWidget {
                       )
                       .toList(),
                 ),
-                const SizedBox(height: 16),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Referral link',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                        ),
-                        const SizedBox(height: 10),
-                        SelectableText(link, style: const TextStyle(color: AppTheme.neonCyan)),
-                        const SizedBox(height: 12),
-                        OutlinedButton.icon(
-                          onPressed: () => _copy(context, link),
-                          icon: const Icon(Icons.link),
-                          label: const Text('Copy link'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
                 Text(
-                  'Assigned events',
+                  'Active events',
                   style: Theme.of(context)
                       .textTheme
                       .titleLarge
                       ?.copyWith(fontWeight: FontWeight.w900),
                 ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Share event links and track your RSVPs.',
+                  style: TextStyle(color: AppTheme.textMuted),
+                ),
                 const SizedBox(height: 10),
                 StreamBuilder<List<NightlifeEvent>>(
-                  stream: FirestoreService.instance
-                      .promoterAssignedEventsStream(promoter.referralCode),
+                  stream: FirestoreService.instance.activeEventsStream(),
                   builder: (context, eventSnapshot) {
                     final events = eventSnapshot.data ?? [];
                     if (eventSnapshot.connectionState == ConnectionState.waiting) {
@@ -154,24 +133,26 @@ class _PromoterContent extends StatelessWidget {
                     }
                     if (events.isEmpty) {
                       return const EmptyView(
-                        title: 'No assigned events',
-                        message: 'Super Admin assigned events will appear here.',
+                        title: 'No active events',
+                        message: 'Share event links and track your RSVPs.',
                         icon: Icons.local_activity_outlined,
                       );
                     }
-                    return Column(
+                    return Wrap(
+                      spacing: 14,
+                      runSpacing: 14,
                       children: events
                           .map(
-                            (event) => Card(
-                              child: ListTile(
-                                title: Text(
-                                  event.title,
-                                  style: const TextStyle(fontWeight: FontWeight.w800),
+                            (event) => SizedBox(
+                              width: wide ? (constraints.maxWidth - 46) / 2 : double.infinity,
+                              child: _PromoterEventCard(
+                                event: event,
+                                rsvpCount: eventCounts[event.id] ?? 0,
+                                referralLink: _eventReferralLink(
+                                  event,
+                                  promoter.referralCode,
                                 ),
-                                subtitle: Text(
-                                  '${event.city} - ${Formatters.eventDate(event.dateTime)}',
-                                  style: const TextStyle(color: AppTheme.textMuted),
-                                ),
+                                onCopy: (value) => _copy(context, value),
                               ),
                             ),
                           )
@@ -196,7 +177,13 @@ class _PromoterContent extends StatelessWidget {
                   )
                 else
                   Column(
-                    children: eventCounts.entries
+                    children: rsvps
+                        .fold<Map<String, int>>({}, (counts, rsvp) {
+                          counts[rsvp.eventTitle] =
+                              (counts[rsvp.eventTitle] ?? 0) + 1;
+                          return counts;
+                        })
+                        .entries
                         .map(
                           (entry) => Card(
                             child: ListTile(
@@ -251,6 +238,141 @@ class _PromoterContent extends StatelessWidget {
     Clipboard.setData(ClipboardData(text: value));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Copied')),
+    );
+  }
+
+  String _eventReferralLink(NightlifeEvent event, String referralCode) {
+    return Uri.base
+        .replace(
+          path: '/event/${Uri.encodeComponent(event.id)}',
+          queryParameters: {'ref': referralCode},
+          fragment: null,
+        )
+        .toString();
+  }
+}
+
+class _PromoterEventCard extends StatelessWidget {
+  const _PromoterEventCard({
+    required this.event,
+    required this.rsvpCount,
+    required this.referralLink,
+    required this.onCopy,
+  });
+
+  final NightlifeEvent event;
+  final int rsvpCount;
+  final String referralLink;
+  final ValueChanged<String> onCopy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: event.posterUrl.isEmpty
+                ? const _PosterFallback()
+                : Image.network(
+                    event.posterUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const _PosterFallback(),
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 10),
+                _EventLine(
+                  icon: Icons.place_outlined,
+                  text: event.venueName,
+                ),
+                _EventLine(icon: Icons.location_city_outlined, text: event.city),
+                _EventLine(
+                  icon: Icons.schedule,
+                  text: Formatters.eventDate(event.dateTime),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Chip(
+                      label: Text('$rsvpCount RSVPs'),
+                      avatar: const Icon(Icons.confirmation_number, size: 18),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => onCopy(referralLink),
+                      icon: const Icon(Icons.link),
+                      label: const Text('Copy referral link'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PosterFallback extends StatelessWidget {
+  const _PosterFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppTheme.elevated,
+      child: const Icon(
+        Icons.local_activity_outlined,
+        color: AppTheme.neonCyan,
+        size: 48,
+      ),
+    );
+  }
+}
+
+class _EventLine extends StatelessWidget {
+  const _EventLine({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    if (text.trim().isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 7),
+      child: Row(
+        children: [
+          Icon(icon, size: 17, color: AppTheme.textMuted),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: AppTheme.textMuted),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

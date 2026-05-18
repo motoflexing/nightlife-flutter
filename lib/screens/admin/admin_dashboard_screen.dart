@@ -246,7 +246,7 @@ class _ApprovalsAdmin extends StatelessWidget {
         if (users.isEmpty) {
           return const EmptyView(
             title: 'No pending approvals',
-            message: 'Promoter and club admin requests will appear here.',
+            message: 'Club admin requests will appear here.',
             icon: Icons.verified_user_outlined,
           );
         }
