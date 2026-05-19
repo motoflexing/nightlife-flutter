@@ -10,6 +10,7 @@ class AuthService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+
   String? _requestedRole;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -44,6 +45,7 @@ class AuthService {
   }) async {
     try {
       _requestedRole = requestedRole;
+
       await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
@@ -59,45 +61,112 @@ class AuthService {
     required String phone,
     required String password,
     required String requestedRole,
+
+    // Extra signup fields
+    String title = '',
+    String gender = '',
+    String dob = '',
+    String instagramId = '',
+    String snapchatId = '',
+    String validIdUrl = '',
   }) async {
     try {
       _requestedRole = requestedRole;
+
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
+
       final user = credential.user;
+
       if (user == null) {
         throw const AuthException('Unable to create your account right now.');
       }
-      await user.updateDisplayName(name.trim());
+
+      final cleanName = name.trim();
+      final cleanEmail = email.trim().toLowerCase();
+      final cleanPhone = phone.trim();
+      final cleanTitle = title.trim();
+      final cleanGender = gender.trim();
+      final cleanDob = dob.trim();
+      final cleanInstagramId = instagramId.trim();
+      final cleanSnapchatId = snapchatId.trim();
+      final cleanValidIdUrl = validIdUrl.trim();
+
       final role = _safeRequestedRole(requestedRole);
       final status = role == 'clubAdmin' ? 'pending' : 'approved';
-      final promoterCode = role == 'promoter' ? _makePromoterCode(name, user.uid) : null;
-      await _db.collection('users').doc(user.uid).set({
+
+      final promoterCode =
+          role == 'promoter' ? _makePromoterCode(cleanName, user.uid) : null;
+
+      await user.updateDisplayName(cleanName);
+
+      final userData = {
         'uid': user.uid,
-        'name': name.trim(),
-        'email': email.trim().toLowerCase(),
-        'phone': phone.trim(),
+
+        // Basic details
+        'title': cleanTitle,
+        'name': cleanName,
+        'email': cleanEmail,
+        'phone': cleanPhone,
+        'gender': cleanGender,
+        'dob': cleanDob,
+
+        // Social IDs
+        'instagramId': cleanInstagramId,
+        'snapchatId': cleanSnapchatId,
+
+        // Verification
+        'validIdUrl': cleanValidIdUrl,
+        'verificationStatus':
+            cleanValidIdUrl.isEmpty ? 'not_uploaded' : 'pending',
+
+        // Role details
         'role': role,
         'status': status,
         'clubId': null,
         'promoterCode': promoterCode,
+
+        // System fields
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'isActive': true,
-      });
+      };
+
+      await _db.collection('users').doc(user.uid).set(userData);
+
       if (role == 'promoter') {
         await _db.collection('promoters').doc(user.uid).set({
           'userId': user.uid,
-          'name': name.trim(),
-          'phone': phone.trim(),
-          'email': email.trim().toLowerCase(),
+
+          // Basic details
+          'title': cleanTitle,
+          'name': cleanName,
+          'email': cleanEmail,
+          'phone': cleanPhone,
+          'gender': cleanGender,
+          'dob': cleanDob,
+
+          // Social IDs
+          'instagramId': cleanInstagramId,
+          'snapchatId': cleanSnapchatId,
+
+          // Verification
+          'validIdUrl': cleanValidIdUrl,
+          'verificationStatus':
+              cleanValidIdUrl.isEmpty ? 'not_uploaded' : 'pending',
+
+          // Promoter details
           'referralCode': promoterCode,
           'totalRsvps': 0,
+
+          // System fields
           'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
           'isActive': true,
         });
+
         await _db.collection('referralCodes').doc(promoterCode).set({
           'promoterId': user.uid,
           'referralCode': promoterCode,
@@ -108,26 +177,48 @@ class AuthService {
       }
     } on FirebaseAuthException catch (error) {
       throw AuthException(_friendlyAuthError(error));
+    } catch (error) {
+      throw AuthException(error.toString());
     }
   }
 
   Future<AppUser> ensureSafeProfile(User user) async {
     final ref = _db.collection('users').doc(user.uid);
     final doc = await ref.get();
+
     if (doc.exists) return AppUser.fromDoc(doc);
+
     await ref.set({
       'uid': user.uid,
+
+      // Basic details
+      'title': '',
       'name': user.displayName ?? 'Nightlife User',
       'email': user.email ?? '',
       'phone': user.phoneNumber ?? '',
+      'gender': '',
+      'dob': '',
+
+      // Social IDs
+      'instagramId': '',
+      'snapchatId': '',
+
+      // Verification
+      'validIdUrl': '',
+      'verificationStatus': 'not_uploaded',
+
+      // Role details
       'role': 'user',
       'status': 'approved',
       'clubId': null,
       'promoterCode': null,
+
+      // System fields
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
       'isActive': true,
     });
+
     final next = await ref.get();
     return AppUser.fromDoc(next);
   }
@@ -146,12 +237,13 @@ class AuthService {
   }
 
   String _makePromoterCode(String name, String uid) {
-    final base = name
+    final cleanBase = name
         .toUpperCase()
         .replaceAll(RegExp(r'[^A-Z0-9]'), '')
         .padRight(4, 'X')
         .substring(0, 4);
-    return '$base${uid.substring(0, 4).toUpperCase()}';
+
+    return '$cleanBase${uid.substring(0, 4).toUpperCase()}';
   }
 
   String _friendlyAuthError(FirebaseAuthException error) {

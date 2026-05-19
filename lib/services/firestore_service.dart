@@ -284,7 +284,7 @@ class FirestoreService {
     await _db.collection('users').doc(user.uid).update({
       'role': role,
       'status': approvedImmediately ? 'approved' : 'pending',
-      if (referralCode != null) 'promoterCode': referralCode,
+      'promoterCode': ?referralCode,
       if (role != 'promoter') 'promoterCode': null,
       if (role == 'promoter') 'isActive': true,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -460,7 +460,7 @@ class FirestoreService {
     if (existing.exists) {
       await ref.update({
         'isActive': isActive,
-        if (referralCode != null) 'referralCode': referralCode,
+        'referralCode': ?referralCode,
       });
       final existingReferralCode = existing.data()?['referralCode'] as String?;
       await _ensureReferralCode(

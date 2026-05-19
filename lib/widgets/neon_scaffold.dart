@@ -23,16 +23,10 @@ class NeonScaffold extends StatelessWidget {
       bottomNavigationBar: bottomNavigationBar,
       floatingActionButton: floatingActionButton,
       body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF080A12), Color(0xFF101020), Color(0xFF07141B)],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: AppTheme.nightclubGradient),
         child: Stack(
           children: [
-            Positioned.fill(child: CustomPaint(painter: _GridPainter())),
+            Positioned.fill(child: CustomPaint(painter: _NightclubPainter())),
             SafeArea(child: child),
           ],
         ),
@@ -41,20 +35,42 @@ class NeonScaffold extends StatelessWidget {
   }
 }
 
-class _GridPainter extends CustomPainter {
+class _NightclubPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
+    final violetGlow = Paint()
+      ..color = AppTheme.primaryViolet.withValues(alpha: 0.18)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 42)
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = size.width * 0.34;
+    canvas.drawLine(
+      Offset(size.width * 0.92, -size.height * 0.08),
+      Offset(size.width * 0.26, size.height * 0.92),
+      violetGlow,
+    );
+
+    final pinkGlow = Paint()
+      ..color = AppTheme.accentPink.withValues(alpha: 0.06)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 56)
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = size.width * 0.22;
+    canvas.drawLine(
+      Offset(size.width * 0.04, size.height * 0.08),
+      Offset(size.width * 0.56, size.height * 0.62),
+      pinkGlow,
+    );
+
     final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.035)
+      ..color = Colors.white.withValues(alpha: 0.025)
       ..strokeWidth = 1;
-    for (var y = 0.0; y < size.height; y += 42) {
+    for (var y = 0.0; y < size.height; y += 48) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
     }
-    for (var x = 0.0; x < size.width; x += 42) {
+    for (var x = 0.0; x < size.width; x += 48) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
     }
     final accentPaint = Paint()
-      ..color = AppTheme.neonCyan.withValues(alpha: 0.09)
+      ..color = AppTheme.neonViolet.withValues(alpha: 0.11)
       ..strokeWidth = 1.4;
     canvas.drawLine(
       Offset(size.width * 0.08, 0),

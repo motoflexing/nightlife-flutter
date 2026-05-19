@@ -35,9 +35,7 @@ class EventCard extends StatelessWidget {
                           event.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
+                          style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                       ),
@@ -105,19 +103,25 @@ class _FallbackPoster extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF24113A), Color(0xFF0B2730), Color(0xFF171D2D)],
+          colors: [
+            AppTheme.deepPurple,
+            AppTheme.primaryViolet,
+            AppTheme.surface,
+          ],
         ),
       ),
       child: Stack(
         children: [
-          Positioned.fill(
-            child: CustomPaint(painter: _PosterLinesPainter()),
-          ),
+          Positioned.fill(child: CustomPaint(painter: _PosterLinesPainter())),
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.nightlife, color: AppTheme.neonCyan, size: 42),
+                const Icon(
+                  Icons.nightlife,
+                  color: AppTheme.neonViolet,
+                  size: 42,
+                ),
                 const SizedBox(height: 8),
                 Text(
                   city.toUpperCase(),
@@ -185,9 +189,9 @@ class _Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: AppTheme.neonPink.withValues(alpha: 0.14),
+        color: AppTheme.primaryViolet.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.neonPink.withValues(alpha: 0.35)),
+        border: Border.all(color: AppTheme.neonViolet.withValues(alpha: 0.42)),
       ),
       child: Text(
         label,
@@ -208,8 +212,9 @@ class _Meta extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppTheme.elevated,
+        color: AppTheme.deepPurple.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: AppTheme.glassBorder),
       ),
       child: Text(
         label,
