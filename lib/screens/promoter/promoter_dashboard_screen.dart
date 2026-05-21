@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -21,7 +23,7 @@ class PromoterDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return NeonScaffold(
       appBar: AppBar(
-        title: const Text('Promoter dashboard'),
+        title: const Text('Promoter'),
         actions: [
           IconButton(
             tooltip: 'Logout',
@@ -31,12 +33,15 @@ class PromoterDashboardScreen extends StatelessWidget {
         ],
       ),
       child: StreamBuilder<Promoter?>(
-        stream: FirestoreService.instance.promoterForUserStream(currentUser.uid),
+        stream: FirestoreService.instance.promoterForUserStream(
+          currentUser.uid,
+        ),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingView(message: 'Loading promoter profile');
           }
-          if (snapshot.hasError) return ErrorStateView(message: snapshot.error.toString());
+          if (snapshot.hasError)
+            return ErrorStateView(message: snapshot.error.toString());
           final promoter = snapshot.data;
           if (promoter == null) {
             return const EmptyView(
@@ -76,48 +81,53 @@ class _PromoterContent extends StatelessWidget {
                 Wrap(
                   spacing: 14,
                   runSpacing: 14,
-                  children: [
-                    _MetricCard(
-                      title: 'Referral code',
-                      value: promoter.referralCode,
-                      icon: Icons.qr_code_2,
-                      action: IconButton(
-                        tooltip: 'Copy code',
-                        onPressed: () => _copy(context, promoter.referralCode),
-                        icon: const Icon(Icons.copy),
-                      ),
-                    ),
-                    _MetricCard(
-                      title: 'Total RSVP credits',
-                      value: snapshot.connectionState == ConnectionState.waiting
-                          ? '...'
-                          : rsvps.length.toString(),
-                      icon: Icons.trending_up,
-                    ),
-                    _MetricCard(
-                      title: 'Status',
-                      value: promoter.isActive ? 'Active' : 'Inactive',
-                      icon: Icons.verified_user_outlined,
-                    ),
-                  ]
-                      .map(
-                        (child) => SizedBox(
-                          width: wide ? (constraints.maxWidth - 60) / 3 : double.infinity,
-                          child: child,
-                        ),
-                      )
-                      .toList(),
+                  children:
+                      [
+                            _MetricCard(
+                              title: 'Referral code',
+                              value: promoter.referralCode,
+                              icon: Icons.qr_code_2,
+                              action: IconButton(
+                                tooltip: 'Copy code',
+                                onPressed: () =>
+                                    _copy(context, promoter.referralCode),
+                                icon: const Icon(Icons.copy),
+                              ),
+                            ),
+                            _MetricCard(
+                              title: 'Total RSVP credits',
+                              value:
+                                  snapshot.connectionState ==
+                                      ConnectionState.waiting
+                                  ? '...'
+                                  : rsvps.length.toString(),
+                              icon: Icons.trending_up,
+                            ),
+                            _MetricCard(
+                              title: 'Status',
+                              value: promoter.isActive ? 'Active' : 'Inactive',
+                              icon: Icons.verified_user_outlined,
+                            ),
+                          ]
+                          .map(
+                            (child) => SizedBox(
+                              width: wide
+                                  ? (constraints.maxWidth - 60) / 3
+                                  : double.infinity,
+                              child: child,
+                            ),
+                          )
+                          .toList(),
                 ),
                 Text(
-                  'Active events',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w900),
+                  'Active Events',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Share event links and track your RSVPs.',
+                  'Copy any live event link. Promoters can share immediately.',
                   style: TextStyle(color: AppTheme.textMuted),
                 ),
                 const SizedBox(height: 10),
@@ -125,7 +135,8 @@ class _PromoterContent extends StatelessWidget {
                   stream: FirestoreService.instance.activeEventsStream(),
                   builder: (context, eventSnapshot) {
                     final events = eventSnapshot.data ?? [];
-                    if (eventSnapshot.connectionState == ConnectionState.waiting) {
+                    if (eventSnapshot.connectionState ==
+                        ConnectionState.waiting) {
                       return const Padding(
                         padding: EdgeInsets.all(20),
                         child: Center(child: CircularProgressIndicator()),
@@ -144,7 +155,9 @@ class _PromoterContent extends StatelessWidget {
                       children: events
                           .map(
                             (event) => SizedBox(
-                              width: wide ? (constraints.maxWidth - 46) / 2 : double.infinity,
+                              width: wide
+                                  ? (constraints.maxWidth - 46) / 2
+                                  : double.infinity,
                               child: _PromoterEventCard(
                                 event: event,
                                 rsvpCount: eventCounts[event.id] ?? 0,
@@ -162,51 +175,10 @@ class _PromoterContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Event-wise performance',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w900),
-                ),
-                const SizedBox(height: 10),
-                if (eventCounts.isEmpty)
-                  const EmptyView(
-                    title: 'No referral performance yet',
-                    message: 'Referred RSVPs will be grouped by event here.',
-                    icon: Icons.query_stats_outlined,
-                  )
-                else
-                  Column(
-                    children: rsvps
-                        .fold<Map<String, int>>({}, (counts, rsvp) {
-                          counts[rsvp.eventTitle] =
-                              (counts[rsvp.eventTitle] ?? 0) + 1;
-                          return counts;
-                        })
-                        .entries
-                        .map(
-                          (entry) => Card(
-                            child: ListTile(
-                              title: Text(
-                                entry.key,
-                                style: const TextStyle(fontWeight: FontWeight.w800),
-                              ),
-                              trailing: Text(
-                                '${entry.value} referrals',
-                                style: const TextStyle(fontWeight: FontWeight.w800),
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                const SizedBox(height: 16),
-                Text(
                   'Generated RSVPs',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w900),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 10),
                 if (snapshot.connectionState == ConnectionState.waiting)
@@ -219,12 +191,15 @@ class _PromoterContent extends StatelessWidget {
                 else if (rsvps.isEmpty)
                   const EmptyView(
                     title: 'No RSVP credits yet',
-                    message: 'Share your referral link or code to start tracking.',
+                    message:
+                        'Share your referral link or code to start tracking.',
                     icon: Icons.insights_outlined,
                   )
                 else
                   Column(
-                    children: rsvps.map((rsvp) => _RsvpRow(rsvp: rsvp)).toList(),
+                    children: rsvps
+                        .map((rsvp) => _RsvpRow(rsvp: rsvp))
+                        .toList(),
                   ),
               ],
             );
@@ -236,19 +211,13 @@ class _PromoterContent extends StatelessWidget {
 
   void _copy(BuildContext context, String value) {
     Clipboard.setData(ClipboardData(text: value));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Copied')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Copied')));
   }
 
   String _eventReferralLink(NightlifeEvent event, String referralCode) {
-    return Uri.base
-        .replace(
-          path: '/event/${Uri.encodeComponent(event.id)}',
-          queryParameters: {'ref': referralCode},
-          fragment: null,
-        )
-        .toString();
+    return '/event/${Uri.encodeComponent(event.id)}?ref=$referralCode';
   }
 }
 
@@ -291,17 +260,16 @@ class _PromoterEventCard extends StatelessWidget {
                   event.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w900),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 const SizedBox(height: 10),
+                _EventLine(icon: Icons.place_outlined, text: event.venueName),
                 _EventLine(
-                  icon: Icons.place_outlined,
-                  text: event.venueName,
+                  icon: Icons.location_city_outlined,
+                  text: event.city,
                 ),
-                _EventLine(icon: Icons.location_city_outlined, text: event.city),
                 _EventLine(
                   icon: Icons.schedule,
                   text: Formatters.eventDate(event.dateTime),
@@ -406,14 +374,16 @@ class _MetricCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(color: AppTheme.textMuted)),
+                  Text(
+                    title,
+                    style: const TextStyle(color: AppTheme.textMuted),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     value,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w900),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ],
               ),
@@ -437,7 +407,10 @@ class _RsvpRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Card(
         child: ListTile(
-          title: Text(rsvp.eventTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
+          title: Text(
+            rsvp.eventTitle,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
           subtitle: Text(
             '${rsvp.userName} - ${rsvp.userPhone} - ${Formatters.eventDate(rsvp.createdAt)}',
             style: const TextStyle(color: AppTheme.textMuted),

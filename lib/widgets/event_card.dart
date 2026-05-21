@@ -3,12 +3,23 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../core/utils/formatters.dart';
 import '../models/event.dart';
+import '../services/location_service.dart';
 
 class EventCard extends StatelessWidget {
-  const EventCard({super.key, required this.event, required this.onTap});
+  const EventCard({
+    super.key,
+    required this.event,
+    required this.onTap,
+    this.onRsvp,
+    this.compact = false,
+    this.distanceKm,
+  });
 
   final NightlifeEvent event;
   final VoidCallback onTap;
+  final VoidCallback? onRsvp;
+  final bool compact;
+  final double? distanceKm;
 
   @override
   Widget build(BuildContext context) {
@@ -20,11 +31,11 @@ class EventCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AspectRatio(
-              aspectRatio: 16 / 9,
+              aspectRatio: compact ? 1.05 : 16 / 9,
               child: _Poster(url: event.posterUrl, city: event.city),
             ),
             Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(13),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -40,7 +51,13 @@ class EventCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      _Pill(label: event.city),
+                      _Pill(
+                        label: distanceKm == null
+                            ? event.city
+                            : LocationService.instance.formatDistance(
+                                distanceKm!,
+                              ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -60,6 +77,30 @@ class EventCard extends StatelessWidget {
                     children: [
                       _Meta(label: event.musicType),
                       _Meta(label: event.priceText),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: onRsvp ?? onTap,
+                          child: const Text('RSVP'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {},
+                          child: const Text('Check-in'),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      IconButton.filledTonal(
+                        tooltip: 'Like',
+                        onPressed: () {},
+                        icon: const Icon(Icons.favorite_border),
+                      ),
                     ],
                   ),
                 ],

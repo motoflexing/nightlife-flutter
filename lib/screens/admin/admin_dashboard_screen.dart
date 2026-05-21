@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -13,10 +15,12 @@ import '../../models/promoter.dart';
 import '../../models/rsvp.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/location_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/event_card.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/state_views.dart';
+import '../../widgets/venue_location_picker.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key, required this.currentUser});
@@ -41,7 +45,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       const _PromotersAdmin(),
       const _RsvpsAdmin(),
     ];
-    final labels = ['Super Admin', 'Approvals', 'Events', 'Users', 'Clubs', 'Promoters', 'RSVPs'];
+    final labels = [
+      'Super Admin',
+      'Approvals',
+      'Events',
+      'Users',
+      'Clubs',
+      'Promoters',
+      'RSVPs',
+    ];
     final icons = [
       Icons.dashboard_outlined,
       Icons.verified_user_outlined,
@@ -69,7 +81,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 NavigationRail(
                   selectedIndex: _index,
-                  onDestinationSelected: (value) => setState(() => _index = value),
+                  onDestinationSelected: (value) =>
+                      setState(() => _index = value),
                   labelType: NavigationRailLabelType.all,
                   destinations: [
                     for (var i = 0; i < labels.length; i++)
@@ -90,10 +103,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(child: sections[_index]),
               NavigationBar(
                 selectedIndex: _index,
-                onDestinationSelected: (value) => setState(() => _index = value),
+                onDestinationSelected: (value) =>
+                    setState(() => _index = value),
                 destinations: [
                   for (var i = 0; i < labels.length; i++)
-                    NavigationDestination(icon: Icon(icons[i]), label: labels[i]),
+                    NavigationDestination(
+                      icon: Icon(icons[i]),
+                      label: labels[i],
+                    ),
                 ],
               ),
             ],
@@ -154,10 +171,9 @@ class _AdminOverview extends StatelessWidget {
               children: [
                 Text(
                   'Operator console',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w900),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -166,7 +182,8 @@ class _AdminOverview extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
-                  onPressed: () => FirestoreService.instance.seedDemoEvents(currentUser.uid),
+                  onPressed: () =>
+                      FirestoreService.instance.seedDemoEvents(currentUser.uid),
                   icon: const Icon(Icons.auto_awesome),
                   label: const Text('Seed demo events'),
                 ),
@@ -210,12 +227,15 @@ class _StreamCountCard<T> extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: const TextStyle(color: AppTheme.textMuted)),
                       Text(
-                        snapshot.hasData ? snapshot.data!.length.toString() : '...',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
+                        title,
+                        style: const TextStyle(color: AppTheme.textMuted),
+                      ),
+                      Text(
+                        snapshot.hasData
+                            ? snapshot.data!.length.toString()
+                            : '...',
+                        style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.w900),
                       ),
                     ],
@@ -241,7 +261,8 @@ class _ApprovalsAdmin extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingView(message: 'Loading approvals');
         }
-        if (snapshot.hasError) return ErrorStateView(message: snapshot.error.toString());
+        if (snapshot.hasError)
+          return ErrorStateView(message: snapshot.error.toString());
         final users = snapshot.data ?? [];
         if (users.isEmpty) {
           return const EmptyView(
@@ -258,8 +279,14 @@ class _ApprovalsAdmin extends StatelessWidget {
             final user = users[index];
             return Card(
               child: ListTile(
-                leading: const Icon(Icons.hourglass_top_outlined, color: AppTheme.neonCyan),
-                title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                leading: const Icon(
+                  Icons.hourglass_top_outlined,
+                  color: AppTheme.neonCyan,
+                ),
+                title: Text(
+                  user.name,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
                 subtitle: Text('${user.email} - ${user.role} - ${user.status}'),
                 trailing: Wrap(
                   spacing: 8,
@@ -290,14 +317,17 @@ class _ApprovalsAdmin extends StatelessWidget {
     );
   }
 
-  Future<void> _runAction(BuildContext context, Future<void> Function() action) async {
+  Future<void> _runAction(
+    BuildContext context,
+    Future<void> Function() action,
+  ) async {
     try {
       await action();
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }
@@ -316,7 +346,8 @@ class _EventsAdmin extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingView(message: 'Loading events');
         }
-        if (snapshot.hasError) return ErrorStateView(message: snapshot.error.toString());
+        if (snapshot.hasError)
+          return ErrorStateView(message: snapshot.error.toString());
         final events = snapshot.data ?? [];
         return ListView(
           padding: const EdgeInsets.all(16),
@@ -356,7 +387,8 @@ class _EventsAdmin extends StatelessWidget {
                           Expanded(
                             child: EventCard(
                               event: event,
-                              onTap: () => _openEventForm(context, event: event),
+                              onTap: () =>
+                                  _openEventForm(context, event: event),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -364,7 +396,8 @@ class _EventsAdmin extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () => _openEventForm(context, event: event),
+                                  onPressed: () =>
+                                      _openEventForm(context, event: event),
                                   icon: const Icon(Icons.edit),
                                   label: const Text('Edit'),
                                 ),
@@ -372,8 +405,11 @@ class _EventsAdmin extends StatelessWidget {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () => FirestoreService.instance.deactivateEvent(event.id),
-                                  icon: const Icon(Icons.visibility_off_outlined),
+                                  onPressed: () => FirestoreService.instance
+                                      .deactivateEvent(event.id),
+                                  icon: const Icon(
+                                    Icons.visibility_off_outlined,
+                                  ),
                                   label: const Text('Deactivate'),
                                 ),
                               ),
@@ -397,10 +433,7 @@ class _EventsAdmin extends StatelessWidget {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: AppTheme.surface,
-      builder: (_) => _EventForm(
-        currentUser: currentUser,
-        event: event,
-      ),
+      builder: (_) => _EventForm(currentUser: currentUser, event: event),
     );
   }
 }
@@ -433,7 +466,8 @@ class _EventFormState extends State<_EventForm> {
   @override
   void initState() {
     super.initState();
-    _event = widget.event ?? NightlifeEvent.empty(createdBy: widget.currentUser.uid);
+    _event =
+        widget.event ?? NightlifeEvent.empty(createdBy: widget.currentUser.uid);
     _title = TextEditingController(text: _event.title);
     _venue = TextEditingController(text: _event.venueName);
     _address = TextEditingController(text: _event.address);
@@ -476,15 +510,15 @@ class _EventFormState extends State<_EventForm> {
       );
       _posterUrl.text = url;
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Poster uploaded')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Poster uploaded')));
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -494,10 +528,11 @@ class _EventFormState extends State<_EventForm> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-    final next = _event.copyWith(
+    var next = _event.copyWith(
       title: _title.text.trim(),
       venueName: _venue.text.trim(),
       address: _address.text.trim(),
+      fullAddress: _address.text.trim(),
       musicType: _music.text.trim(),
       crowdType: _crowd.text.trim(),
       entryRules: _rules.text.trim(),
@@ -505,14 +540,32 @@ class _EventFormState extends State<_EventForm> {
       posterUrl: _posterUrl.text.trim(),
       priceText: _price.text.trim(),
     );
+
+    if (next.latitude == null || next.longitude == null) {
+      final geocoded = await LocationService.instance.geocodeAddress(
+        '${next.venueName}, ${next.address}, ${next.city}',
+      );
+      if (geocoded != null) {
+        next = next.copyWith(
+          latitude: geocoded.latitude,
+          longitude: geocoded.longitude,
+          googleMapsLink: LocationService.instance.googleMapsLink(
+            latitude: geocoded.latitude,
+            longitude: geocoded.longitude,
+            label: next.venueName,
+          ),
+        );
+      }
+    }
+
     try {
       await FirestoreService.instance.createOrUpdateEvent(next);
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -540,10 +593,9 @@ class _EventFormState extends State<_EventForm> {
             children: [
               Text(
                 _event.id.isEmpty ? 'Add event' : 'Edit event',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w900),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
               ),
               const SizedBox(height: 16),
               _TextField(controller: _title, label: 'Title'),
@@ -554,10 +606,17 @@ class _EventFormState extends State<_EventForm> {
                       initialValue: _event.city,
                       decoration: const InputDecoration(labelText: 'City'),
                       items: const ['Guwahati', 'Delhi']
-                          .map((city) => DropdownMenuItem(value: city, child: Text(city)))
+                          .map(
+                            (city) => DropdownMenuItem(
+                              value: city,
+                              child: Text(city),
+                            ),
+                          )
                           .toList(),
                       onChanged: (value) => setState(
-                        () => _event = _event.copyWith(city: value ?? _event.city),
+                        () => _event = _event.copyWith(
+                          city: value ?? _event.city,
+                        ),
                       ),
                     ),
                   ),
@@ -575,7 +634,15 @@ class _EventFormState extends State<_EventForm> {
                 ],
               ),
               _TextField(controller: _venue, label: 'Venue name'),
-              _TextField(controller: _address, label: 'Address'),
+              _TextField(controller: _address, label: 'Venue address'),
+              VenueLocationPicker(
+                event: _event,
+                venueName: _venue.text,
+                onChanged: (event) => setState(() => _event = event),
+                onAddressResolved: (address) {
+                  if (address.trim().isNotEmpty) _address.text = address;
+                },
+              ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.schedule),
@@ -590,10 +657,19 @@ class _EventFormState extends State<_EventForm> {
               _TextField(controller: _crowd, label: 'Crowd type'),
               _TextField(controller: _rules, label: 'Entry rules'),
               _TextField(controller: _price, label: 'Price text'),
-              _TextField(controller: _description, label: 'Description', maxLines: 4),
+              _TextField(
+                controller: _description,
+                label: 'Description',
+                maxLines: 4,
+              ),
               Row(
                 children: [
-                  Expanded(child: _TextField(controller: _posterUrl, label: 'Poster URL')),
+                  Expanded(
+                    child: _TextField(
+                      controller: _posterUrl,
+                      label: 'Poster URL',
+                    ),
+                  ),
                   const SizedBox(width: 10),
                   OutlinedButton.icon(
                     onPressed: _uploading ? null : _pickPoster,
@@ -642,7 +718,13 @@ class _EventFormState extends State<_EventForm> {
     if (time == null) return;
     setState(() {
       _event = _event.copyWith(
-        dateTime: DateTime(date.year, date.month, date.day, time.hour, time.minute),
+        dateTime: DateTime(
+          date.year,
+          date.month,
+          date.day,
+          time.hour,
+          time.minute,
+        ),
       );
     });
   }
@@ -669,7 +751,8 @@ class _TextField extends StatelessWidget {
         decoration: InputDecoration(labelText: label),
         validator: (value) {
           if (label == 'Poster URL') return null;
-          if (value == null || value.trim().isEmpty) return '$label is required';
+          if (value == null || value.trim().isEmpty)
+            return '$label is required';
           return null;
         },
       ),
@@ -688,7 +771,8 @@ class _UsersAdmin extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingView(message: 'Loading users');
         }
-        if (snapshot.hasError) return ErrorStateView(message: snapshot.error.toString());
+        if (snapshot.hasError)
+          return ErrorStateView(message: snapshot.error.toString());
         final users = snapshot.data ?? [];
         return ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -698,7 +782,10 @@ class _UsersAdmin extends StatelessWidget {
             final user = users[index];
             return Card(
               child: ListTile(
-                title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                title: Text(
+                  user.name,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
                 subtitle: Text('${user.email} - ${user.phone}'),
                 trailing: Wrap(
                   spacing: 10,
@@ -708,7 +795,12 @@ class _UsersAdmin extends StatelessWidget {
                     DropdownButton<String>(
                       value: user.role,
                       items: AppConstants.roles
-                          .map((role) => DropdownMenuItem(value: role, child: Text(role)))
+                          .map(
+                            (role) => DropdownMenuItem(
+                              value: role,
+                              child: Text(role),
+                            ),
+                          )
                           .toList(),
                       onChanged: (role) {
                         if (role != null) {
@@ -718,8 +810,8 @@ class _UsersAdmin extends StatelessWidget {
                     ),
                     Switch(
                       value: user.isActive,
-                      onChanged: (value) =>
-                          FirestoreService.instance.setUserActive(user.uid, value),
+                      onChanged: (value) => FirestoreService.instance
+                          .setUserActive(user.uid, value),
                     ),
                   ],
                 ),
@@ -743,7 +835,8 @@ class _ClubsAdmin extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingView(message: 'Loading clubs');
         }
-        if (snapshot.hasError) return ErrorStateView(message: snapshot.error.toString());
+        if (snapshot.hasError)
+          return ErrorStateView(message: snapshot.error.toString());
         final clubs = snapshot.data ?? [];
         if (clubs.isEmpty) {
           return const EmptyView(
@@ -761,9 +854,16 @@ class _ClubsAdmin extends StatelessWidget {
             return Card(
               child: ListTile(
                 leading: const Icon(Icons.storefront, color: AppTheme.neonCyan),
-                title: Text(club.clubName, style: const TextStyle(fontWeight: FontWeight.w800)),
-                subtitle: Text('${club.city} - ${club.businessEmail} - ${club.address}'),
-                trailing: Chip(label: Text(Formatters.titleCase(club.verificationStatus))),
+                title: Text(
+                  club.clubName,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                subtitle: Text(
+                  '${club.city} - ${club.businessEmail} - ${club.address}',
+                ),
+                trailing: Chip(
+                  label: Text(Formatters.titleCase(club.verificationStatus)),
+                ),
               ),
             );
           },
@@ -784,12 +884,14 @@ class _PromotersAdmin extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingView(message: 'Loading promoters');
         }
-        if (snapshot.hasError) return ErrorStateView(message: snapshot.error.toString());
+        if (snapshot.hasError)
+          return ErrorStateView(message: snapshot.error.toString());
         final promoters = snapshot.data ?? [];
         if (promoters.isEmpty) {
           return const EmptyView(
             title: 'No promoters yet',
-            message: 'Change a user role to promoter to create a referral profile.',
+            message:
+                'Change a user role to promoter to create a referral profile.',
           );
         }
         return ListView.separated(
@@ -801,7 +903,10 @@ class _PromotersAdmin extends StatelessWidget {
             return Card(
               child: ListTile(
                 leading: const Icon(Icons.campaign, color: AppTheme.neonCyan),
-                title: Text(promoter.name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                title: Text(
+                  promoter.name,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
                 subtitle: Text('${promoter.referralCode} - ${promoter.email}'),
                 trailing: Text(
                   '${promoter.totalRsvps} RSVPs',
@@ -827,7 +932,8 @@ class _RsvpsAdmin extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingView(message: 'Loading RSVPs');
         }
-        if (snapshot.hasError) return ErrorStateView(message: snapshot.error.toString());
+        if (snapshot.hasError)
+          return ErrorStateView(message: snapshot.error.toString());
         final rsvps = snapshot.data ?? [];
         if (rsvps.isEmpty) {
           return const EmptyView(
@@ -843,7 +949,10 @@ class _RsvpsAdmin extends StatelessWidget {
             final rsvp = rsvps[index];
             return Card(
               child: ListTile(
-                title: Text(rsvp.eventTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
+                title: Text(
+                  rsvp.eventTitle,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
                 subtitle: Text(
                   '${rsvp.userName} - ${rsvp.userPhone} - ${rsvp.promoterCode ?? 'Direct'}',
                   style: const TextStyle(color: AppTheme.textMuted),
@@ -855,13 +964,21 @@ class _RsvpsAdmin extends StatelessWidget {
                     Chip(label: Text(Formatters.titleCase(rsvp.status))),
                     IconButton(
                       tooltip: 'Approve',
-                      onPressed: () => FirestoreService.instance.updateRsvpStatus(rsvp.id, 'approved'),
-                      icon: const Icon(Icons.check_circle_outline, color: AppTheme.neonLime),
+                      onPressed: () => FirestoreService.instance
+                          .updateRsvpStatus(rsvp.id, 'approved'),
+                      icon: const Icon(
+                        Icons.check_circle_outline,
+                        color: AppTheme.neonLime,
+                      ),
                     ),
                     IconButton(
                       tooltip: 'Reject',
-                      onPressed: () => FirestoreService.instance.updateRsvpStatus(rsvp.id, 'rejected'),
-                      icon: const Icon(Icons.cancel_outlined, color: AppTheme.neonPink),
+                      onPressed: () => FirestoreService.instance
+                          .updateRsvpStatus(rsvp.id, 'rejected'),
+                      icon: const Icon(
+                        Icons.cancel_outlined,
+                        color: AppTheme.neonPink,
+                      ),
                     ),
                   ],
                 ),

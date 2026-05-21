@@ -13,6 +13,10 @@ class AppUser {
     required this.createdAt,
     required this.updatedAt,
     required this.isActive,
+    required this.lastLatitude,
+    required this.lastLongitude,
+    required this.lastKnownCity,
+    required this.lastKnownAddress,
   });
 
   final String uid;
@@ -26,6 +30,10 @@ class AppUser {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
+  final double? lastLatitude;
+  final double? lastLongitude;
+  final String lastKnownCity;
+  final String lastKnownAddress;
 
   bool get isUser => role == 'user';
   bool get isPromoter => role == 'promoter';
@@ -43,12 +51,18 @@ class AppUser {
       email: data['email'] as String? ?? '',
       phone: data['phone'] as String? ?? '',
       role: _normalizeRole(data['role'] as String?),
-      status: data['status'] as String? ?? ((data['isActive'] as bool? ?? true) ? 'approved' : 'rejected'),
+      status:
+          data['status'] as String? ??
+          ((data['isActive'] as bool? ?? true) ? 'approved' : 'rejected'),
       clubId: data['clubId'] as String?,
       promoterCode: data['promoterCode'] as String?,
       createdAt: _readDate(data['createdAt']),
       updatedAt: _readDate(data['updatedAt']),
       isActive: data['isActive'] as bool? ?? true,
+      lastLatitude: _readDouble(data['lastLatitude']),
+      lastLongitude: _readDouble(data['lastLongitude']),
+      lastKnownCity: data['lastKnownCity'] as String? ?? '',
+      lastKnownAddress: data['lastKnownAddress'] as String? ?? '',
     );
   }
 
@@ -65,6 +79,10 @@ class AppUser {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'isActive': isActive,
+      'lastLatitude': lastLatitude,
+      'lastLongitude': lastLongitude,
+      'lastKnownCity': lastKnownCity,
+      'lastKnownAddress': lastKnownAddress,
     };
   }
 
@@ -77,5 +95,12 @@ class AppUser {
     if (value is Timestamp) return value.toDate();
     if (value is DateTime) return value;
     return DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  static double? _readDouble(Object? value) {
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is num) return value.toDouble();
+    return null;
   }
 }

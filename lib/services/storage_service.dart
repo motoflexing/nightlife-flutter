@@ -15,7 +15,8 @@ class StorageService {
     required String contentType,
   }) async {
     final safeName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9_.-]'), '_');
-    final path = 'event_posters/${DateTime.now().millisecondsSinceEpoch}_$safeName';
+    final path =
+        'event_posters/${DateTime.now().millisecondsSinceEpoch}_$safeName';
     final ref = _storage.ref(path);
     final task = await ref.putData(
       bytes,

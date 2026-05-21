@@ -30,11 +30,15 @@ class RoleRouterScreen extends StatelessWidget {
           stream: AuthService.instance.profileStream(user.uid),
           builder: (context, profileSnapshot) {
             if (profileSnapshot.connectionState == ConnectionState.waiting) {
-              return const NeonScaffold(child: LoadingView(message: 'Loading profile'));
+              return const NeonScaffold(
+                child: LoadingView(message: 'Loading profile'),
+              );
             }
             if (profileSnapshot.hasError) {
               return NeonScaffold(
-                child: ErrorStateView(message: profileSnapshot.error.toString()),
+                child: ErrorStateView(
+                  message: profileSnapshot.error.toString(),
+                ),
               );
             }
             final profile = profileSnapshot.data;
@@ -49,7 +53,9 @@ class RoleRouterScreen extends StatelessWidget {
                   }
                   if (safeSnapshot.hasError) {
                     return NeonScaffold(
-                      child: ErrorStateView(message: safeSnapshot.error.toString()),
+                      child: ErrorStateView(
+                        message: safeSnapshot.error.toString(),
+                      ),
                     );
                   }
                   return const NeonScaffold(

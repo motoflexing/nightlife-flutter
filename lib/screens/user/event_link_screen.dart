@@ -38,7 +38,9 @@ class EventLinkScreen extends StatelessWidget {
             }
             if (profileSnapshot.hasError) {
               return NeonScaffold(
-                child: ErrorStateView(message: profileSnapshot.error.toString()),
+                child: ErrorStateView(
+                  message: profileSnapshot.error.toString(),
+                ),
               );
             }
 

@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_constants.dart';
@@ -68,9 +70,9 @@ class _ClubOnboardingScreenState extends State<ClubOnboardingScreen> {
       );
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -105,9 +107,7 @@ class _ClubOnboardingScreenState extends State<ClubOnboardingScreen> {
                     children: [
                       Text(
                         'Verify your club',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
+                        style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(height: 8),
@@ -118,21 +118,38 @@ class _ClubOnboardingScreenState extends State<ClubOnboardingScreen> {
                       const SizedBox(height: 20),
                       _Field(controller: _clubName, label: 'Club name'),
                       _Field(controller: _ownerName, label: 'Owner name'),
-                      _Field(controller: _businessEmail, label: 'Business email'),
+                      _Field(
+                        controller: _businessEmail,
+                        label: 'Business email',
+                      ),
                       _Field(controller: _phone, label: 'Phone'),
                       DropdownButtonFormField<String>(
                         initialValue: _city,
                         decoration: const InputDecoration(labelText: 'City'),
                         items: AppConstants.cities
                             .where((city) => city != 'All')
-                            .map((city) => DropdownMenuItem(value: city, child: Text(city)))
+                            .map(
+                              (city) => DropdownMenuItem(
+                                value: city,
+                                child: Text(city),
+                              ),
+                            )
                             .toList(),
-                        onChanged: (value) => setState(() => _city = value ?? _city),
+                        onChanged: (value) =>
+                            setState(() => _city = value ?? _city),
                       ),
                       const SizedBox(height: 12),
                       _Field(controller: _address, label: 'Address'),
-                      _Field(controller: _instagram, label: 'Instagram link', isRequired: false),
-                      _Field(controller: _maps, label: 'Google Maps link', isRequired: false),
+                      _Field(
+                        controller: _instagram,
+                        label: 'Instagram link',
+                        isRequired: false,
+                      ),
+                      _Field(
+                        controller: _maps,
+                        label: 'Google Maps link',
+                        isRequired: false,
+                      ),
                       _Field(
                         controller: _document,
                         label: 'GST/license/document link',
@@ -145,7 +162,9 @@ class _ClubOnboardingScreenState extends State<ClubOnboardingScreen> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.verified_outlined),
                         label: const Text('Submit for approval'),
@@ -182,7 +201,8 @@ class _Field extends StatelessWidget {
         decoration: InputDecoration(labelText: label),
         validator: (value) {
           if (!isRequired) return null;
-          if (value == null || value.trim().isEmpty) return '$label is required';
+          if (value == null || value.trim().isEmpty)
+            return '$label is required';
           return null;
         },
       ),

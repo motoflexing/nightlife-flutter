@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color background = Color(0xFF090B16);
-  static const Color surface = Color(0xFF111827);
-  static const Color elevated = Color(0xFF171D2D);
+  static const Color background = Color(0xFF0B0D14);
+  static const Color surface = Color(0xFF181A20);
+  static const Color elevated = Color(0xFF20232B);
   static const Color deepPurple = Color(0xFF1E1B4B);
-  static const Color primaryViolet = Color(0xFF7B2EFF);
+  static const Color primaryViolet = Color(0xFFFF2D55);
   static const Color neonViolet = Color(0xFFA855F7);
-  static const Color accentPink = Color(0xFFFF4FD8);
+  static const Color accentPink = Color(0xFFFF3D8B);
   static const Color textMuted = Color(0xFFB8B8D0);
 
   static const Color glassSurface = Color(0xCC111827);
@@ -20,13 +20,13 @@ class AppTheme {
   static const LinearGradient premiumGradient = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [primaryViolet, neonViolet, accentPink],
+    colors: [primaryViolet, accentPink, neonViolet],
   );
 
   static const LinearGradient nightclubGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [background, deepPurple, Color(0xFF03040A)],
+    colors: [background, Color(0xFF11131B), Color(0xFF050509)],
     stops: [0, 0.54, 1],
   );
 
@@ -58,7 +58,7 @@ class AppTheme {
         margin: EdgeInsets.zero,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(22),
           side: const BorderSide(color: glassBorder),
         ),
       ),
@@ -116,7 +116,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.white,
-          side: const BorderSide(color: Color(0x667B2EFF)),
+          side: const BorderSide(color: Color(0x66FF3D8B)),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
@@ -143,9 +143,9 @@ class AppTheme {
           }),
           side: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return const BorderSide(color: neonViolet);
+              return const BorderSide(color: accentPink);
             }
-            return const BorderSide(color: Color(0x337B2EFF));
+            return const BorderSide(color: Color(0x33FF3D8B));
           }),
           shape: WidgetStateProperty.all(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -169,8 +169,8 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: surface.withValues(alpha: 0.94),
-        indicatorColor: primaryViolet.withValues(alpha: 0.22),
+        backgroundColor: const Color(0xF20F1118),
+        indicatorColor: accentPink.withValues(alpha: 0.18),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (_) => const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),

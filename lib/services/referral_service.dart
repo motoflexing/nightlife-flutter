@@ -8,7 +8,8 @@ class ReferralService {
   String? get code => _code;
 
   void captureFromUri(Uri uri) {
-    final value = uri.queryParameters['ref'] ??
+    final value =
+        uri.queryParameters['ref'] ??
         uri.queryParameters['code'] ??
         uri.queryParameters['promoter'];
     if (value == null || value.trim().isEmpty) return;

@@ -14,6 +14,10 @@ class NightlifeEvent {
     required this.description,
     required this.posterUrl,
     required this.priceText,
+    required this.latitude,
+    required this.longitude,
+    required this.googleMapsLink,
+    required this.fullAddress,
     required this.isActive,
     required this.clubId,
     required this.createdBy,
@@ -33,6 +37,10 @@ class NightlifeEvent {
   final String description;
   final String posterUrl;
   final String priceText;
+  final double? latitude;
+  final double? longitude;
+  final String googleMapsLink;
+  final String fullAddress;
   final bool isActive;
   final String? clubId;
   final String createdBy;
@@ -55,6 +63,10 @@ class NightlifeEvent {
       description: '',
       posterUrl: '',
       priceText: '',
+      latitude: null,
+      longitude: null,
+      googleMapsLink: '',
+      fullAddress: '',
       isActive: true,
       clubId: null,
       createdBy: createdBy,
@@ -63,9 +75,7 @@ class NightlifeEvent {
     );
   }
 
-  factory NightlifeEvent.fromDoc(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
+  factory NightlifeEvent.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
 
     return NightlifeEvent(
@@ -81,6 +91,10 @@ class NightlifeEvent {
       description: data['description'] as String? ?? '',
       posterUrl: data['posterUrl'] as String? ?? '',
       priceText: data['priceText'] as String? ?? '',
+      latitude: _readDouble(data['latitude']),
+      longitude: _readDouble(data['longitude']),
+      googleMapsLink: data['googleMapsLink'] as String? ?? '',
+      fullAddress: data['fullAddress'] as String? ?? '',
       isActive: data['isActive'] as bool? ?? false,
       clubId: data['clubId'] as String?,
       createdBy: data['createdBy'] as String? ?? '',
@@ -102,6 +116,10 @@ class NightlifeEvent {
       'description': description,
       'posterUrl': posterUrl,
       'priceText': priceText,
+      'latitude': latitude,
+      'longitude': longitude,
+      'googleMapsLink': googleMapsLink,
+      'fullAddress': fullAddress,
       'isActive': isActive,
       'clubId': clubId,
       'createdBy': createdBy,
@@ -123,6 +141,10 @@ class NightlifeEvent {
       'description': description,
       'posterUrl': posterUrl,
       'priceText': priceText,
+      'latitude': latitude,
+      'longitude': longitude,
+      'googleMapsLink': googleMapsLink,
+      'fullAddress': fullAddress,
       'isActive': isActive,
       'clubId': clubId,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -142,6 +164,10 @@ class NightlifeEvent {
     String? description,
     String? posterUrl,
     String? priceText,
+    double? latitude,
+    double? longitude,
+    String? googleMapsLink,
+    String? fullAddress,
     bool? isActive,
     String? clubId,
     String? createdBy,
@@ -161,6 +187,10 @@ class NightlifeEvent {
       description: description ?? this.description,
       posterUrl: posterUrl ?? this.posterUrl,
       priceText: priceText ?? this.priceText,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      googleMapsLink: googleMapsLink ?? this.googleMapsLink,
+      fullAddress: fullAddress ?? this.fullAddress,
       isActive: isActive ?? this.isActive,
       clubId: clubId ?? this.clubId,
       createdBy: createdBy ?? this.createdBy,
@@ -173,5 +203,12 @@ class NightlifeEvent {
     if (value is Timestamp) return value.toDate();
     if (value is DateTime) return value;
     return DateTime.now();
+  }
+
+  static double? _readDouble(Object? value) {
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is num) return value.toDouble();
+    return null;
   }
 }

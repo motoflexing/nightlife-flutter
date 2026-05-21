@@ -75,9 +75,16 @@ service cloud.firestore {
         && request.resource.data.isActive == true
         && request.resource.data.keys().hasOnly([
           'uid',
+          'title',
           'name',
           'email',
           'phone',
+          'gender',
+          'dob',
+          'instagramId',
+          'snapchatId',
+          'validIdUrl',
+          'verificationStatus',
           'role',
           'status',
           'clubId',
@@ -230,6 +237,7 @@ service cloud.firestore {
             'referralCode',
             'totalRsvps',
             'createdAt',
+            'updatedAt',
             'isActive'
           ])
         );

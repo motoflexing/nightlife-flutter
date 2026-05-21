@@ -34,10 +34,9 @@ class AccessStateScreen extends StatelessWidget {
                     const SizedBox(height: 14),
                     Text(
                       title,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w900),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),

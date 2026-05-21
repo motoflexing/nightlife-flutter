@@ -9,12 +9,14 @@ class NeonScaffold extends StatelessWidget {
     this.appBar,
     this.bottomNavigationBar,
     this.floatingActionButton,
+    this.floatingActionButtonLocation,
   });
 
   final Widget child;
   final PreferredSizeWidget? appBar;
   final Widget? bottomNavigationBar;
   final Widget? floatingActionButton;
+  final FloatingActionButtonLocation? floatingActionButtonLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +24,7 @@ class NeonScaffold extends StatelessWidget {
       appBar: appBar,
       bottomNavigationBar: bottomNavigationBar,
       floatingActionButton: floatingActionButton,
+      floatingActionButtonLocation: floatingActionButtonLocation,
       body: DecoratedBox(
         decoration: const BoxDecoration(gradient: AppTheme.nightclubGradient),
         child: Stack(

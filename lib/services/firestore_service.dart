@@ -36,29 +36,35 @@ class FirestoreService {
 
     final snapshot = await query.get();
 
-    final events = snapshot.docs
-        .map(NightlifeEvent.fromDoc)
-        .where((event) => city == 'All' || event.city == city)
-        .toList()
-      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    final events =
+        snapshot.docs
+            .map(NightlifeEvent.fromDoc)
+            .where((event) => city == 'All' || event.city == city)
+            .toList()
+          ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
-    return PagedEvents(
-      events: events,
-      lastDocument: null,
-    );
+    return PagedEvents(events: events, lastDocument: null);
   }
 
   Stream<List<NightlifeEvent>> adminEventsStream() {
-    return _db.collection('events').snapshots().map(
-          (snap) => snap.docs.map(NightlifeEvent.fromDoc).toList()
-            ..sort((a, b) => b.dateTime.compareTo(a.dateTime)),
+    return _db
+        .collection('events')
+        .snapshots()
+        .map(
+          (snap) =>
+              snap.docs.map(NightlifeEvent.fromDoc).toList()
+                ..sort((a, b) => b.dateTime.compareTo(a.dateTime)),
         );
   }
 
   Stream<List<AppUser>> usersStream() {
-    return _db.collection('users').snapshots().map(
-          (snap) => snap.docs.map(AppUser.fromDoc).toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+    return _db
+        .collection('users')
+        .snapshots()
+        .map(
+          (snap) =>
+              snap.docs.map(AppUser.fromDoc).toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
         );
   }
 
@@ -68,18 +74,23 @@ class FirestoreService {
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .map(
-          (snap) => snap.docs
-              .map(AppUser.fromDoc)
-              .where((user) => user.isClubAdmin)
-              .toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+          (snap) =>
+              snap.docs
+                  .map(AppUser.fromDoc)
+                  .where((user) => user.isClubAdmin)
+                  .toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
         );
   }
 
   Stream<List<Club>> clubsStream() {
-    return _db.collection('clubs').snapshots().map(
-          (snap) => snap.docs.map(Club.fromDoc).toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+    return _db
+        .collection('clubs')
+        .snapshots()
+        .map(
+          (snap) =>
+              snap.docs.map(Club.fromDoc).toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
         );
   }
 
@@ -89,20 +100,30 @@ class FirestoreService {
         .where('ownerId', isEqualTo: ownerId)
         .limit(1)
         .snapshots()
-        .map((snap) => snap.docs.isEmpty ? null : Club.fromDoc(snap.docs.first));
+        .map(
+          (snap) => snap.docs.isEmpty ? null : Club.fromDoc(snap.docs.first),
+        );
   }
 
   Stream<List<Promoter>> promotersStream() {
-    return _db.collection('promoters').snapshots().map(
-          (snap) => snap.docs.map(Promoter.fromDoc).toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+    return _db
+        .collection('promoters')
+        .snapshots()
+        .map(
+          (snap) =>
+              snap.docs.map(Promoter.fromDoc).toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
         );
   }
 
   Stream<List<Rsvp>> allRsvpsStream() {
-    return _db.collection('rsvps').snapshots().map(
-          (snap) => snap.docs.map(Rsvp.fromDoc).toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+    return _db
+        .collection('rsvps')
+        .snapshots()
+        .map(
+          (snap) =>
+              snap.docs.map(Rsvp.fromDoc).toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
         );
   }
 
@@ -112,8 +133,9 @@ class FirestoreService {
         .where('userId', isEqualTo: userId)
         .snapshots()
         .map(
-          (snap) => snap.docs.map(Rsvp.fromDoc).toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+          (snap) =>
+              snap.docs.map(Rsvp.fromDoc).toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
         );
   }
 
@@ -123,8 +145,9 @@ class FirestoreService {
         .where('promoterId', isEqualTo: promoterId)
         .snapshots()
         .map(
-          (snap) => snap.docs.map(Rsvp.fromDoc).toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+          (snap) =>
+              snap.docs.map(Rsvp.fromDoc).toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
         );
   }
 
@@ -134,8 +157,9 @@ class FirestoreService {
         .where('isActive', isEqualTo: true)
         .snapshots()
         .map(
-          (snap) => snap.docs.map(NightlifeEvent.fromDoc).toList()
-            ..sort((a, b) => a.dateTime.compareTo(b.dateTime)),
+          (snap) =>
+              snap.docs.map(NightlifeEvent.fromDoc).toList()
+                ..sort((a, b) => a.dateTime.compareTo(b.dateTime)),
         );
   }
 
@@ -155,8 +179,9 @@ class FirestoreService {
         .where('clubId', isEqualTo: clubId)
         .snapshots()
         .map(
-          (snap) => snap.docs.map(NightlifeEvent.fromDoc).toList()
-            ..sort((a, b) => b.dateTime.compareTo(a.dateTime)),
+          (snap) =>
+              snap.docs.map(NightlifeEvent.fromDoc).toList()
+                ..sort((a, b) => b.dateTime.compareTo(a.dateTime)),
         );
   }
 
@@ -169,8 +194,9 @@ class FirestoreService {
         .where('clubId', isEqualTo: clubId)
         .snapshots()
         .map(
-          (snap) => snap.docs.map(Rsvp.fromDoc).toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+          (snap) =>
+              snap.docs.map(Rsvp.fromDoc).toList()
+                ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
         );
   }
 
@@ -181,20 +207,20 @@ class FirestoreService {
         .limit(1)
         .snapshots()
         .asyncMap((snap) async {
-      if (snap.docs.isEmpty) return null;
-      final promoter = Promoter.fromDoc(snap.docs.first);
-      try {
-        await _ensureReferralCode(
-          promoterId: promoter.id,
-          referralCode: promoter.referralCode,
-          isActive: promoter.isActive,
-        );
-      } catch (_) {
-        // Existing profiles should still load even if the referral index needs
-        // a privileged backfill.
-      }
-      return promoter;
-    });
+          if (snap.docs.isEmpty) return null;
+          final promoter = Promoter.fromDoc(snap.docs.first);
+          try {
+            await _ensureReferralCode(
+              promoterId: promoter.id,
+              referralCode: promoter.referralCode,
+              isActive: promoter.isActive,
+            );
+          } catch (_) {
+            // Existing profiles should still load even if the referral index needs
+            // a privileged backfill.
+          }
+          return promoter;
+        });
   }
 
   Future<void> createOrUpdateEvent(NightlifeEvent event) async {
@@ -203,6 +229,23 @@ class FirestoreService {
     } else {
       await _db.collection('events').doc(event.id).update(event.toUpdateMap());
     }
+  }
+
+  Future<void> updateUserLastKnownLocation({
+    required String userId,
+    required double latitude,
+    required double longitude,
+    required String city,
+    required String fullAddress,
+  }) async {
+    await _db.collection('users').doc(userId).set({
+      'lastLatitude': latitude,
+      'lastLongitude': longitude,
+      'lastKnownCity': city,
+      'lastKnownAddress': fullAddress,
+      'lastLocationAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   Future<void> deactivateEvent(String eventId) async {
@@ -225,7 +268,9 @@ class FirestoreService {
     String? promoterCode,
   }) async {
     if (!user.isUser || !user.isApproved) {
-      throw const FirestoreAppException('Only approved user accounts can RSVP.');
+      throw const FirestoreAppException(
+        'Only approved user accounts can RSVP.',
+      );
     }
 
     final code = promoterCode == null || promoterCode.trim().isEmpty
@@ -458,10 +503,7 @@ class FirestoreService {
     final existing = await ref.get();
 
     if (existing.exists) {
-      await ref.update({
-        'isActive': isActive,
-        'referralCode': ?referralCode,
-      });
+      await ref.update({'isActive': isActive, 'referralCode': ?referralCode});
       final existingReferralCode = existing.data()?['referralCode'] as String?;
       await _ensureReferralCode(
         promoterId: user.uid,
@@ -510,9 +552,9 @@ class FirestoreService {
         .collection('referralCodes')
         .doc(ReferralService.normalize(referralCode))
         .set({
-      'isActive': false,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+          'isActive': false,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
   }
 
   String _makeReferralCode(AppUser user) {

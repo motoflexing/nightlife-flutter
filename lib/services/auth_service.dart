@@ -97,8 +97,9 @@ class AuthService {
       final role = _safeRequestedRole(requestedRole);
       final status = role == 'clubAdmin' ? 'pending' : 'approved';
 
-      final promoterCode =
-          role == 'promoter' ? _makePromoterCode(cleanName, user.uid) : null;
+      final promoterCode = role == 'promoter'
+          ? _makePromoterCode(cleanName, user.uid)
+          : null;
 
       await user.updateDisplayName(cleanName);
 
@@ -119,8 +120,9 @@ class AuthService {
 
         // Verification
         'validIdUrl': cleanValidIdUrl,
-        'verificationStatus':
-            cleanValidIdUrl.isEmpty ? 'not_uploaded' : 'pending',
+        'verificationStatus': cleanValidIdUrl.isEmpty
+            ? 'not_uploaded'
+            : 'pending',
 
         // Role details
         'role': role,
@@ -139,29 +141,11 @@ class AuthService {
       if (role == 'promoter') {
         await _db.collection('promoters').doc(user.uid).set({
           'userId': user.uid,
-
-          // Basic details
-          'title': cleanTitle,
           'name': cleanName,
           'email': cleanEmail,
           'phone': cleanPhone,
-          'gender': cleanGender,
-          'dob': cleanDob,
-
-          // Social IDs
-          'instagramId': cleanInstagramId,
-          'snapchatId': cleanSnapchatId,
-
-          // Verification
-          'validIdUrl': cleanValidIdUrl,
-          'verificationStatus':
-              cleanValidIdUrl.isEmpty ? 'not_uploaded' : 'pending',
-
-          // Promoter details
           'referralCode': promoterCode,
           'totalRsvps': 0,
-
-          // System fields
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
           'isActive': true,

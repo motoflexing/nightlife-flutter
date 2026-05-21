@@ -1,3 +1,5 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_constants.dart';
@@ -8,9 +10,11 @@ import '../../models/event.dart';
 import '../../models/rsvp.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/location_service.dart';
 import '../../widgets/event_card.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/state_views.dart';
+import '../../widgets/venue_location_picker.dart';
 
 class ClubAdminDashboardScreen extends StatefulWidget {
   const ClubAdminDashboardScreen({super.key, required this.currentUser});
@@ -18,7 +22,8 @@ class ClubAdminDashboardScreen extends StatefulWidget {
   final AppUser currentUser;
 
   @override
-  State<ClubAdminDashboardScreen> createState() => _ClubAdminDashboardScreenState();
+  State<ClubAdminDashboardScreen> createState() =>
+      _ClubAdminDashboardScreenState();
 }
 
 class _ClubAdminDashboardScreenState extends State<ClubAdminDashboardScreen> {
@@ -75,7 +80,8 @@ class _ClubEvents extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingView(message: 'Loading club events');
         }
-        if (snapshot.hasError) return ErrorStateView(message: snapshot.error.toString());
+        if (snapshot.hasError)
+          return ErrorStateView(message: snapshot.error.toString());
         final events = snapshot.data ?? [];
         return ListView(
           padding: const EdgeInsets.all(16),
@@ -83,7 +89,8 @@ class _ClubEvents extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: ElevatedButton.icon(
-                onPressed: () => _openEventForm(context, currentUser: currentUser),
+                onPressed: () =>
+                    _openEventForm(context, currentUser: currentUser),
                 icon: const Icon(Icons.add),
                 label: const Text('Create event'),
               ),
@@ -140,8 +147,8 @@ class _ClubEvents extends StatelessWidget {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed: () =>
-                                      FirestoreService.instance.deactivateEvent(event.id),
+                                  onPressed: () => FirestoreService.instance
+                                      .deactivateEvent(event.id),
                                   icon: const Icon(Icons.delete_outline),
                                   label: const Text('Delete'),
                                 ),
@@ -188,7 +195,8 @@ class _ClubRsvps extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingView(message: 'Loading club RSVPs');
         }
-        if (snapshot.hasError) return ErrorStateView(message: snapshot.error.toString());
+        if (snapshot.hasError)
+          return ErrorStateView(message: snapshot.error.toString());
         final rsvps = snapshot.data ?? [];
         if (rsvps.isEmpty) {
           return const EmptyView(
@@ -205,7 +213,10 @@ class _ClubRsvps extends StatelessWidget {
             final rsvp = rsvps[index];
             return Card(
               child: ListTile(
-                title: Text(rsvp.eventTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
+                title: Text(
+                  rsvp.eventTitle,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
                 subtitle: Text(
                   '${rsvp.userName} - ${rsvp.userPhone} - ${Formatters.eventDate(rsvp.createdAt)}',
                   style: const TextStyle(color: AppTheme.textMuted),
@@ -247,10 +258,11 @@ class _ClubEventFormState extends State<_ClubEventForm> {
   @override
   void initState() {
     super.initState();
-    _event = widget.event ??
-        NightlifeEvent.empty(createdBy: widget.currentUser.uid).copyWith(
-          clubId: widget.currentUser.clubId,
-        );
+    _event =
+        widget.event ??
+        NightlifeEvent.empty(
+          createdBy: widget.currentUser.uid,
+        ).copyWith(clubId: widget.currentUser.clubId);
     _title = TextEditingController(text: _event.title);
     _venue = TextEditingController(text: _event.venueName);
     _address = TextEditingController(text: _event.address);
@@ -279,10 +291,11 @@ class _ClubEventFormState extends State<_ClubEventForm> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
-    final next = _event.copyWith(
+    var next = _event.copyWith(
       title: _title.text.trim(),
       venueName: _venue.text.trim(),
       address: _address.text.trim(),
+      fullAddress: _address.text.trim(),
       musicType: _music.text.trim(),
       crowdType: _crowd.text.trim(),
       entryRules: _rules.text.trim(),
@@ -290,14 +303,36 @@ class _ClubEventFormState extends State<_ClubEventForm> {
       posterUrl: _posterUrl.text.trim(),
       priceText: _price.text.trim(),
       clubId: widget.currentUser.clubId,
-      createdBy: _event.createdBy.isEmpty ? widget.currentUser.uid : _event.createdBy,
+      createdBy: _event.createdBy.isEmpty
+          ? widget.currentUser.uid
+          : _event.createdBy,
     );
+
+    if (next.latitude == null || next.longitude == null) {
+      final geocoded = await LocationService.instance.geocodeAddress(
+        '${next.venueName}, ${next.address}, ${next.city}',
+      );
+      if (geocoded != null) {
+        next = next.copyWith(
+          latitude: geocoded.latitude,
+          longitude: geocoded.longitude,
+          googleMapsLink: LocationService.instance.googleMapsLink(
+            latitude: geocoded.latitude,
+            longitude: geocoded.longitude,
+            label: next.venueName,
+          ),
+        );
+      }
+    }
+
     try {
       await FirestoreService.instance.createOrUpdateEvent(next);
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -325,10 +360,9 @@ class _ClubEventFormState extends State<_ClubEventForm> {
             children: [
               Text(
                 _event.id.isEmpty ? 'Create event' : 'Edit event',
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.w900),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
               ),
               const SizedBox(height: 16),
               _Field(controller: _title, label: 'Title'),
@@ -337,7 +371,10 @@ class _ClubEventFormState extends State<_ClubEventForm> {
                 decoration: const InputDecoration(labelText: 'City'),
                 items: AppConstants.cities
                     .where((city) => city != 'All')
-                    .map((city) => DropdownMenuItem(value: city, child: Text(city)))
+                    .map(
+                      (city) =>
+                          DropdownMenuItem(value: city, child: Text(city)),
+                    )
                     .toList(),
                 onChanged: (value) => setState(
                   () => _event = _event.copyWith(city: value ?? _event.city),
@@ -348,12 +385,19 @@ class _ClubEventFormState extends State<_ClubEventForm> {
                 contentPadding: EdgeInsets.zero,
                 value: _event.isActive,
                 title: const Text('Active'),
-                onChanged: (value) => setState(
-                  () => _event = _event.copyWith(isActive: value),
-                ),
+                onChanged: (value) =>
+                    setState(() => _event = _event.copyWith(isActive: value)),
               ),
               _Field(controller: _venue, label: 'Venue name'),
-              _Field(controller: _address, label: 'Address'),
+              _Field(controller: _address, label: 'Venue address'),
+              VenueLocationPicker(
+                event: _event,
+                venueName: _venue.text,
+                onChanged: (event) => setState(() => _event = event),
+                onAddressResolved: (address) {
+                  if (address.trim().isNotEmpty) _address.text = address;
+                },
+              ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.schedule),
@@ -368,8 +412,16 @@ class _ClubEventFormState extends State<_ClubEventForm> {
               _Field(controller: _crowd, label: 'Crowd type'),
               _Field(controller: _rules, label: 'Entry rules'),
               _Field(controller: _price, label: 'Price text'),
-              _Field(controller: _description, label: 'Description', maxLines: 4),
-              _Field(controller: _posterUrl, label: 'Poster URL', isRequired: false),
+              _Field(
+                controller: _description,
+                label: 'Description',
+                maxLines: 4,
+              ),
+              _Field(
+                controller: _posterUrl,
+                label: 'Poster URL',
+                isRequired: false,
+              ),
               const SizedBox(height: 18),
               ElevatedButton.icon(
                 onPressed: _saving ? null : _save,
@@ -404,7 +456,13 @@ class _ClubEventFormState extends State<_ClubEventForm> {
     if (time == null) return;
     setState(() {
       _event = _event.copyWith(
-        dateTime: DateTime(date.year, date.month, date.day, time.hour, time.minute),
+        dateTime: DateTime(
+          date.year,
+          date.month,
+          date.day,
+          time.hour,
+          time.minute,
+        ),
       );
     });
   }
@@ -433,7 +491,8 @@ class _Field extends StatelessWidget {
         decoration: InputDecoration(labelText: label),
         validator: (value) {
           if (!isRequired) return null;
-          if (value == null || value.trim().isEmpty) return '$label is required';
+          if (value == null || value.trim().isEmpty)
+            return '$label is required';
           return null;
         },
       ),
