@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../core/theme/app_theme.dart';
 import '../models/event.dart';
 import '../services/location_service.dart';
+import '../services/maps_availability.dart';
 
 class VenueLocationPicker extends StatefulWidget {
   const VenueLocationPicker({
@@ -37,6 +39,7 @@ class _VenueLocationPickerState extends State<VenueLocationPicker> {
   Widget build(BuildContext context) {
     final latitude = widget.event.latitude;
     final longitude = widget.event.longitude;
+    final mapsUnavailable = kIsWeb && !isGoogleMapsWebSdkReady;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -70,27 +73,29 @@ class _VenueLocationPickerState extends State<VenueLocationPicker> {
             borderRadius: BorderRadius.circular(8),
             child: SizedBox(
               height: 190,
-              child: GoogleMap(
-                initialCameraPosition: LocationService.instance.cameraFor(
-                  latitude: latitude ?? 26.1445,
-                  longitude: longitude ?? 91.7362,
-                  zoom: latitude == null ? 11 : 15,
-                ),
-                markers: {
-                  if (latitude != null && longitude != null)
-                    Marker(
-                      markerId: const MarkerId('venue_pin'),
-                      position: LatLng(latitude, longitude),
-                      draggable: true,
-                      onDragEnd: _setPin,
+              child: mapsUnavailable
+                  ? const _PickerMapUnavailable()
+                  : GoogleMap(
+                      initialCameraPosition: LocationService.instance.cameraFor(
+                        latitude: latitude ?? 26.1445,
+                        longitude: longitude ?? 91.7362,
+                        zoom: latitude == null ? 11 : 15,
+                      ),
+                      markers: {
+                        if (latitude != null && longitude != null)
+                          Marker(
+                            markerId: const MarkerId('venue_pin'),
+                            position: LatLng(latitude, longitude),
+                            draggable: true,
+                            onDragEnd: _setPin,
+                          ),
+                      },
+                      onTap: _setPin,
+                      onMapCreated: (controller) => _mapController = controller,
+                      zoomControlsEnabled: false,
+                      myLocationButtonEnabled: false,
+                      mapToolbarEnabled: false,
                     ),
-                },
-                onTap: _setPin,
-                onMapCreated: (controller) => _mapController = controller,
-                zoomControlsEnabled: false,
-                myLocationButtonEnabled: false,
-                mapToolbarEnabled: false,
-              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -106,20 +111,26 @@ class _VenueLocationPickerState extends State<VenueLocationPicker> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.gps_fixed),
-                  label: const Text('Use current'),
+                  label: const Text('Use Current Location'),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: latitude == null || longitude == null
-                      ? null
-                      : () => _openMaps(latitude, longitude),
-                  icon: const Icon(Icons.map_outlined),
-                  label: const Text('Preview'),
+                  onPressed: _openMapPicker,
+                  icon: const Icon(Icons.add_location_alt_outlined),
+                  label: const Text('Open Map Picker'),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: latitude == null || longitude == null
+                ? null
+                : () => _openMaps(latitude, longitude),
+            icon: const Icon(Icons.map_outlined),
+            label: const Text('Open in Google Maps'),
           ),
         ],
       ),
@@ -167,6 +178,93 @@ class _VenueLocationPickerState extends State<VenueLocationPicker> {
     );
   }
 
+  Future<void> _openMapPicker() async {
+    if (kIsWeb && !isGoogleMapsWebSdkReady) {
+      _showError(
+        'API key not configured. Use Current Location or enter coordinates manually.',
+      );
+      return;
+    }
+
+    var selected = LatLng(
+      widget.event.latitude ?? 26.1445,
+      widget.event.longitude ?? 91.7362,
+    );
+    final picked = await showDialog<LatLng>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(18),
+          child: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return SizedBox(
+                width: 720,
+                height: 520,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Open Map Picker',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Close',
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: GoogleMap(
+                        initialCameraPosition: LocationService.instance
+                            .cameraFor(
+                              latitude: selected.latitude,
+                              longitude: selected.longitude,
+                              zoom: widget.event.latitude == null ? 11 : 15,
+                            ),
+                        markers: {
+                          Marker(
+                            markerId: const MarkerId('picked_venue_pin'),
+                            position: selected,
+                            draggable: true,
+                            onDragEnd: (position) =>
+                                setDialogState(() => selected = position),
+                          ),
+                        },
+                        onTap: (position) =>
+                            setDialogState(() => selected = position),
+                        zoomControlsEnabled: false,
+                        myLocationButtonEnabled: false,
+                        mapToolbarEnabled: false,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.of(context).pop(selected),
+                        icon: const Icon(Icons.check),
+                        label: const Text('Use Selected Location'),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+    if (picked != null) await _setPin(picked);
+  }
+
   Future<void> _applyCoordinates({
     required double latitude,
     required double longitude,
@@ -209,5 +307,34 @@ class _VenueLocationPickerState extends State<VenueLocationPicker> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _PickerMapUnavailable extends StatelessWidget {
+  const _PickerMapUnavailable();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppTheme.surface.withValues(alpha: 0.9),
+      padding: const EdgeInsets.all(16),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.map_outlined, color: AppTheme.neonCyan),
+          SizedBox(height: 10),
+          Text(
+            'Maps unavailable',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'Interactive map will be available after Google Maps API configuration',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppTheme.textMuted, height: 1.35),
+          ),
+        ],
+      ),
+    );
   }
 }

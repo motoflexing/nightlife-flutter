@@ -89,9 +89,9 @@ class _SignupScreenState extends State<SignupScreen> {
       if (mounted) Navigator.of(context).pop();
     } on AuthException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.message)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -108,13 +108,6 @@ class _SignupScreenState extends State<SignupScreen> {
         color: AppTheme.surface.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(32),
         border: Border.all(color: AppTheme.glassBorder),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryViolet.withValues(alpha: 0.12),
-            blurRadius: 18,
-            spreadRadius: -8,
-          ),
-        ],
       ),
       child: Row(
         children: _roles.map((role) {
@@ -124,28 +117,14 @@ class _SignupScreenState extends State<SignupScreen> {
             child: GestureDetector(
               onTap: _loading
                   ? null
-                  : () {
-                      setState(() => _selectedRole = role['value']!);
-                    },
+                  : () => setState(() => _selectedRole = role['value']!),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOut,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   gradient: isSelected ? AppTheme.premiumGradient : null,
-                  color: isSelected ? null : Colors.transparent,
                   borderRadius: BorderRadius.circular(28),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppTheme.neonViolet.withValues(alpha: 0.28),
-                            blurRadius: 16,
-                            spreadRadius: -8,
-                            offset: const Offset(0, 8),
-                          ),
-                        ]
-                      : null,
                 ),
-                alignment: Alignment.center,
                 child: Text(
                   role['label']!,
                   maxLines: 1,
@@ -170,268 +149,259 @@ class _SignupScreenState extends State<SignupScreen> {
     final isPhone = width < 500;
 
     return NeonScaffold(
-      child: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: isPhone ? 16 : 24,
-            vertical: 24,
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: GlassCard(
-              padding: EdgeInsets.all(isPhone ? 18 : 22),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Align(
-                      child: Container(
-                        width: 62,
-                        height: 62,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: AppTheme.premiumGradient,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.neonViolet.withValues(
-                                alpha: 0.34,
-                              ),
-                              blurRadius: 28,
-                              spreadRadius: -6,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.nightlife,
-                          size: 34,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-
-                    Text(
-                      'Create Account',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(fontWeight: FontWeight.w900),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const Text(
-                      'Complete your profile to start your nightlife journey.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppTheme.textMuted, fontSize: 16),
-                    ),
-
-                    const SizedBox(height: 26),
-
-                    _roleSelector(),
-
-                    const SizedBox(height: 18),
-
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedTitle,
-                      decoration: const InputDecoration(
-                        labelText: 'Title',
-                        prefixIcon: Icon(Icons.badge_outlined),
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'Mr', child: Text('Mr')),
-                        DropdownMenuItem(value: 'Mrs', child: Text('Mrs')),
-                        DropdownMenuItem(value: 'Miss', child: Text('Miss')),
-                        DropdownMenuItem(value: 'Ms', child: Text('Ms')),
-                        DropdownMenuItem(value: 'Dr', child: Text('Dr')),
-                        DropdownMenuItem(value: 'Prof', child: Text('Prof')),
-                      ],
-                      onChanged: _loading
-                          ? null
-                          : (value) {
-                              if (value != null) {
-                                setState(() => _selectedTitle = value);
-                              }
-                            },
-                    ),
-
-                    _gap(),
-
-                    TextFormField(
-                      controller: _name,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Full name',
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().length < 2) {
-                          return 'Enter your full name';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    _gap(),
-
-                    TextFormField(
-                      controller: _gender,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Gender',
-                        prefixIcon: Icon(Icons.wc_outlined),
-                        hintText: 'Male / Female / Other',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Enter your gender';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    _gap(),
-
-                    TextFormField(
-                      controller: _dob,
-                      readOnly: true,
-                      onTap: _loading ? null : _pickDob,
-                      decoration: const InputDecoration(
-                        labelText: 'Date of birth',
-                        prefixIcon: Icon(Icons.calendar_month_outlined),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Select your date of birth';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    _gap(),
-
-                    TextFormField(
-                      controller: _email,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.mail_outline),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Email is required';
-                        }
-                        if (!value.contains('@')) {
-                          return 'Enter a valid email';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    _gap(),
-
-                    TextFormField(
-                      controller: _phone,
-                      keyboardType: TextInputType.phone,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Phone',
-                        prefixIcon: Icon(Icons.call_outlined),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().length < 8) {
-                          return 'Enter a valid phone number';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    _gap(),
-
-                    TextFormField(
-                      controller: _instagramId,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Instagram ID (optional)',
-                        prefixIcon: Icon(Icons.alternate_email),
-                      ),
-                    ),
-
-                    _gap(),
-
-                    TextFormField(
-                      controller: _snapchatId,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Snapchat ID (optional)',
-                        prefixIcon: Icon(Icons.camera_alt_outlined),
-                      ),
-                    ),
-
-                    _gap(),
-
-                    OutlinedButton.icon(
-                      onPressed: _loading
-                          ? null
-                          : () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Valid ID upload will be connected with Firebase Storage next.',
-                                  ),
-                                ),
-                              );
-                            },
-                      icon: const Icon(Icons.upload_file_outlined),
-                      label: const Text('Upload valid ID'),
-                    ),
-
-                    _gap(),
-
-                    TextFormField(
-                      controller: _password,
-                      obscureText: _hidePassword,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() => _hidePassword = !_hidePassword);
-                          },
-                          icon: Icon(
-                            _hidePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
+      child: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: isPhone ? 16 : 24,
+              vertical: 24,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
+              child: GlassCard(
+                padding: EdgeInsets.all(isPhone ? 18 : 22),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Align(
+                        child: Container(
+                          width: 62,
+                          height: 62,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: AppTheme.premiumGradient,
+                          ),
+                          child: const Icon(
+                            Icons.nightlife,
+                            size: 34,
+                            color: Colors.white,
                           ),
                         ),
                       ),
-                      validator: (value) {
-                        if (value == null || value.length < 6) {
-                          return 'Use at least 6 characters';
-                        }
-                        return null;
-                      },
-                    ),
+                      const SizedBox(height: 18),
+                      Text(
+                        'Create Account',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Complete your profile to start your nightlife journey.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 26),
+                      _roleSelector(),
+                      const SizedBox(height: 18),
 
-                    const SizedBox(height: 22),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedTitle,
+                        decoration: const InputDecoration(
+                          labelText: 'Title',
+                          prefixIcon: Icon(Icons.badge_outlined),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'Mr', child: Text('Mr')),
+                          DropdownMenuItem(value: 'Mrs', child: Text('Mrs')),
+                          DropdownMenuItem(value: 'Miss', child: Text('Miss')),
+                          DropdownMenuItem(value: 'Ms', child: Text('Ms')),
+                          DropdownMenuItem(value: 'Dr', child: Text('Dr')),
+                          DropdownMenuItem(value: 'Prof', child: Text('Prof')),
+                        ],
+                        onChanged: _loading
+                            ? null
+                            : (value) {
+                                if (value != null) {
+                                  setState(() => _selectedTitle = value);
+                                }
+                              },
+                      ),
 
-                    PremiumGradientButton(
-                      onPressed: _loading ? null : _submit,
-                      loading: _loading,
-                      icon: Icons.person_add_alt,
-                      label: 'Sign up',
-                    ),
+                      _gap(),
 
-                    const SizedBox(height: 22),
+                      TextFormField(
+                        controller: _name,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Full name',
+                          prefixIcon: Icon(Icons.person_outline),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().length < 2) {
+                            return 'Enter your full name';
+                          }
+                          return null;
+                        },
+                      ),
 
-                    TextButton(
-                      onPressed: _loading
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      child: const Text('Already have an account? Login'),
-                    ),
-                  ],
+                      _gap(),
+
+                      TextFormField(
+                        controller: _gender,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Gender',
+                          prefixIcon: Icon(Icons.wc_outlined),
+                          hintText: 'Male / Female / Other',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Enter your gender';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      _gap(),
+
+                      TextFormField(
+                        controller: _dob,
+                        readOnly: true,
+                        onTap: _loading ? null : _pickDob,
+                        decoration: const InputDecoration(
+                          labelText: 'Date of birth',
+                          prefixIcon: Icon(Icons.calendar_month_outlined),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Select your date of birth';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      _gap(),
+
+                      TextFormField(
+                        controller: _email,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          prefixIcon: Icon(Icons.mail_outline),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Email is required';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      _gap(),
+
+                      TextFormField(
+                        controller: _phone,
+                        keyboardType: TextInputType.phone,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Phone',
+                          prefixIcon: Icon(Icons.call_outlined),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().length < 8) {
+                            return 'Enter a valid phone number';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      _gap(),
+
+                      TextFormField(
+                        controller: _instagramId,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Instagram ID (optional)',
+                          prefixIcon: Icon(Icons.alternate_email),
+                        ),
+                      ),
+
+                      _gap(),
+
+                      TextFormField(
+                        controller: _snapchatId,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Snapchat ID (optional)',
+                          prefixIcon: Icon(Icons.camera_alt_outlined),
+                        ),
+                      ),
+
+                      _gap(),
+
+                      OutlinedButton.icon(
+                        onPressed: _loading
+                            ? null
+                            : () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Valid ID upload will be connected with Firebase Storage next.',
+                                    ),
+                                  ),
+                                );
+                              },
+                        icon: const Icon(Icons.upload_file_outlined),
+                        label: const Text('Upload valid ID'),
+                      ),
+
+                      _gap(),
+
+                      TextFormField(
+                        controller: _password,
+                        obscureText: _hidePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() => _hidePassword = !_hidePassword);
+                            },
+                            icon: Icon(
+                              _hidePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                            ),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.length < 6) {
+                            return 'Use at least 6 characters';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 22),
+
+                      PremiumGradientButton(
+                        onPressed: _loading ? null : _submit,
+                        loading: _loading,
+                        icon: Icons.person_add_alt,
+                        label: 'Sign up',
+                      ),
+
+                      const SizedBox(height: 22),
+
+                      TextButton(
+                        onPressed:
+                            _loading ? null : () => Navigator.of(context).pop(),
+                        child: const Text('Already have an account? Login'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

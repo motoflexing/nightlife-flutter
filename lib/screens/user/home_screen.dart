@@ -42,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loadingMore = false;
   bool _hasMore = true;
   bool _nearbyEnabled = false;
+  bool _nearbyExpanded = false;
   double? _userLatitude;
   double? _userLongitude;
   String? _userCity;
@@ -76,7 +77,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadUserLocation() async {
     final permission = await LocationService.instance.requestPermission();
-    if (!permission.isGranted) return;
+    if (!permission.isGranted) {
+      if (!mounted) return;
+      setState(() {
+        _nearbyEnabled = false;
+        _userLatitude = null;
+        _userLongitude = null;
+        _locationMessage = '${permission.message} Showing city-based events.';
+        final fallbackCity = widget.currentUser.lastKnownCity.trim();
+        if (fallbackCity.isNotEmpty &&
+            AppConstants.cities.contains(fallbackCity)) {
+          _city = fallbackCity;
+        }
+      });
+      if (!_loading) _loadFirstPage();
+      return;
+    }
 
     try {
       final snapshot = await LocationService.instance.getUserLocationSnapshot();
@@ -93,14 +109,19 @@ class _HomeScreenState extends State<HomeScreen> {
         _userLatitude = snapshot.latitude;
         _userLongitude = snapshot.longitude;
         _userCity = snapshot.city.isEmpty ? null : snapshot.city;
-        _locationMessage = 'Using your location';
+        _locationMessage = snapshot.fullAddress.isEmpty
+            ? 'Using your current GPS location'
+            : 'Using your current location';
         _sortEventsByDistance();
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _nearbyEnabled = false;
-        _locationMessage = permission.message;
+        _userLatitude = null;
+        _userLongitude = null;
+        _locationMessage =
+            'Location is unavailable right now. Showing city-based events.';
       });
     }
   }
@@ -176,42 +197,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<NightlifeEvent> get _visibleEvents {
     final events = List<NightlifeEvent>.of(_events);
-    if (!_nearbyEnabled) {
-      return events..sort((a, b) {
-        final cityCompare = a.city.compareTo(b.city);
-        if (_city != 'All' && cityCompare != 0) return cityCompare;
-        return a.dateTime.compareTo(b.dateTime);
-      });
-    }
-
-    bool within(NightlifeEvent event, double maxKm) {
-      final distance = _distanceFor(event);
-      return distance != null && distance <= maxKm;
-    }
-
-    final filtered = switch (_filter) {
-      _LocationFilter.within5 => events.where((event) => within(event, 5)),
-      _LocationFilter.within10 => events.where((event) => within(event, 10)),
-      _LocationFilter.sameCity => events.where(
-        (event) =>
-            _userCity == null ||
-            event.city.toLowerCase() == _userCity!.toLowerCase(),
-      ),
-      _LocationFilter.trending => events.where(
-        (event) => within(event, 10) && event.isActive,
-      ),
-      _LocationFilter.nearby => events,
-    };
-
-    return filtered.toList()..sort((a, b) {
-      final distanceA = _distanceFor(a);
-      final distanceB = _distanceFor(b);
-      if (distanceA == null && distanceB == null) {
-        return a.dateTime.compareTo(b.dateTime);
-      }
-      if (distanceA == null) return 1;
-      if (distanceB == null) return -1;
-      return distanceA.compareTo(distanceB);
+    final cityEvents = _city == 'All'
+        ? events
+        : events.where((event) => event.city == _city).toList();
+    return cityEvents..sort((a, b) {
+      final cityCompare = a.city.compareTo(b.city);
+      if (_city != 'All' && cityCompare != 0) return cityCompare;
+      return a.dateTime.compareTo(b.dateTime);
     });
   }
 
@@ -288,7 +280,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          const SliverToBoxAdapter(child: _PromoBanner()),
           if (_loading)
             const SliverFillRemaining(
               child: LoadingView(message: 'Finding nights'),
@@ -297,25 +288,31 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverFillRemaining(
               child: ErrorStateView(message: _error!, onRetry: _loadFirstPage),
             )
-          else if (visibleEvents.isEmpty)
-            const SliverFillRemaining(
-              child: EmptyView(
-                title: 'No nearby events',
-                message: 'Try a wider distance filter or switch city filters.',
-              ),
-            )
           else
             SliverToBoxAdapter(
               child: _EventsContent(
                 events: visibleEvents,
                 loadingMore: _loadingMore,
-                nearbyEnabled: _nearbyEnabled,
-                filter: _filter,
-                onFilterChanged: (filter) => setState(() => _filter = filter),
                 distanceFor: _distanceFor,
                 onOpen: (event) => _openEvent(context, event),
               ),
             ),
+          SliverToBoxAdapter(
+            child: _NearbyEventsSection(
+              loading: _loading,
+              events: _nearbySectionEvents,
+              expanded: _nearbyExpanded,
+              nearbyEnabled: _nearbyEnabled,
+              locationMessage: _locationMessage,
+              filter: _filter,
+              onToggle: () {
+                setState(() => _nearbyExpanded = !_nearbyExpanded);
+              },
+              onFilterChanged: (filter) => setState(() => _filter = filter),
+              distanceFor: _distanceFor,
+              onOpen: (event) => _openEvent(context, event),
+            ),
+          ),
         ],
       ),
     );
@@ -325,6 +322,44 @@ class _HomeScreenState extends State<HomeScreen> {
     return _events
         .where((event) => event.latitude != null && event.longitude != null)
         .toList();
+  }
+
+  List<NightlifeEvent> get _nearbySectionEvents {
+    final events = List<NightlifeEvent>.of(_events);
+
+    bool sameCity(NightlifeEvent event) {
+      final userCity = _userCity ?? (_city == 'All' ? '' : _city);
+      return userCity.isNotEmpty &&
+          event.city.toLowerCase() == userCity.toLowerCase();
+    }
+
+    bool within(NightlifeEvent event, double maxKm) {
+      final distance = _distanceFor(event);
+      return distance != null && distance <= maxKm;
+    }
+
+    final filtered = switch (_filter) {
+      _LocationFilter.nearby => events.where(
+        (event) => _distanceFor(event) != null,
+      ),
+      _LocationFilter.within5 => events.where((event) => within(event, 5)),
+      _LocationFilter.within10 => events.where((event) => within(event, 10)),
+      _LocationFilter.sameCity => events.where(sameCity),
+      _LocationFilter.trending => events.where(
+        (event) => event.isActive && within(event, 10),
+      ),
+    };
+
+    return filtered.toList()..sort((a, b) {
+      final distanceA = _distanceFor(a);
+      final distanceB = _distanceFor(b);
+      if (distanceA == null && distanceB == null) {
+        return a.dateTime.compareTo(b.dateTime);
+      }
+      if (distanceA == null) return 1;
+      if (distanceB == null) return -1;
+      return distanceA.compareTo(distanceB);
+    });
   }
 
   void _openEvent(BuildContext context, NightlifeEvent event) {
@@ -443,35 +478,286 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _PromoBanner extends StatelessWidget {
-  const _PromoBanner();
+class _NearbyEventsSection extends StatelessWidget {
+  const _NearbyEventsSection({
+    required this.loading,
+    required this.events,
+    required this.expanded,
+    required this.nearbyEnabled,
+    required this.locationMessage,
+    required this.filter,
+    required this.onToggle,
+    required this.onFilterChanged,
+    required this.distanceFor,
+    required this.onOpen,
+  });
+
+  final bool loading;
+  final List<NightlifeEvent> events;
+  final bool expanded;
+  final bool nearbyEnabled;
+  final String? locationMessage;
+  final _LocationFilter filter;
+  final VoidCallback onToggle;
+  final ValueChanged<_LocationFilter> onFilterChanged;
+  final double? Function(NightlifeEvent event) distanceFor;
+  final ValueChanged<NightlifeEvent> onOpen;
 
   @override
   Widget build(BuildContext context) {
+    final previewEvents = events.take(6).toList();
+    final status = nearbyEnabled
+        ? 'Sorted from your current location'
+        : locationMessage ??
+              'Location permission is off. Showing city-based events.';
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: AppTheme.premiumGradient,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.accentPink.withValues(alpha: 0.22),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.glassBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: onToggle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  Icon(
+                    nearbyEnabled
+                        ? Icons.near_me_outlined
+                        : Icons.location_city,
+                    color: nearbyEnabled
+                        ? AppTheme.neonLime
+                        : AppTheme.neonCyan,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Nearby Events',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          expanded ? status : 'Tap to view events near you',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: const Icon(Icons.keyboard_arrow_down),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 12),
+                DropdownButtonFormField<_LocationFilter>(
+                  initialValue: filter,
+                  decoration: const InputDecoration(
+                    labelText: 'Nearby filter',
+                    prefixIcon: Icon(Icons.tune),
+                  ),
+                  items: _LocationFilter.values
+                      .map(
+                        (option) => DropdownMenuItem(
+                          value: option,
+                          child: Text(option.label),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) onFilterChanged(value);
+                  },
+                ),
+                const SizedBox(height: 12),
+                if (loading)
+                  const LinearProgressIndicator(minHeight: 3)
+                else if (previewEvents.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.elevated.withValues(alpha: 0.58),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppTheme.glassBorder),
+                    ),
+                    child: const Text(
+                      'No nearby events found. Try increasing the distance range.',
+                      style: TextStyle(color: AppTheme.textMuted),
+                    ),
+                  )
+                else
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final mobile = constraints.maxWidth < 520;
+                      if (mobile) {
+                        return Column(
+                          children: [
+                            for (var i = 0; i < previewEvents.length; i++) ...[
+                              _NearbyPreviewTile(
+                                event: previewEvents[i],
+                                distanceKm: distanceFor(previewEvents[i]),
+                                onTap: () => onOpen(previewEvents[i]),
+                              ),
+                              if (i != previewEvents.length - 1)
+                                const SizedBox(height: 10),
+                            ],
+                          ],
+                        );
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Swipe to explore more nearby events',
+                            style: TextStyle(
+                              color: AppTheme.textMuted,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 118,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: previewEvents.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(width: 10),
+                              itemBuilder: (context, index) {
+                                final event = previewEvents[index];
+                                return SizedBox(
+                                  width: 250,
+                                  child: _NearbyPreviewTile(
+                                    event: event,
+                                    distanceKm: distanceFor(event),
+                                    onTap: () => onOpen(event),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+              ],
+            ),
+            crossFadeState: expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
           ),
         ],
       ),
-      child: const Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Access Hidden Parties & Exclusive Deals',
-              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
+    );
+  }
+}
+
+class _NearbyPreviewTile extends StatelessWidget {
+  const _NearbyPreviewTile({
+    required this.event,
+    required this.distanceKm,
+    required this.onTap,
+  });
+
+  final NightlifeEvent event;
+  final double? distanceKm;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasLocation = event.latitude != null && event.longitude != null;
+    final locationLabel = !hasLocation
+        ? 'Location not added'
+        : distanceKm == null
+        ? event.city
+        : LocationService.instance.formatDistance(distanceKm!);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+        decoration: BoxDecoration(
+          color: AppTheme.elevated.withValues(alpha: 0.66),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppTheme.glassBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              event.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w900),
             ),
-          ),
-          Icon(Icons.local_fire_department, size: 34),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              '${event.venueName} - ${event.city}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+            ),
+            const SizedBox(height: 7),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 136),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryViolet.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: AppTheme.neonViolet.withValues(alpha: 0.42),
+                    ),
+                  ),
+                  child: Text(
+                    locationLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -481,107 +767,371 @@ class _EventsContent extends StatelessWidget {
   const _EventsContent({
     required this.events,
     required this.loadingMore,
-    required this.nearbyEnabled,
-    required this.filter,
-    required this.onFilterChanged,
     required this.distanceFor,
     required this.onOpen,
   });
 
   final List<NightlifeEvent> events;
   final bool loadingMore;
-  final bool nearbyEnabled;
-  final _LocationFilter filter;
-  final ValueChanged<_LocationFilter> onFilterChanged;
   final double? Function(NightlifeEvent event) distanceFor;
   final ValueChanged<NightlifeEvent> onOpen;
 
   @override
   Widget build(BuildContext context) {
-    final featured = events.take(5).toList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: 420,
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            scrollDirection: Axis.horizontal,
-            itemCount: featured.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final event = featured[index];
-              return SizedBox(
-                width: 230,
-                child: EventCard(
-                  event: event,
-                  compact: true,
-                  distanceKm: distanceFor(event),
-                  onTap: () => onOpen(event),
-                ),
-              );
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final hasEvents = events.isNotEmpty;
+        final isMobile = width < 600;
+        final isTablet = width >= 600 && width < 1024;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (hasEvents && !isMobile && !isTablet)
+              _FeaturedEventsCarousel(
+                events: events.take(6).toList(),
+                distanceFor: distanceFor,
+                onOpen: onOpen,
+              ),
+            _EventsHeader(
+              title: 'Events Around You',
+              summary: events.isEmpty
+                  ? 'No events match this city yet'
+                  : '${events.length} events sorted by city and time',
+              eventsLength: events.length,
+              topPadding: hasEvents && !isMobile && !isTablet ? 20 : 4,
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 280),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: hasEvents
+                  ? isMobile
+                        ? _VerticalEventsList(
+                            key: ValueKey(
+                              'mobile-events-${events.map((event) => event.id).join('|')}',
+                            ),
+                            events: events,
+                            loadingMore: loadingMore,
+                            distanceFor: distanceFor,
+                            onOpen: onOpen,
+                          )
+                        : _ResponsiveEventsGrid(
+                            key: ValueKey(
+                              'grid-events-${events.map((event) => event.id).join('|')}',
+                            ),
+                            events: events,
+                            loadingMore: loadingMore,
+                            columns: isTablet ? 2 : 3,
+                            distanceFor: distanceFor,
+                            onOpen: onOpen,
+                          )
+                  : _InlineEmptyFilterState(
+                      key: const ValueKey('empty-events'),
+                      title: 'No events found',
+                      message: 'Try another city or check back soon.',
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _FeaturedEventsCarousel extends StatefulWidget {
+  const _FeaturedEventsCarousel({
+    required this.events,
+    required this.distanceFor,
+    required this.onOpen,
+  });
+
+  final List<NightlifeEvent> events;
+  final double? Function(NightlifeEvent event) distanceFor;
+  final ValueChanged<NightlifeEvent> onOpen;
+
+  @override
+  State<_FeaturedEventsCarousel> createState() =>
+      _FeaturedEventsCarouselState();
+}
+
+class _FeaturedEventsCarouselState extends State<_FeaturedEventsCarousel> {
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _scrollBy(double offset) {
+    if (!_controller.hasClients) return;
+    final next = (_controller.offset + offset).clamp(
+      0.0,
+      _controller.position.maxScrollExtent,
+    );
+    _controller.animateTo(
+      next,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.events.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Text(
-                nearbyEnabled ? 'Near You' : 'Events Around You',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                nearbyEnabled
-                    ? '${events.length} events sorted by distance'
-                    : '${events.length} events sorted by city and time',
-                style: const TextStyle(color: AppTheme.textMuted),
-              ),
-              const SizedBox(height: 12),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (final option in _LocationFilter.values) ...[
-                      ChoiceChip(
-                        label: Text(option.label),
-                        selected: filter == option,
-                        onSelected:
-                            nearbyEnabled || option == _LocationFilter.sameCity
-                            ? (_) => onFilterChanged(option)
-                            : null,
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                  ],
+              Expanded(
+                child: Text(
+                  'Featured Nights',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
+              ),
+              IconButton.filledTonal(
+                tooltip: 'Previous events',
+                onPressed: () => _scrollBy(-304),
+                icon: const Icon(Icons.chevron_left),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                tooltip: 'Next events',
+                onPressed: () => _scrollBy(304),
+                icon: const Icon(Icons.chevron_right),
               ),
             ],
           ),
+          const SizedBox(height: 2),
+          const Text(
+            'Swipe to explore more events',
+            style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 382,
+            child: ListView.separated(
+              controller: _controller,
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: widget.events.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final event = widget.events[index];
+                return SizedBox(
+                  width: 276,
+                  child: EventCard(
+                    event: event,
+                    compact: true,
+                    distanceKm: widget.distanceFor(event),
+                    onTap: () => widget.onOpen(event),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EventsHeader extends StatelessWidget {
+  const _EventsHeader({
+    required this.title,
+    required this.summary,
+    required this.eventsLength,
+    required this.topPadding,
+  });
+
+  final String title;
+  final String summary;
+  final int eventsLength;
+  final double topPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, topPadding, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 4),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: Text(
+              key: ValueKey('event-count-$eventsLength'),
+              summary,
+              style: const TextStyle(color: AppTheme.textMuted),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VerticalEventsList extends StatelessWidget {
+  const _VerticalEventsList({
+    super.key,
+    required this.events,
+    required this.loadingMore,
+    required this.distanceFor,
+    required this.onOpen,
+  });
+
+  final List<NightlifeEvent> events;
+  final bool loadingMore;
+  final double? Function(NightlifeEvent event) distanceFor;
+  final ValueChanged<NightlifeEvent> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
+      itemCount: events.length + (loadingMore ? 1 : 0),
+      separatorBuilder: (_, _) => const SizedBox(height: 14),
+      itemBuilder: (context, index) {
+        if (index == events.length) {
+          return const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final event = events[index];
+        return EventCard(
+          event: event,
+          distanceKm: distanceFor(event),
+          onTap: () => onOpen(event),
+        );
+      },
+    );
+  }
+}
+
+class _ResponsiveEventsGrid extends StatelessWidget {
+  const _ResponsiveEventsGrid({
+    super.key,
+    required this.events,
+    required this.loadingMore,
+    required this.columns,
+    required this.distanceFor,
+    required this.onOpen,
+  });
+
+  final List<NightlifeEvent> events;
+  final bool loadingMore;
+  final int columns;
+  final double? Function(NightlifeEvent event) distanceFor;
+  final ValueChanged<NightlifeEvent> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final itemCount = events.length + (loadingMore ? 1 : 0);
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
+      itemCount: itemCount,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        mainAxisExtent: columns == 2 ? 390 : 382,
+        crossAxisSpacing: 14,
+        mainAxisSpacing: 14,
+      ),
+      itemBuilder: (context, index) {
+        if (index == events.length) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final event = events[index];
+        return EventCard(
+          event: event,
+          compact: true,
+          distanceKm: distanceFor(event),
+          onTap: () => onOpen(event),
+        );
+      },
+    );
+  }
+}
+
+class _InlineEmptyFilterState extends StatelessWidget {
+  const _InlineEmptyFilterState({
+    super.key,
+    required this.title,
+    required this.message,
+  });
+
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: AppTheme.elevated.withValues(alpha: 0.76),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppTheme.glassBorder),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.neonCyan.withValues(alpha: 0.08),
+              blurRadius: 22,
+              offset: const Offset(0, 12),
+            ),
+          ],
         ),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-          itemCount: events.length + (loadingMore ? 1 : 0),
-          separatorBuilder: (_, _) => const SizedBox(height: 14),
-          itemBuilder: (context, index) {
-            if (index == events.length) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final event = events[index];
-            return EventCard(
-              event: event,
-              distanceKm: distanceFor(event),
-              onTap: () => onOpen(event),
-            );
-          },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.search_off_outlined, color: AppTheme.neonCyan),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              message,
+              style: const TextStyle(color: AppTheme.textMuted, height: 1.35),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.neonCyan.withValues(alpha: 0.48),
+                    AppTheme.neonViolet.withValues(alpha: 0.2),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

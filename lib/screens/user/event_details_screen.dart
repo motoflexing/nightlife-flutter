@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -7,7 +8,9 @@ import '../../models/app_user.dart';
 import '../../models/event.dart';
 import '../../services/firestore_service.dart';
 import '../../services/location_service.dart';
+import '../../services/maps_availability.dart';
 import '../../services/referral_service.dart';
+import '../../widgets/event_poster.dart';
 import '../../widgets/neon_scaffold.dart';
 
 class EventDetailsScreen extends StatefulWidget {
@@ -38,6 +41,12 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     _loadDistance();
   }
 
+  @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadDistance() async {
     final latitude = widget.event.latitude;
     final longitude = widget.event.longitude;
@@ -60,12 +69,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     } catch (_) {
       // Details stay usable when location is unavailable.
     }
-  }
-
-  @override
-  void dispose() {
-    _codeController.dispose();
-    super.dispose();
   }
 
   Future<void> _rsvp() async {
@@ -103,50 +106,56 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final event = widget.event;
+
     return NeonScaffold(
       appBar: AppBar(title: const Text('Event details')),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final wide = constraints.maxWidth > 780;
+          final wide = constraints.maxWidth >= 860;
+          final content = wide
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: _HeroPoster(event: event, aspectRatio: 4 / 5),
+                    ),
+                    const SizedBox(width: 22),
+                    Expanded(
+                      flex: 4,
+                      child: _DetailsContent(
+                        event: event,
+                        currentUser: widget.currentUser,
+                        codeController: _codeController,
+                        submitting: _submitting,
+                        distanceKm: _distanceKm,
+                        onRsvp: _rsvp,
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _HeroPoster(event: event, aspectRatio: 16 / 11),
+                    const SizedBox(height: 14),
+                    _DetailsContent(
+                      event: event,
+                      currentUser: widget.currentUser,
+                      codeController: _codeController,
+                      submitting: _submitting,
+                      distanceKm: _distanceKm,
+                      onRsvp: _rsvp,
+                    ),
+                  ],
+                );
+
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 112),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1080),
-                child: wide
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(flex: 5, child: _Poster(event: event)),
-                          const SizedBox(width: 22),
-                          Expanded(
-                            flex: 4,
-                            child: _Details(
-                              event: event,
-                              currentUser: widget.currentUser,
-                              codeController: _codeController,
-                              submitting: _submitting,
-                              distanceKm: _distanceKm,
-                              onRsvp: _rsvp,
-                            ),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _Poster(event: event),
-                          const SizedBox(height: 18),
-                          _Details(
-                            event: event,
-                            currentUser: widget.currentUser,
-                            codeController: _codeController,
-                            submitting: _submitting,
-                            distanceKm: _distanceKm,
-                            onRsvp: _rsvp,
-                          ),
-                        ],
-                      ),
+                child: content,
               ),
             ),
           );
@@ -156,34 +165,36 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 }
 
-class _Poster extends StatelessWidget {
-  const _Poster({required this.event});
+class _HeroPoster extends StatelessWidget {
+  const _HeroPoster({required this.event, required this.aspectRatio});
 
   final NightlifeEvent event;
+  final double aspectRatio;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: AspectRatio(
-        aspectRatio: 4 / 5,
-        child: event.posterUrl.isEmpty
-            ? Container(
-                color: AppTheme.elevated,
-                child: const Icon(
-                  Icons.nightlife,
-                  size: 80,
-                  color: AppTheme.neonCyan,
-                ),
-              )
-            : Image.network(event.posterUrl, fit: BoxFit.cover),
+    return AspectRatio(
+      aspectRatio: aspectRatio,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.accentPink.withValues(alpha: 0.22),
+              blurRadius: 34,
+              spreadRadius: -12,
+              offset: const Offset(0, 18),
+            ),
+          ],
+        ),
+        child: EventPoster(event: event, borderRadius: 24, showTitle: true),
       ),
     );
   }
 }
 
-class _Details extends StatelessWidget {
-  const _Details({
+class _DetailsContent extends StatelessWidget {
+  const _DetailsContent({
     required this.event,
     required this.currentUser,
     required this.codeController,
@@ -201,84 +212,116 @@ class _Details extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    event.title,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
+    final canRsvp = currentUser.isUser && currentUser.isApproved;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _Panel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _Chip(label: event.city, icon: Icons.location_city_outlined),
+                  if (distanceKm != null)
+                    _Chip(
+                      label: LocationService.instance.formatDistance(
+                        distanceKm!,
+                      ),
+                      icon: Icons.near_me_outlined,
                     ),
-                  ),
-                ),
-                Chip(label: Text(event.city)),
-              ],
-            ),
-            const SizedBox(height: 14),
-            _Info(
-              icon: Icons.place_outlined,
-              text: '${event.venueName}, ${event.address}',
-            ),
-            _Info(
-              icon: Icons.schedule,
-              text: Formatters.eventDate(event.dateTime),
-            ),
-            _Info(icon: Icons.music_note_outlined, text: event.musicType),
-            _Info(icon: Icons.groups_2_outlined, text: event.crowdType),
-            _Info(icon: Icons.rule_outlined, text: event.entryRules),
-            _LocationSection(event: event, distanceKm: distanceKm),
-            const SizedBox(height: 12),
-            Text(event.description, style: const TextStyle(height: 1.45)),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppTheme.neonCyan.withValues(alpha: 0.09),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppTheme.neonCyan.withValues(alpha: 0.22),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                event.title.isEmpty ? 'Nightlife Event' : event.title,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
                 ),
               ),
-              child: Text(
-                event.priceText.isEmpty
-                    ? 'Entry details available at venue.'
-                    : event.priceText,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+              const SizedBox(height: 14),
+              _InfoLine(
+                icon: Icons.storefront_outlined,
+                title: event.venueName,
+                subtitle: event.address,
               ),
-            ),
-            const SizedBox(height: 16),
-            if (currentUser.isUser && currentUser.isApproved) ...[
-              TextField(
-                controller: codeController,
-                textCapitalization: TextCapitalization.characters,
-                decoration: const InputDecoration(
-                  labelText: 'Promoter code',
-                  hintText: 'Optional referral code',
-                  prefixIcon: Icon(Icons.qr_code_2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: submitting ? null : onRsvp,
-                icon: submitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.how_to_reg),
-                label: const Text('RSVP now'),
+              _InfoLine(
+                icon: Icons.schedule,
+                title: Formatters.eventDate(event.dateTime),
               ),
             ],
-          ],
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        _Panel(
+          child: Column(
+            children: [
+              _InfoLine(
+                icon: Icons.music_note_outlined,
+                title: event.musicType,
+              ),
+              _InfoLine(icon: Icons.groups_2_outlined, title: event.crowdType),
+              _InfoLine(icon: Icons.rule_outlined, title: event.entryRules),
+              _InfoLine(
+                icon: Icons.confirmation_number_outlined,
+                title: event.priceText.isEmpty
+                    ? 'Entry details available at venue'
+                    : event.priceText,
+              ),
+              if (event.description.trim().isNotEmpty) ...[
+                const Divider(height: 24),
+                Text(
+                  event.description,
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _LocationSection(event: event, distanceKm: distanceKm),
+        if (canRsvp) ...[
+          const SizedBox(height: 12),
+          _Panel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: codeController,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: const InputDecoration(
+                    labelText: 'Promoter code',
+                    hintText: 'Optional referral code',
+                    prefixIcon: Icon(Icons.qr_code_2),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    onPressed: submitting ? null : onRsvp,
+                    icon: submitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.how_to_reg),
+                    label: const Text('RSVP now'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -293,103 +336,96 @@ class _LocationSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final latitude = event.latitude;
     final longitude = event.longitude;
+    final hasCoordinates = latitude != null && longitude != null;
     final address = event.fullAddress.trim().isEmpty
         ? event.address
         : event.fullAddress;
 
-    if (address.trim().isEmpty && (latitude == null || longitude == null)) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(top: 6, bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.elevated.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
-      ),
+    return _Panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              const Icon(Icons.location_on_outlined, size: 18),
-              const SizedBox(width: 8),
+              const Icon(Icons.location_on_outlined, color: AppTheme.neonCyan),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Venue location',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
               if (distanceKm != null)
-                Text(
-                  LocationService.instance.formatDistance(distanceKm!),
-                  style: const TextStyle(
-                    color: AppTheme.neonCyan,
-                    fontWeight: FontWeight.w800,
-                  ),
+                _Chip(
+                  label: LocationService.instance.formatDistance(distanceKm!),
+                  icon: Icons.near_me_outlined,
                 ),
             ],
           ),
           if (address.trim().isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               address,
               style: const TextStyle(color: AppTheme.textMuted, height: 1.35),
             ),
           ],
-          if (latitude != null && longitude != null) ...[
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: SizedBox(
-                height: 170,
-                child: GoogleMap(
-                  initialCameraPosition: LocationService.instance.cameraFor(
-                    latitude: latitude,
-                    longitude: longitude,
-                    zoom: 15,
-                  ),
-                  markers: {
-                    Marker(
-                      markerId: MarkerId(event.id),
-                      position: LatLng(latitude, longitude),
-                      infoWindow: InfoWindow(
-                        title: event.venueName,
-                        snippet: event.title,
-                      ),
+          const SizedBox(height: 14),
+          if (!hasCoordinates)
+            const _MapUnavailable(
+              message:
+                  'Location not added. Directions will be available after venue coordinates are saved.',
+            )
+          else ...[
+            if (kIsWeb && !isGoogleMapsWebSdkReady)
+              const _MapUnavailable(message: 'Map preview unavailable')
+            else
+              ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: SizedBox(
+                  height: 180,
+                  child: GoogleMap(
+                    initialCameraPosition: LocationService.instance.cameraFor(
+                      latitude: latitude,
+                      longitude: longitude,
+                      zoom: 15,
                     ),
-                  },
-                  zoomControlsEnabled: false,
-                  scrollGesturesEnabled: false,
-                  tiltGesturesEnabled: false,
-                  rotateGesturesEnabled: false,
-                  mapToolbarEnabled: false,
-                  myLocationButtonEnabled: false,
+                    markers: {
+                      Marker(
+                        markerId: MarkerId(event.id),
+                        position: LatLng(latitude, longitude),
+                        infoWindow: InfoWindow(
+                          title: event.venueName,
+                          snippet: event.title,
+                        ),
+                      ),
+                    },
+                    zoomControlsEnabled: false,
+                    scrollGesturesEnabled: false,
+                    tiltGesturesEnabled: false,
+                    rotateGesturesEnabled: false,
+                    mapToolbarEnabled: false,
+                    myLocationButtonEnabled: false,
+                  ),
                 ),
               ),
-            ),
             const SizedBox(height: 12),
-            Row(
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _openMap(context, latitude, longitude),
-                    icon: const Icon(Icons.map_outlined),
-                    label: const Text('Open Maps'),
-                  ),
+                _ActionButton(
+                  icon: Icons.map_outlined,
+                  label: 'Open Google Maps',
+                  onPressed: () => _openMap(context, latitude, longitude),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () =>
-                        _openDirections(context, latitude, longitude),
-                    icon: const Icon(Icons.directions),
-                    label: const Text('Directions'),
-                  ),
+                _ActionButton(
+                  icon: Icons.directions,
+                  label: 'Get Directions',
+                  filled: true,
+                  onPressed: () =>
+                      _openDirections(context, latitude, longitude),
                 ),
               ],
             ),
@@ -438,26 +474,187 @@ class _LocationSection extends StatelessWidget {
   }
 }
 
-class _Info extends StatelessWidget {
-  const _Info({required this.icon, required this.text});
+class _Panel extends StatelessWidget {
+  const _Panel({required this.child});
 
-  final IconData icon;
-  final String text;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    if (text.trim().isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppTheme.glassBorder),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryViolet.withValues(alpha: 0.12),
+            blurRadius: 26,
+            spreadRadius: -14,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _InfoLine extends StatelessWidget {
+  const _InfoLine({required this.icon, required this.title, this.subtitle});
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    if (title.trim().isEmpty && (subtitle ?? '').trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: AppTheme.textMuted),
-          const SizedBox(width: 9),
+          Icon(icon, size: 20, color: AppTheme.textMuted),
+          const SizedBox(width: 10),
           Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (title.trim().isNotEmpty)
+                  Text(
+                    title,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      height: 1.25,
+                    ),
+                  ),
+                if ((subtitle ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle!,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({required this.label, required this.icon});
+
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryViolet.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppTheme.accentPink.withValues(alpha: 0.34)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppTheme.neonLime),
+          const SizedBox(width: 6),
+          Flexible(
             child: Text(
-              text,
-              style: const TextStyle(color: AppTheme.textMuted),
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.filled = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
+      ],
+    );
+
+    return SizedBox(
+      width: MediaQuery.sizeOf(context).width < 430 ? double.infinity : 210,
+      height: 48,
+      child: filled
+          ? ElevatedButton(onPressed: onPressed, child: child)
+          : OutlinedButton(onPressed: onPressed, child: child),
+    );
+  }
+}
+
+class _MapUnavailable extends StatelessWidget {
+  const _MapUnavailable({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 150,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.elevated.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.glassBorder),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.map_outlined, color: AppTheme.neonCyan),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppTheme.textMuted,
+              fontWeight: FontWeight.w800,
+              height: 1.35,
             ),
           ),
         ],

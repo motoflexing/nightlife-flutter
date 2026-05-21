@@ -42,7 +42,7 @@ service cloud.firestore {
     }
 
     function isSuperAdmin() {
-      return isApproved() && currentRole() in ['superAdmin', 'admin'];
+      return isApproved() && currentRole() == 'superAdmin';
     }
 
     function isPromoter() {
@@ -275,6 +275,10 @@ service cloud.firestore {
         );
 
       allow delete: if isSuperAdmin();
+    }
+
+    match /platform/{documentId} {
+      allow read, create, update, delete: if isSuperAdmin();
     }
   }
 }

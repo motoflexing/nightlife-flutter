@@ -5,26 +5,15 @@ import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 
 class MenuScreen extends StatelessWidget {
-  const MenuScreen({
-    super.key,
-    required this.currentUser,
-    required this.onCreateEvent,
-    required this.onCreateBrand,
-  });
+  const MenuScreen({super.key, required this.currentUser});
 
   final AppUser currentUser;
-  final VoidCallback onCreateEvent;
-  final VoidCallback onCreateBrand;
 
   @override
   Widget build(BuildContext context) {
     final items = [
       _MenuItem(Icons.confirmation_number_outlined, 'My Tickets', () {}),
       _MenuItem(Icons.campaign_outlined, 'Promote', () {}),
-      _MenuItem(Icons.add_circle_outline, 'Create Event', onCreateEvent),
-      _MenuItem(Icons.storefront_outlined, 'Create Brand', onCreateBrand),
-      _MenuItem(Icons.list_alt_outlined, 'My Event Listings', () {}),
-      _MenuItem(Icons.business_outlined, 'My Brand Listings', () {}),
       _MenuItem(Icons.support_agent_outlined, 'Help & Support', () {}),
       _MenuItem(Icons.quiz_outlined, 'FAQs', () {}),
       _MenuItem(Icons.favorite_border, 'Follow Us', () {}),

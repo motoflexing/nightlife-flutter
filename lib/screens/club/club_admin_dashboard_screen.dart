@@ -253,6 +253,10 @@ class _ClubEventFormState extends State<_ClubEventForm> {
   late final TextEditingController _description;
   late final TextEditingController _posterUrl;
   late final TextEditingController _price;
+  late final TextEditingController _fullAddress;
+  late final TextEditingController _latitude;
+  late final TextEditingController _longitude;
+  late final TextEditingController _mapsLink;
   bool _saving = false;
 
   @override
@@ -272,6 +276,12 @@ class _ClubEventFormState extends State<_ClubEventForm> {
     _description = TextEditingController(text: _event.description);
     _posterUrl = TextEditingController(text: _event.posterUrl);
     _price = TextEditingController(text: _event.priceText);
+    _fullAddress = TextEditingController(text: _event.fullAddress);
+    _latitude = TextEditingController(text: _formatCoordinate(_event.latitude));
+    _longitude = TextEditingController(
+      text: _formatCoordinate(_event.longitude),
+    );
+    _mapsLink = TextEditingController(text: _event.googleMapsLink);
   }
 
   @override
@@ -285,17 +295,42 @@ class _ClubEventFormState extends State<_ClubEventForm> {
     _description.dispose();
     _posterUrl.dispose();
     _price.dispose();
+    _fullAddress.dispose();
+    _latitude.dispose();
+    _longitude.dispose();
+    _mapsLink.dispose();
     super.dispose();
+  }
+
+  void _syncLocationControllers(NightlifeEvent event) {
+    _fullAddress.text = event.fullAddress;
+    _latitude.text = _formatCoordinate(event.latitude);
+    _longitude.text = _formatCoordinate(event.longitude);
+    _mapsLink.text = event.googleMapsLink;
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
+    final latitude = double.tryParse(_latitude.text.trim());
+    final longitude = double.tryParse(_longitude.text.trim());
+    final mapsLink = _mapsLink.text.trim().isNotEmpty
+        ? _mapsLink.text.trim()
+        : latitude == null || longitude == null
+        ? ''
+        : LocationService.instance.googleMapsLink(
+            latitude: latitude,
+            longitude: longitude,
+            label: _venue.text.trim(),
+          );
     var next = _event.copyWith(
       title: _title.text.trim(),
       venueName: _venue.text.trim(),
       address: _address.text.trim(),
-      fullAddress: _address.text.trim(),
+      fullAddress: _fullAddress.text.trim(),
+      latitude: latitude,
+      longitude: longitude,
+      googleMapsLink: mapsLink,
       musicType: _music.text.trim(),
       crowdType: _crowd.text.trim(),
       entryRules: _rules.text.trim(),
@@ -390,12 +425,52 @@ class _ClubEventFormState extends State<_ClubEventForm> {
               ),
               _Field(controller: _venue, label: 'Venue name'),
               _Field(controller: _address, label: 'Venue address'),
+              _Field(controller: _fullAddress, label: 'Full address'),
+              Row(
+                children: [
+                  Expanded(
+                    child: _Field(
+                      controller: _latitude,
+                      label: 'Latitude',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      validator: _coordinateValidator,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _Field(
+                      controller: _longitude,
+                      label: 'Longitude',
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      validator: _coordinateValidator,
+                    ),
+                  ),
+                ],
+              ),
+              _Field(
+                controller: _mapsLink,
+                label: 'Google Maps link',
+                isRequired: false,
+                keyboardType: TextInputType.url,
+              ),
               VenueLocationPicker(
                 event: _event,
                 venueName: _venue.text,
-                onChanged: (event) => setState(() => _event = event),
+                onChanged: (event) => setState(() {
+                  _event = event;
+                  _syncLocationControllers(event);
+                }),
                 onAddressResolved: (address) {
-                  if (address.trim().isNotEmpty) _address.text = address;
+                  if (address.trim().isNotEmpty) {
+                    _address.text = address;
+                    _fullAddress.text = address;
+                  }
                 },
               ),
               ListTile(
@@ -466,6 +541,17 @@ class _ClubEventFormState extends State<_ClubEventForm> {
       );
     });
   }
+
+  static String _formatCoordinate(double? coordinate) {
+    return coordinate == null ? '' : coordinate.toStringAsFixed(7);
+  }
+
+  static String? _coordinateValidator(String? value) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) return 'Coordinate is required';
+    if (double.tryParse(text) == null) return 'Enter a valid coordinate';
+    return null;
+  }
 }
 
 class _Field extends StatelessWidget {
@@ -474,12 +560,16 @@ class _Field extends StatelessWidget {
     required this.label,
     this.maxLines = 1,
     this.isRequired = true,
+    this.keyboardType,
+    this.validator,
   });
 
   final TextEditingController controller;
   final String label;
   final int maxLines;
   final bool isRequired;
+  final TextInputType? keyboardType;
+  final String? Function(String?)? validator;
 
   @override
   Widget build(BuildContext context) {
@@ -488,13 +578,16 @@ class _Field extends StatelessWidget {
       child: TextFormField(
         controller: controller,
         maxLines: maxLines,
+        keyboardType: keyboardType,
         decoration: InputDecoration(labelText: label),
-        validator: (value) {
-          if (!isRequired) return null;
-          if (value == null || value.trim().isEmpty)
-            return '$label is required';
-          return null;
-        },
+        validator:
+            validator ??
+            (value) {
+              if (!isRequired) return null;
+              if (value == null || value.trim().isEmpty)
+                return '$label is required';
+              return null;
+            },
       ),
     );
   }

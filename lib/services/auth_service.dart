@@ -12,12 +12,29 @@ class AuthService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   String? _requestedRole;
+  bool _superAdminUnlockArmed = false;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   User? get currentFirebaseUser => _auth.currentUser;
 
   String? get requestedRole => _requestedRole;
+
+  bool get isSuperAdminUnlockArmed => _superAdminUnlockArmed;
+
+  void armSuperAdminUnlock() {
+    _superAdminUnlockArmed = true;
+    _requestedRole = 'superAdmin';
+  }
+
+  Future<bool> verifyCurrentUserIsSuperAdmin() async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+
+    final doc = await _db.collection('users').doc(user.uid).get();
+    final role = doc.data()?['role'] as String?;
+    return doc.exists && role == 'superAdmin';
+  }
 
   Future<AppUser?> getCurrentProfile() async {
     final user = _auth.currentUser;
@@ -209,6 +226,7 @@ class AuthService {
 
   Future<void> signOut() {
     _requestedRole = null;
+    _superAdminUnlockArmed = false;
     return _auth.signOut();
   }
 

@@ -255,6 +255,17 @@ class FirestoreService {
     });
   }
 
+  Future<void> setEventFeatured(String eventId, bool isFeatured) async {
+    await _db.collection('events').doc(eventId).set({
+      'isFeatured': isFeatured,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> deleteEvent(String eventId) async {
+    await _db.collection('events').doc(eventId).delete();
+  }
+
   Future<void> updateRsvpStatus(String rsvpId, String status) async {
     await _db.collection('rsvps').doc(rsvpId).update({
       'status': status,
@@ -365,6 +376,34 @@ class FirestoreService {
       await _ensurePromoter(user, isActive: isActive);
       if (!isActive) await _deactivateReferralCode(user.promoterCode);
     }
+  }
+
+  Future<void> setPromoterActive(Promoter promoter, bool isActive) async {
+    await _db.collection('promoters').doc(promoter.id).set({
+      'isActive': isActive,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    if (promoter.userId.isNotEmpty) {
+      await _db.collection('users').doc(promoter.userId).set({
+        'isActive': isActive,
+        'status': isActive ? 'approved' : 'rejected',
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    }
+
+    await _ensureReferralCode(
+      promoterId: promoter.userId,
+      referralCode: promoter.referralCode,
+      isActive: isActive,
+    );
+  }
+
+  Future<void> setMaintenanceModePlaceholder(bool enabled) async {
+    await _db.collection('platform').doc('settings').set({
+      'maintenanceMode': enabled,
+      'maintenanceModeUpdatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   Future<void> approveUser(AppUser user) async {

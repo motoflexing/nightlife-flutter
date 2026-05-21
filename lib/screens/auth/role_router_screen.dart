@@ -2,16 +2,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/app_user.dart';
-import '../../screens/admin/admin_dashboard_screen.dart';
 import '../../screens/club/club_admin_dashboard_screen.dart';
 import '../../screens/promoter/promoter_dashboard_screen.dart';
+import '../../screens/super_admin/super_admin_screen.dart';
 import '../../screens/user/user_shell_screen.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/state_views.dart';
 import 'access_state_screen.dart';
 import 'club_onboarding_screen.dart';
-import 'login_screen.dart';
+import 'welcome_screen.dart';
 
 class RoleRouterScreen extends StatelessWidget {
   const RoleRouterScreen({super.key});
@@ -25,7 +25,7 @@ class RoleRouterScreen extends StatelessWidget {
           return const NeonScaffold(child: LoadingView());
         }
         final user = authSnapshot.data;
-        if (user == null) return const LoginScreen();
+        if (user == null) return const WelcomeScreen();
         return StreamBuilder<AppUser?>(
           stream: AuthService.instance.profileStream(user.uid),
           builder: (context, profileSnapshot) {
@@ -93,7 +93,33 @@ class RoleRouterScreen extends StatelessWidget {
             }
             switch (profile.role) {
               case 'superAdmin':
-                return AdminDashboardScreen(currentUser: profile);
+                if (!AuthService.instance.isSuperAdminUnlockArmed) {
+                  return const AccessStateScreen(
+                    title: 'Access denied',
+                    message:
+                        'Super Admin access requires an active secure unlock.',
+                    icon: Icons.lock_outline,
+                  );
+                }
+                return FutureBuilder<bool>(
+                  future: AuthService.instance.verifyCurrentUserIsSuperAdmin(),
+                  builder: (context, superAdminSnapshot) {
+                    if (superAdminSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const NeonScaffold(
+                        child: LoadingView(message: 'Verifying role'),
+                      );
+                    }
+                    if (superAdminSnapshot.data != true) {
+                      return const AccessStateScreen(
+                        title: 'Access denied',
+                        message: 'This account is not a Super Admin.',
+                        icon: Icons.lock_outline,
+                      );
+                    }
+                    return SuperAdminScreen(currentUser: profile);
+                  },
+                );
               case 'promoter':
                 return PromoterDashboardScreen(currentUser: profile);
               case 'clubAdmin':

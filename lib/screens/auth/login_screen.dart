@@ -1,12 +1,16 @@
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
+import '../../screens/super_admin/super_admin_screen.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/fiery_unlock_overlay.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_gradient_button.dart';
+import '../../widgets/secret_super_admin_unlock_gate.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,10 +24,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _userRoleKey = GlobalKey();
+  final _venueRoleKey = GlobalKey();
 
   String _selectedRole = 'user';
   bool _loading = false;
   bool _hidePassword = true;
+  bool _superAdminUnlockArmed = false;
+  bool _unlockingSuperAdmin = false;
 
   final List<Map<String, String>> _roles = const [
     {'label': 'User', 'value': 'user'},
@@ -47,8 +55,11 @@ class _LoginScreenState extends State<LoginScreen> {
       await AuthService.instance.signIn(
         email: _email.text.trim(),
         password: _password.text,
-        requestedRole: _selectedRole,
+        requestedRole: _superAdminUnlockArmed ? 'superAdmin' : _selectedRole,
       );
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
     } on AuthException catch (error) {
       _showError(error.message);
     } finally {
@@ -141,68 +152,116 @@ class _LoginScreenState extends State<LoginScreen> {
     ).whenComplete(emailController.dispose);
   }
 
-  Widget _roleSelector() {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppTheme.surface.withValues(alpha: 0.78),
-        borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: AppTheme.glassBorder),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryViolet.withValues(alpha: 0.12),
-            blurRadius: 18,
-            spreadRadius: -8,
-          ),
-        ],
-      ),
-      child: Row(
-        children: _roles.map((role) {
-          final isSelected = _selectedRole == role['value'];
+  Future<void> _handleSuperAdminUnlockGesture() async {
+    if (_unlockingSuperAdmin) return;
+    _unlockingSuperAdmin = true;
+    _superAdminUnlockArmed = true;
+    AuthService.instance.armSuperAdminUnlock();
 
-          return Expanded(
-            child: GestureDetector(
-              onTap: _loading
-                  ? null
-                  : () {
-                      setState(() {
-                        _selectedRole = role['value']!;
-                      });
-                    },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOut,
-                decoration: BoxDecoration(
-                  gradient: isSelected ? AppTheme.premiumGradient : null,
-                  color: isSelected ? null : Colors.transparent,
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppTheme.neonViolet.withValues(alpha: 0.28),
-                            blurRadius: 16,
-                            spreadRadius: -8,
-                            offset: const Offset(0, 8),
-                          ),
-                        ]
-                      : null,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  role['label']!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: isSelected ? Colors.white : AppTheme.textMuted,
+    await _playSuperAdminUnlockSoundHook();
+    await _triggerSuperAdminVibrationHook();
+    if (mounted) await showFieryUnlockOverlay(context);
+
+    final allowed = await AuthService.instance.verifyCurrentUserIsSuperAdmin();
+    final profile = allowed
+        ? await AuthService.instance.getCurrentProfile()
+        : null;
+
+    if (mounted && profile != null && profile.isSuperAdmin) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => SuperAdminScreen(currentUser: profile),
+        ),
+      );
+    }
+
+    _unlockingSuperAdmin = false;
+  }
+
+  Future<void> _playSuperAdminUnlockSoundHook() async {
+    // Hook for a future cyberpunk unlock sound asset.
+  }
+
+  Future<void> _triggerSuperAdminVibrationHook() {
+    return HapticFeedback.heavyImpact();
+  }
+
+  Widget _roleSelector() {
+    return SecretSuperAdminUnlockGate(
+      userKey: _userRoleKey,
+      venueKey: _venueRoleKey,
+      enabled: !_loading && _selectedRole == 'clubAdmin',
+      onUnlock: _handleSuperAdminUnlockGesture,
+      child: Container(
+        height: 56,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: AppTheme.surface.withValues(alpha: 0.78),
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: AppTheme.glassBorder),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primaryViolet.withValues(alpha: 0.12),
+              blurRadius: 18,
+              spreadRadius: -8,
+            ),
+          ],
+        ),
+        child: Row(
+          children: _roles.map((role) {
+            final isSelected = _selectedRole == role['value'];
+            final key = switch (role['value']) {
+              'user' => _userRoleKey,
+              'clubAdmin' => _venueRoleKey,
+              _ => null,
+            };
+
+            return Expanded(
+              child: GestureDetector(
+                key: key,
+                onTap: _loading
+                    ? null
+                    : () {
+                        setState(() {
+                          _selectedRole = role['value']!;
+                        });
+                      },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  decoration: BoxDecoration(
+                    gradient: isSelected ? AppTheme.premiumGradient : null,
+                    color: isSelected ? null : Colors.transparent,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: AppTheme.neonViolet.withValues(
+                                alpha: 0.28,
+                              ),
+                              blurRadius: 16,
+                              spreadRadius: -8,
+                              offset: const Offset(0, 8),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    role['label']!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: isSelected ? Colors.white : AppTheme.textMuted,
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
