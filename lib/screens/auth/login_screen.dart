@@ -1,10 +1,9 @@
-import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
-import '../../screens/super_admin/super_admin_screen.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/fiery_unlock_overlay.dart';
 import '../../widgets/glass_card.dart';
@@ -30,7 +29,6 @@ class _LoginScreenState extends State<LoginScreen> {
   String _selectedRole = 'user';
   bool _loading = false;
   bool _hidePassword = true;
-  bool _superAdminUnlockArmed = false;
   bool _unlockingSuperAdmin = false;
 
   final List<Map<String, String>> _roles = const [
@@ -55,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await AuthService.instance.signIn(
         email: _email.text.trim(),
         password: _password.text,
-        requestedRole: _superAdminUnlockArmed ? 'superAdmin' : _selectedRole,
+        requestedRole: _selectedRole,
       );
       if (mounted && Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
@@ -154,36 +152,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleSuperAdminUnlockGesture() async {
     if (_unlockingSuperAdmin) return;
-    _unlockingSuperAdmin = true;
-    _superAdminUnlockArmed = true;
+    setState(() => _unlockingSuperAdmin = true);
     AuthService.instance.armSuperAdminUnlock();
 
-    await _playSuperAdminUnlockSoundHook();
-    await _triggerSuperAdminVibrationHook();
+    await HapticFeedback.heavyImpact();
     if (mounted) await showFieryUnlockOverlay(context);
-
-    final allowed = await AuthService.instance.verifyCurrentUserIsSuperAdmin();
-    final profile = allowed
-        ? await AuthService.instance.getCurrentProfile()
-        : null;
-
-    if (mounted && profile != null && profile.isSuperAdmin) {
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => SuperAdminScreen(currentUser: profile),
-        ),
-      );
-    }
-
-    _unlockingSuperAdmin = false;
-  }
-
-  Future<void> _playSuperAdminUnlockSoundHook() async {
-    // Hook for a future cyberpunk unlock sound asset.
-  }
-
-  Future<void> _triggerSuperAdminVibrationHook() {
-    return HapticFeedback.heavyImpact();
+    if (mounted) await Navigator.of(context).pushNamed('/super-admin-login');
+    if (mounted) setState(() => _unlockingSuperAdmin = false);
   }
 
   Widget _roleSelector() {
@@ -192,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
       venueKey: _venueRoleKey,
       enabled: !_loading && _selectedRole == 'clubAdmin',
       onUnlock: _handleSuperAdminUnlockGesture,
+      onHoldSatisfied: HapticFeedback.selectionClick,
       child: Container(
         height: 56,
         padding: const EdgeInsets.all(4),
@@ -221,11 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 key: key,
                 onTap: _loading
                     ? null
-                    : () {
-                        setState(() {
-                          _selectedRole = role['value']!;
-                        });
-                      },
+                    : () => setState(() => _selectedRole = role['value']!),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOut,
@@ -319,7 +291,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-
                       Text(
                         AppConstants.appName,
                         textAlign: TextAlign.center,
@@ -329,9 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontSize: isPhone ? 26 : 30,
                             ),
                       ),
-
                       const SizedBox(height: 6),
-
                       const Text(
                         'Login to manage your night.',
                         textAlign: TextAlign.center,
@@ -340,13 +309,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontSize: 15,
                         ),
                       ),
-
                       const SizedBox(height: 24),
-
                       _roleSelector(),
-
                       const SizedBox(height: 18),
-
                       TextFormField(
                         controller: _email,
                         keyboardType: TextInputType.emailAddress,
@@ -365,9 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           return null;
                         },
                       ),
-
                       const SizedBox(height: 14),
-
                       TextFormField(
                         controller: _password,
                         obscureText: _hidePassword,
@@ -381,9 +344,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ? 'Show password'
                                 : 'Hide password',
                             onPressed: () {
-                              setState(() {
-                                _hidePassword = !_hidePassword;
-                              });
+                              setState(() => _hidePassword = !_hidePassword);
                             },
                             icon: Icon(
                               _hidePassword
@@ -399,7 +360,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           return null;
                         },
                       ),
-
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
@@ -407,9 +367,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text('Forgot password?'),
                         ),
                       ),
-
                       const SizedBox(height: 12),
-
                       SizedBox(
                         height: 56,
                         child: PremiumGradientButton(
@@ -419,9 +377,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           label: 'Login',
                         ),
                       ),
-
                       const SizedBox(height: 12),
-
                       TextButton(
                         onPressed: _loading
                             ? null

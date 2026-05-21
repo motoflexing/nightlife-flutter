@@ -17,6 +17,10 @@ class AppUser {
     required this.lastLongitude,
     required this.lastKnownCity,
     required this.lastKnownAddress,
+    required this.verificationStatus,
+    required this.documentUploadStatus,
+    required this.onboardingCompleted,
+    required this.rejectionReason,
   });
 
   final String uid;
@@ -34,6 +38,10 @@ class AppUser {
   final double? lastLongitude;
   final String lastKnownCity;
   final String lastKnownAddress;
+  final String verificationStatus;
+  final String documentUploadStatus;
+  final bool onboardingCompleted;
+  final String rejectionReason;
 
   bool get isUser => role == 'user';
   bool get isPromoter => role == 'promoter';
@@ -63,6 +71,16 @@ class AppUser {
       lastLongitude: _readDouble(data['lastLongitude']),
       lastKnownCity: data['lastKnownCity'] as String? ?? '',
       lastKnownAddress: data['lastKnownAddress'] as String? ?? '',
+      verificationStatus:
+          data['verificationStatus'] as String? ??
+          data['status'] as String? ??
+          '',
+      documentUploadStatus:
+          data['documentUploadStatus'] as String? ?? 'not_selected',
+      onboardingCompleted:
+          data['onboardingCompleted'] as bool? ??
+          roleIsUser(data['role'] as String?),
+      rejectionReason: data['rejectionReason'] as String? ?? '',
     );
   }
 
@@ -83,7 +101,15 @@ class AppUser {
       'lastLongitude': lastLongitude,
       'lastKnownCity': lastKnownCity,
       'lastKnownAddress': lastKnownAddress,
+      'verificationStatus': verificationStatus,
+      'documentUploadStatus': documentUploadStatus,
+      'onboardingCompleted': onboardingCompleted,
+      'rejectionReason': rejectionReason,
     };
+  }
+
+  static bool roleIsUser(String? role) {
+    return _normalizeRole(role) == 'user';
   }
 
   static String _normalizeRole(String? role) {

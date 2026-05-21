@@ -160,12 +160,12 @@ class _SuperAdminSection {
 
 class _FireAdminColors {
   static const black = Color(0xFF030304);
-  static const charcoal = Color(0xFF111217);
-  static const panel = Color(0xE615161C);
-  static const lava = Color(0xFFFF6A00);
-  static const ember = Color(0xFFFF2A12);
-  static const gold = Color(0xFFFFC266);
-  static const red = Color(0xFFB11308);
+  static const charcoal = Color(0xFF10111A);
+  static const panel = Color(0xE6111220);
+  static const lava = Color(0xFFFF2D55);
+  static const ember = Color(0xFFFF3D8B);
+  static const gold = Color(0xFFB8FF5C);
+  static const red = Color(0xFFA855F7);
 }
 
 class _CommandHeader extends StatelessWidget {
@@ -447,8 +447,8 @@ class _AnalyticsOverview extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _SectionTitle(
-                icon: Icons.bolt_outlined,
-                title: 'Operations Pulse',
+                icon: Icons.radar_outlined,
+                title: 'Restricted Operations Pulse',
                 action: ElevatedButton.icon(
                   onPressed: () =>
                       FirestoreService.instance.seedDemoEvents(currentUser.uid),
@@ -463,8 +463,9 @@ class _AnalyticsOverview extends StatelessWidget {
                 children: [
                   _SignalChip(label: 'Firestore gated'),
                   _SignalChip(label: 'Role locked'),
-                  _SignalChip(label: 'Hidden route'),
-                  _SignalChip(label: 'Emergency ready'),
+                  _SignalChip(label: 'Hidden route armed'),
+                  _SignalChip(label: 'Venue approvals live'),
+                  _SignalChip(label: 'RSVP command ready'),
                 ],
               ),
             ],

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/app_user.dart';
 
@@ -86,101 +87,194 @@ class AuthService {
     String instagramId = '',
     String snapchatId = '',
     String validIdUrl = '',
+    String businessName = '',
+    String gstNumber = '',
+    String businessPhone = '',
+    String businessAddress = '',
+    String businessCity = '',
+    String businessInstagram = '',
+    String documentUploadStatus = 'pending_upload',
   }) async {
     try {
       _requestedRole = requestedRole;
 
-      final credential = await _auth.createUserWithEmailAndPassword(
-        email: email.trim(),
+      final user = await createAuthUser(
+        name: name,
+        email: email,
         password: password,
       );
-
-      final user = credential.user;
-
-      if (user == null) {
-        throw const AuthException('Unable to create your account right now.');
-      }
-
-      final cleanName = name.trim();
-      final cleanEmail = email.trim().toLowerCase();
-      final cleanPhone = phone.trim();
-      final cleanTitle = title.trim();
-      final cleanGender = gender.trim();
-      final cleanDob = dob.trim();
-      final cleanInstagramId = instagramId.trim();
-      final cleanSnapchatId = snapchatId.trim();
-      final cleanValidIdUrl = validIdUrl.trim();
-
-      final role = _safeRequestedRole(requestedRole);
-      final status = role == 'clubAdmin' ? 'pending' : 'approved';
-
-      final promoterCode = role == 'promoter'
-          ? _makePromoterCode(cleanName, user.uid)
-          : null;
-
-      await user.updateDisplayName(cleanName);
-
-      final userData = {
-        'uid': user.uid,
-
-        // Basic details
-        'title': cleanTitle,
-        'name': cleanName,
-        'email': cleanEmail,
-        'phone': cleanPhone,
-        'gender': cleanGender,
-        'dob': cleanDob,
-
-        // Social IDs
-        'instagramId': cleanInstagramId,
-        'snapchatId': cleanSnapchatId,
-
-        // Verification
-        'validIdUrl': cleanValidIdUrl,
-        'verificationStatus': cleanValidIdUrl.isEmpty
-            ? 'not_uploaded'
-            : 'pending',
-
-        // Role details
-        'role': role,
-        'status': status,
-        'clubId': null,
-        'promoterCode': promoterCode,
-
-        // System fields
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'isActive': true,
-      };
-
-      await _db.collection('users').doc(user.uid).set(userData);
-
-      if (role == 'promoter') {
-        await _db.collection('promoters').doc(user.uid).set({
-          'userId': user.uid,
-          'name': cleanName,
-          'email': cleanEmail,
-          'phone': cleanPhone,
-          'referralCode': promoterCode,
-          'totalRsvps': 0,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-          'isActive': true,
-        });
-
-        await _db.collection('referralCodes').doc(promoterCode).set({
-          'promoterId': user.uid,
-          'referralCode': promoterCode,
-          'isActive': true,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }
+      await saveCurrentUserProfile(
+        user: user,
+        name: name,
+        email: email,
+        phone: phone,
+        requestedRole: requestedRole,
+        title: title,
+        gender: gender,
+        dob: dob,
+        instagramId: instagramId,
+        snapchatId: snapchatId,
+        validIdUrl: validIdUrl,
+      );
     } on FirebaseAuthException catch (error) {
       throw AuthException(_friendlyAuthError(error));
     } catch (error) {
       throw AuthException(error.toString());
     }
+  }
+
+  Future<User> createAuthUser({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    debugPrint('Signup auth create started.');
+    final credential = await _auth
+        .createUserWithEmailAndPassword(email: email.trim(), password: password)
+        .timeout(const Duration(seconds: 20));
+    final user = credential.user;
+    if (user == null) {
+      throw const AuthException('Unable to create your account right now.');
+    }
+    await user
+        .updateDisplayName(name.trim())
+        .timeout(const Duration(seconds: 10));
+    debugPrint('Signup auth create completed: ${user.uid}');
+    return user;
+  }
+
+  Future<void> saveCurrentUserProfile({
+    required User user,
+    required String name,
+    required String email,
+    required String phone,
+    required String requestedRole,
+    String title = '',
+    String gender = '',
+    String dob = '',
+    String instagramId = '',
+    String snapchatId = '',
+    String validIdUrl = '',
+    String businessName = '',
+    String gstNumber = '',
+    String businessPhone = '',
+    String businessAddress = '',
+    String businessCity = '',
+    String businessInstagram = '',
+    String documentUploadStatus = 'pending_upload',
+  }) async {
+    debugPrint('Firestore user profile save started.');
+    final cleanName = name.trim();
+    final cleanEmail = email.trim().toLowerCase();
+    final cleanPhone = phone.trim();
+    final cleanValidIdUrl = validIdUrl.trim();
+    final role = _safeRequestedRole(requestedRole);
+    final requiresReview = role == 'promoter' || role == 'clubAdmin';
+    final status = requiresReview ? 'pending_review' : 'approved';
+    final promoterCode = role == 'promoter'
+        ? _makePromoterCode(cleanName, user.uid)
+        : null;
+
+    final userData = {
+      'uid': user.uid,
+      'title': title.trim(),
+      'name': cleanName,
+      'email': cleanEmail,
+      'phone': cleanPhone,
+      'gender': gender.trim(),
+      'dob': dob.trim(),
+      'instagramId': instagramId.trim(),
+      'snapchatId': snapchatId.trim(),
+      'validIdUrl': cleanValidIdUrl,
+      'verificationStatus': requiresReview ? 'pending_review' : 'approved',
+      'idVerificationStatus': 'not_selected',
+      'documentUploadStatus': requiresReview
+          ? documentUploadStatus
+          : 'not_required',
+      'onboardingCompleted': true,
+      'rejectionReason': '',
+      if (requiresReview) 'businessName': businessName.trim(),
+      if (requiresReview && role == 'clubAdmin')
+        'venueName': businessName.trim(),
+      if (requiresReview) 'gstNumber': gstNumber.trim(),
+      if (requiresReview) 'ownerName': cleanName,
+      if (requiresReview) 'businessPhone': businessPhone.trim(),
+      if (requiresReview) 'businessAddress': businessAddress.trim(),
+      if (requiresReview) 'city': businessCity.trim(),
+      if (requiresReview) 'instagramLink': businessInstagram.trim(),
+      'role': role,
+      'status': status,
+      'clubId': null,
+      'promoterCode': promoterCode,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'isActive': true,
+    };
+
+    await _db
+        .collection('users')
+        .doc(user.uid)
+        .set(userData)
+        .timeout(const Duration(seconds: 20));
+
+    if (role == 'promoter') {
+      await _db
+          .collection('promoters')
+          .doc(user.uid)
+          .set({
+            'userId': user.uid,
+            'name': cleanName,
+            'email': cleanEmail,
+            'phone': cleanPhone,
+            'referralCode': promoterCode,
+            'totalRsvps': 0,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'isActive': true,
+          })
+          .timeout(const Duration(seconds: 20));
+
+      await _db
+          .collection('referralCodes')
+          .doc(promoterCode)
+          .set({
+            'promoterId': user.uid,
+            'referralCode': promoterCode,
+            'isActive': true,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          })
+          .timeout(const Duration(seconds: 20));
+    }
+    if (role == 'clubAdmin') {
+      final clubRef = _db.collection('clubs').doc();
+      await clubRef
+          .set({
+            'ownerId': user.uid,
+            'clubName': businessName.trim(),
+            'ownerName': cleanName,
+            'businessEmail': cleanEmail,
+            'phone': businessPhone.trim(),
+            'city': businessCity.trim(),
+            'address': businessAddress.trim(),
+            'instagram': businessInstagram.trim(),
+            'documentUrl': '',
+            'documentUploadStatus': documentUploadStatus,
+            'verificationStatus': 'pending_review',
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          })
+          .timeout(const Duration(seconds: 20));
+      await _db
+          .collection('users')
+          .doc(user.uid)
+          .set({
+            'clubId': clubRef.id,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true))
+          .timeout(const Duration(seconds: 20));
+    }
+    debugPrint('Firestore user profile save completed.');
   }
 
   Future<AppUser> ensureSafeProfile(User user) async {
@@ -228,6 +322,28 @@ class AuthService {
     _requestedRole = null;
     _superAdminUnlockArmed = false;
     return _auth.signOut();
+  }
+
+  Future<void> updateCurrentUserValidIdUrl(String validIdUrl) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw const AuthException('Sign in is required to upload a valid ID.');
+    }
+    await _db
+        .collection('users')
+        .doc(user.uid)
+        .set({
+          'validIdUrl': validIdUrl,
+          'idVerificationStatus': validIdUrl.trim().isEmpty
+              ? 'not_selected'
+              : 'pending_review',
+          'verificationStatus': validIdUrl.trim().isEmpty
+              ? 'not_selected'
+              : 'pending_review',
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true))
+        .timeout(const Duration(seconds: 20));
+    debugPrint('Firestore updated with valid ID pending_review.');
   }
 
   String _safeRequestedRole(String role) {

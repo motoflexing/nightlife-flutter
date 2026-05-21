@@ -65,11 +65,11 @@ service cloud.firestore {
             && request.resource.data.status == 'approved'
             && request.resource.data.promoterCode == null)
           || (request.resource.data.role == 'promoter'
-            && request.resource.data.status == 'approved'
+            && request.resource.data.status == 'pending_review'
             && request.resource.data.promoterCode is string
             && request.resource.data.promoterCode.size() > 0)
           || (request.resource.data.role == 'clubAdmin'
-            && request.resource.data.status == 'pending'
+            && request.resource.data.status == 'pending_review'
             && request.resource.data.promoterCode == null)
         )
         && request.resource.data.isActive == true
@@ -85,6 +85,18 @@ service cloud.firestore {
           'snapchatId',
           'validIdUrl',
           'verificationStatus',
+          'idVerificationStatus',
+          'documentUploadStatus',
+          'onboardingCompleted',
+          'rejectionReason',
+          'businessName',
+          'venueName',
+          'gstNumber',
+          'ownerName',
+          'businessPhone',
+          'businessAddress',
+          'city',
+          'instagramLink',
           'role',
           'status',
           'clubId',
@@ -110,6 +122,20 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).changedKeys().hasOnly([
             'name',
             'phone',
+            'validIdUrl',
+            'verificationStatus',
+            'idVerificationStatus',
+            'documentUploadStatus',
+            'onboardingCompleted',
+            'businessName',
+            'venueName',
+            'gstNumber',
+            'ownerName',
+            'businessPhone',
+            'businessAddress',
+            'city',
+            'instagramLink',
+            'documentUrl',
             'clubId',
             'status',
             'updatedAt'
@@ -117,8 +143,30 @@ service cloud.firestore {
           && request.resource.data.role == resource.data.role
           && request.resource.data.isActive == resource.data.isActive
           && (
+            !request.resource.data.diff(resource.data).changedKeys().hasAny([
+              'validIdUrl',
+              'verificationStatus',
+              'idVerificationStatus'
+            ])
+            || (
+              request.resource.data.validIdUrl is string
+              && request.resource.data.validIdUrl.size() > 0
+              && request.resource.data.verificationStatus == 'pending_review'
+              && request.resource.data.idVerificationStatus == 'pending_review'
+            )
+            || (
+              request.resource.data.onboardingCompleted == true
+              && request.resource.data.verificationStatus == 'pending_review'
+              && request.resource.data.status == 'pending_review'
+              && request.resource.data.documentUploadStatus in [
+                'pending_upload',
+                'uploaded_pending_review'
+              ]
+            )
+          )
+          && (
             resource.data.role != 'clubAdmin'
-            || request.resource.data.status == 'pending'
+            || request.resource.data.status in ['pending', 'pending_review']
             || request.resource.data.status == resource.data.status
           )
         );

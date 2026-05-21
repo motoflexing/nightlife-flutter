@@ -490,6 +490,79 @@ class FirestoreService {
     });
   }
 
+  Future<void> submitVerificationDetails({
+    required AppUser user,
+    required String businessName,
+    required String gstNumber,
+    required String ownerName,
+    required String businessPhone,
+    required String businessAddress,
+    required String city,
+    required String instagramLink,
+    String documentUrl = '',
+    String documentUploadStatus = 'pending_upload',
+  }) async {
+    final role = user.role;
+    final details = {
+      'businessName': businessName.trim(),
+      'venueName': role == 'clubAdmin' ? businessName.trim() : null,
+      'gstNumber': gstNumber.trim(),
+      'ownerName': ownerName.trim(),
+      'businessPhone': businessPhone.trim(),
+      'businessAddress': businessAddress.trim(),
+      'city': city.trim(),
+      'instagramLink': instagramLink.trim(),
+      'documentUrl': documentUrl.trim(),
+      'documentUploadStatus': documentUrl.trim().isEmpty
+          ? documentUploadStatus
+          : 'uploaded_pending_review',
+      'verificationStatus': 'pending_review',
+      'status': 'pending_review',
+      'onboardingCompleted': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    await _db
+        .collection('users')
+        .doc(user.uid)
+        .set(details, SetOptions(merge: true))
+        .timeout(const Duration(seconds: 20));
+
+    if (role == 'clubAdmin') {
+      final clubRef = user.clubId == null
+          ? _db.collection('clubs').doc()
+          : _db.collection('clubs').doc(user.clubId);
+      await clubRef
+          .set({
+            'ownerId': user.uid,
+            'clubName': businessName.trim(),
+            'ownerName': ownerName.trim(),
+            'businessEmail': user.email,
+            'phone': businessPhone.trim(),
+            'city': city.trim(),
+            'address': businessAddress.trim(),
+            'instagram': instagramLink.trim(),
+            'documentUrl': documentUrl.trim(),
+            'documentUploadStatus': documentUrl.trim().isEmpty
+                ? documentUploadStatus
+                : 'uploaded_pending_review',
+            'verificationStatus': 'pending_review',
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true))
+          .timeout(const Duration(seconds: 20));
+
+      await _db
+          .collection('users')
+          .doc(user.uid)
+          .set({
+            'clubId': clubRef.id,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true))
+          .timeout(const Duration(seconds: 20));
+    }
+  }
+
   Future<void> seedDemoEvents(String adminId) async {
     final batch = _db.batch();
 
@@ -506,7 +579,8 @@ class FirestoreService {
         description:
             'A high-energy Friday night built for RSVP-driven discovery.',
         priceText: 'Guestlist entry before 10 PM',
-        posterUrl: '',
+        posterUrl:
+            'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=85',
         isActive: true,
       ),
       NightlifeEvent.empty(createdBy: adminId).copyWith(
@@ -521,7 +595,8 @@ class FirestoreService {
         description:
             'Underground sounds, RSVP credits, and promoter-led distribution.',
         priceText: 'Cover starts at INR 999',
-        posterUrl: '',
+        posterUrl:
+            'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=1200&q=85',
         isActive: true,
       ),
     ];

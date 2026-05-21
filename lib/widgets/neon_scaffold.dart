@@ -7,6 +7,7 @@ class NeonScaffold extends StatelessWidget {
     super.key,
     required this.child,
     this.appBar,
+    this.drawer,
     this.bottomNavigationBar,
     this.floatingActionButton,
     this.floatingActionButtonLocation,
@@ -14,6 +15,7 @@ class NeonScaffold extends StatelessWidget {
 
   final Widget child;
   final PreferredSizeWidget? appBar;
+  final Widget? drawer;
   final Widget? bottomNavigationBar;
   final Widget? floatingActionButton;
   final FloatingActionButtonLocation? floatingActionButtonLocation;
@@ -22,6 +24,7 @@ class NeonScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBar,
+      drawer: drawer,
       bottomNavigationBar: bottomNavigationBar,
       floatingActionButton: floatingActionButton,
       floatingActionButtonLocation: floatingActionButtonLocation,

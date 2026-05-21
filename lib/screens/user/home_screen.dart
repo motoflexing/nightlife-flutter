@@ -5,6 +5,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/app_user.dart';
 import '../../models/event.dart';
+import '../../services/app_preferences_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/location_service.dart';
 import '../../widgets/event_card.dart';
@@ -42,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loadingMore = false;
   bool _hasMore = true;
   bool _nearbyEnabled = false;
-  bool _nearbyExpanded = false;
+  bool _nearbyExpanded = true;
   double? _userLatitude;
   double? _userLongitude;
   String? _userCity;
@@ -53,9 +54,17 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _restoreSelectedCity();
     _loadUserLocation();
     _loadFirstPage();
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _restoreSelectedCity() async {
+    final city = await AppPreferencesService.instance.loadSelectedCity();
+    if (!mounted || !AppConstants.cities.contains(city)) return;
+    setState(() => _city = city);
+    await _loadFirstPage();
   }
 
   @override
@@ -86,7 +95,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _locationMessage = '${permission.message} Showing city-based events.';
         final fallbackCity = widget.currentUser.lastKnownCity.trim();
         if (fallbackCity.isNotEmpty &&
-            AppConstants.cities.contains(fallbackCity)) {
+            AppConstants.cities.contains(fallbackCity) &&
+            _city == 'All') {
           _city = fallbackCity;
         }
       });
@@ -250,6 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onChanged: (value) {
                         if (value == null) return;
                         setState(() => _city = value);
+                        AppPreferencesService.instance.saveSelectedCity(value);
                         _loadFirstPage();
                       },
                     ),
@@ -280,6 +291,22 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          SliverToBoxAdapter(
+            child: _NearbyEventsSection(
+              loading: _loading,
+              events: _nearbySectionEvents,
+              expanded: _nearbyExpanded,
+              nearbyEnabled: _nearbyEnabled,
+              locationMessage: _locationMessage,
+              filter: _filter,
+              onToggle: () {
+                setState(() => _nearbyExpanded = !_nearbyExpanded);
+              },
+              onFilterChanged: (filter) => setState(() => _filter = filter),
+              distanceFor: _distanceFor,
+              onOpen: (event) => _openEvent(context, event),
+            ),
+          ),
           if (_loading)
             const SliverFillRemaining(
               child: LoadingView(message: 'Finding nights'),
@@ -297,22 +324,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 onOpen: (event) => _openEvent(context, event),
               ),
             ),
-          SliverToBoxAdapter(
-            child: _NearbyEventsSection(
-              loading: _loading,
-              events: _nearbySectionEvents,
-              expanded: _nearbyExpanded,
-              nearbyEnabled: _nearbyEnabled,
-              locationMessage: _locationMessage,
-              filter: _filter,
-              onToggle: () {
-                setState(() => _nearbyExpanded = !_nearbyExpanded);
-              },
-              onFilterChanged: (filter) => setState(() => _filter = filter),
-              distanceFor: _distanceFor,
-              onOpen: (event) => _openEvent(context, event),
-            ),
-          ),
         ],
       ),
     );

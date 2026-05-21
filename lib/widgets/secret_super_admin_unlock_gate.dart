@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+
+import '../core/theme/app_theme.dart';
 
 class SecretSuperAdminUnlockGate extends StatefulWidget {
   const SecretSuperAdminUnlockGate({
@@ -10,7 +13,9 @@ class SecretSuperAdminUnlockGate extends StatefulWidget {
     required this.venueKey,
     required this.onUnlock,
     this.enabled = true,
-    this.holdDuration = const Duration(milliseconds: 1500),
+    this.holdDuration = const Duration(seconds: 3),
+    this.onTrackingChanged,
+    this.onHoldSatisfied,
   });
 
   final Widget child;
@@ -19,6 +24,8 @@ class SecretSuperAdminUnlockGate extends StatefulWidget {
   final VoidCallback onUnlock;
   final bool enabled;
   final Duration holdDuration;
+  final ValueChanged<bool>? onTrackingChanged;
+  final VoidCallback? onHoldSatisfied;
 
   @override
   State<SecretSuperAdminUnlockGate> createState() =>
@@ -29,10 +36,10 @@ class _SecretSuperAdminUnlockGateState
     extends State<SecretSuperAdminUnlockGate> {
   Timer? _holdTimer;
   Offset? _startPosition;
+  Offset? _currentPosition;
   bool _tracking = false;
   bool _holdSatisfied = false;
-  bool _draggedTowardUser = false;
-  bool _unlockedForPointer = false;
+  bool _unlockTriggered = false;
 
   @override
   void dispose() {
@@ -43,51 +50,50 @@ class _SecretSuperAdminUnlockGateState
   void _handlePointerDown(PointerDownEvent event) {
     if (!widget.enabled) return;
     final venueRect = _globalRectFor(widget.venueKey);
-    if (venueRect == null || !venueRect.contains(event.position)) return;
+    if (venueRect == null || !venueRect.inflate(30).contains(event.position)) {
+      return;
+    }
 
-    _holdTimer?.cancel();
-    _startPosition = event.position;
-    _tracking = true;
-    _holdSatisfied = false;
-    _draggedTowardUser = false;
-    _unlockedForPointer = false;
+    _reset(notify: false);
+    setState(() {
+      _tracking = true;
+      _startPosition = event.position;
+      _currentPosition = event.position;
+    });
+    widget.onTrackingChanged?.call(true);
+
     _holdTimer = Timer(widget.holdDuration, () {
-      if (mounted && _tracking) {
-        _holdSatisfied = true;
-      }
+      if (!mounted || !_tracking) return;
+      setState(() => _holdSatisfied = true);
+      widget.onHoldSatisfied?.call();
     });
   }
 
   void _handlePointerMove(PointerMoveEvent event) {
-    if (!_tracking || !_holdSatisfied || _unlockedForPointer) return;
+    if (_tracking) setState(() => _currentPosition = event.position);
+    if (!_tracking || !_holdSatisfied || _unlockTriggered) return;
 
-    final start = _startPosition;
     final userRect = _globalRectFor(widget.userKey);
-    final venueRect = _globalRectFor(widget.venueKey);
-    if (start == null || userRect == null || venueRect == null) return;
+    if (userRect == null) return;
 
-    final horizontalTravel = start.dx - event.position.dx;
-    final verticalDrift = (event.position.dy - start.dy).abs();
-    final dragFloor = venueRect.width * 0.45;
-    final allowedDrift = venueRect.height * 1.45;
-    final targetRect = userRect.inflate(userRect.width * 0.18);
-
-    _draggedTowardUser =
-        horizontalTravel >= dragFloor && verticalDrift <= allowedDrift;
-
-    if (_draggedTowardUser && targetRect.contains(event.position)) {
-      _unlockedForPointer = true;
+    if (userRect.inflate(80).contains(event.position)) {
+      _unlockTriggered = true;
       widget.onUnlock();
+      _reset();
     }
   }
 
-  void _handlePointerEnd(PointerEvent event) {
+  void _handlePointerEnd(PointerEvent event) => _reset();
+
+  void _reset({bool notify = true}) {
     _holdTimer?.cancel();
     _tracking = false;
     _holdSatisfied = false;
-    _draggedTowardUser = false;
-    _unlockedForPointer = false;
+    _unlockTriggered = false;
     _startPosition = null;
+    _currentPosition = null;
+    if (notify) widget.onTrackingChanged?.call(false);
+    if (mounted) setState(() {});
   }
 
   Rect? _globalRectFor(GlobalKey key) {
@@ -106,7 +112,79 @@ class _SecretSuperAdminUnlockGateState
       onPointerMove: _handlePointerMove,
       onPointerUp: _handlePointerEnd,
       onPointerCancel: _handlePointerEnd,
-      child: widget.child,
+      child: Stack(
+        children: [
+          widget.child,
+          if (_tracking && _startPosition != null && _currentPosition != null)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: _SecretGesturePainter(
+                    start: _startPosition!,
+                    current: _currentPosition!,
+                    armed: _holdSatisfied,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
+  }
+}
+
+class _SecretGesturePainter extends CustomPainter {
+  const _SecretGesturePainter({
+    required this.start,
+    required this.current,
+    required this.armed,
+  });
+
+  final Offset start;
+  final Offset current;
+  final bool armed;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final color = armed ? AppTheme.neonLime : AppTheme.accentPink;
+    final pulsePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = armed ? 2.2 : 1.4
+      ..color = color.withValues(alpha: armed ? 0.72 : 0.42)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawCircle(start, armed ? 34 : 24, pulsePaint);
+
+    final path = Path()
+      ..moveTo(start.dx, start.dy)
+      ..quadraticBezierTo(
+        (start.dx + current.dx) / 2,
+        math.min(start.dy, current.dy) - 38,
+        current.dx,
+        current.dy,
+      );
+    final linePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = armed ? 2.4 : 1.4
+      ..strokeCap = StrokeCap.round
+      ..shader = LinearGradient(
+        colors: [
+          AppTheme.accentPink.withValues(alpha: 0.08),
+          AppTheme.neonViolet.withValues(alpha: 0.72),
+          AppTheme.neonLime.withValues(alpha: armed ? 0.85 : 0.12),
+        ],
+      ).createShader(Offset.zero & size);
+    canvas.drawPath(path, linePaint);
+
+    final nodePaint = Paint()
+      ..color = color.withValues(alpha: 0.84)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawCircle(current, armed ? 7 : 5, nodePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SecretGesturePainter oldDelegate) {
+    return oldDelegate.start != start ||
+        oldDelegate.current != current ||
+        oldDelegate.armed != armed;
   }
 }

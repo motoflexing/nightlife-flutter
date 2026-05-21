@@ -50,7 +50,9 @@ class EventCard extends StatelessWidget {
                 ? constraints.maxWidth
                 : width;
             final narrow = cardWidth < 270;
-            final posterAspectRatio = narrow ? 16 / 10 : 16 / 9;
+            final posterAspectRatio = compact
+                ? 16 / 7.6
+                : (narrow ? 16 / 10 : 16 / 9);
             final contentPadding = narrow
                 ? const EdgeInsets.fromLTRB(11, 10, 11, 11)
                 : const EdgeInsets.all(13);
@@ -101,65 +103,86 @@ class EventCard extends StatelessWidget {
                                 Flexible(child: _Pill(label: distanceLabel)),
                               ],
                             ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: compact ? 6 : 8),
                           _IconLine(
                             icon: Icons.place_outlined,
                             text: '${event.venueName} - ${event.address}',
                             maxLines: mobile && !compact ? 2 : 1,
                           ),
-                          const SizedBox(height: 5),
+                          SizedBox(height: compact ? 3 : 5),
                           _IconLine(icon: Icons.schedule, text: dateText),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 7,
-                            runSpacing: 7,
-                            children: [
-                              _Meta(
-                                label: event.musicType,
-                                maxWidth: compact || narrow
-                                    ? compactMetaMaxWidth
-                                    : metaMaxWidth,
-                              ),
-                              _Meta(
-                                label: event.priceText,
-                                maxWidth: compact || narrow
-                                    ? compactMetaMaxWidth
-                                    : metaMaxWidth,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: SizedBox(
-                                  height: 42,
-                                  child: ElevatedButton(
-                                    onPressed: onRsvp ?? onTap,
-                                    child: const Text(
-                                      'RSVP',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                          if (!compact) ...[
+                            const SizedBox(height: 8),
+                            _GoingRow(event: event),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 7,
+                              runSpacing: 7,
+                              children: [
+                                _Meta(
+                                  label: event.musicType,
+                                  maxWidth: narrow
+                                      ? compactMetaMaxWidth
+                                      : metaMaxWidth,
+                                ),
+                                _Meta(
+                                  label: event.priceText,
+                                  maxWidth: narrow
+                                      ? compactMetaMaxWidth
+                                      : metaMaxWidth,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 42,
+                                    child: ElevatedButton(
+                                      onPressed: onRsvp ?? onTap,
+                                      child: const Text(
+                                        'RSVP',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: SizedBox(
-                                  height: 42,
-                                  child: OutlinedButton(
-                                    onPressed: onTap,
-                                    child: Text(
-                                      narrow ? 'Details' : 'Check-in',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 42,
+                                    child: OutlinedButton(
+                                      onPressed: onTap,
+                                      child: Text(
+                                        narrow ? 'Details' : 'Check-in',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
+                          ] else ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _Meta(
+                                    label: _compactStatus(event),
+                                    maxWidth: double.infinity,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                TextButton(
+                                  onPressed: onTap,
+                                  child: const Text('Details'),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       );
                     },
@@ -170,6 +193,69 @@ class EventCard extends StatelessWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+String _compactStatus(NightlifeEvent event) {
+  if (event.priceText.trim().isNotEmpty) return event.priceText;
+  final hours = event.dateTime.difference(DateTime.now()).inHours;
+  if (hours <= 24 && hours >= 0) return 'Guestlist closes soon';
+  return 'RSVP available';
+}
+
+class _GoingRow extends StatelessWidget {
+  const _GoingRow({required this.event});
+
+  final NightlifeEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    final going = 18 + event.title.codeUnits.fold<int>(0, (a, b) => a + b) % 74;
+    return Row(
+      children: [
+        SizedBox(
+          width: 54,
+          height: 24,
+          child: Stack(
+            children: List.generate(3, (index) {
+              return Positioned(
+                left: index * 15,
+                child: CircleAvatar(
+                  radius: 12,
+                  backgroundColor: [
+                    AppTheme.accentPink,
+                    AppTheme.neonViolet,
+                    AppTheme.neonLime,
+                  ][index],
+                  child: Text(
+                    ['A', 'R', 'N'][index],
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            '$going going - ${event.crowdType.isEmpty ? 'Premium crowd' : event.crowdType}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        _Meta(label: _compactStatus(event), maxWidth: 128),
+      ],
     );
   }
 }

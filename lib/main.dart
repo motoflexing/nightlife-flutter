@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
+import 'screens/admin/super_admin_login_screen.dart';
 import 'screens/auth/splash_screen.dart';
 import 'screens/user/event_link_screen.dart';
 import 'services/referral_service.dart';
@@ -40,6 +41,13 @@ class NightlifePlatformApp extends StatelessWidget {
         builder: (_) => EventLinkScreen(
           eventId: Uri.decodeComponent(uri.pathSegments.last),
         ),
+      );
+    }
+
+    if (uri.path == '/super-admin-login') {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => const SuperAdminLoginScreen(),
       );
     }
 

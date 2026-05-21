@@ -10,7 +10,8 @@ import '../../services/auth_service.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/state_views.dart';
 import 'access_state_screen.dart';
-import 'club_onboarding_screen.dart';
+import 'verification_details_screen.dart';
+import 'waiting_for_approval_screen.dart';
 import 'welcome_screen.dart';
 
 class RoleRouterScreen extends StatelessWidget {
@@ -74,22 +75,21 @@ class RoleRouterScreen extends StatelessWidget {
               );
             }
             if (profile.isRejected || !profile.isActive) {
-              return const AccessStateScreen(
+              return AccessStateScreen(
                 title: 'Account rejected',
-                message: 'This account is not approved for dashboard access.',
+                message: profile.rejectionReason.isEmpty
+                    ? 'This account is not approved for dashboard access.'
+                    : profile.rejectionReason,
                 icon: Icons.block_outlined,
               );
             }
-            if (profile.isClubAdmin && profile.clubId == null) {
-              return ClubOnboardingScreen(currentUser: profile);
+            if ((profile.isPromoter || profile.isClubAdmin) &&
+                !profile.onboardingCompleted) {
+              return VerificationDetailsScreen(currentUser: profile);
             }
-            if (profile.isClubAdmin && profile.isPending) {
-              return AccessStateScreen(
-                title: 'Pending approval',
-                message:
-                    '${_roleLabel(profile.role)} access is waiting for Super Admin approval.',
-                icon: Icons.hourglass_top_outlined,
-              );
+            if ((profile.isPromoter || profile.isClubAdmin) &&
+                !profile.isApproved) {
+              return WaitingForApprovalScreen(currentUser: profile);
             }
             switch (profile.role) {
               case 'superAdmin':

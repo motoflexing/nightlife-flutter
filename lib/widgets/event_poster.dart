@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
 import '../models/event.dart';
+import '../services/event_image_service.dart';
 
 class EventPoster extends StatelessWidget {
   const EventPoster({
@@ -17,24 +18,65 @@ class EventPoster extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final url = event.posterUrl.trim();
-    final uri = Uri.tryParse(url);
-    final canLoadNetworkImage =
-        uri != null &&
-        uri.hasScheme &&
-        (uri.scheme == 'http' || uri.scheme == 'https') &&
-        uri.host.trim().isNotEmpty;
+    final url = EventImageService.instance.imageUrlFor(event);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
-      child: canLoadNetworkImage
-          ? Image.network(
-              url,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) =>
-                  _FallbackPoster(event: event, showTitle: showTitle),
-            )
-          : _FallbackPoster(event: event, showTitle: showTitle),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            url,
+            fit: BoxFit.cover,
+            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+              if (wasSynchronouslyLoaded || frame != null) return child;
+              return _FallbackPoster(event: event, showTitle: showTitle);
+            },
+            errorBuilder: (_, _, _) =>
+                _FallbackPoster(event: event, showTitle: showTitle),
+          ),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Color(0xCC050509)],
+                stops: [0.35, 1],
+              ),
+            ),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Colors.black.withValues(alpha: 0.42),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+          if (showTitle)
+            Positioned(
+              left: 14,
+              right: 14,
+              bottom: 14,
+              child: Text(
+                event.title.isEmpty ? 'Nightlife Event' : event.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  shadows: const [
+                    Shadow(color: Colors.black87, blurRadius: 14),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

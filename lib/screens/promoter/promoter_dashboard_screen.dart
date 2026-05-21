@@ -1,5 +1,3 @@
-// ignore_for_file: curly_braces_in_flow_control_structures
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -11,6 +9,7 @@ import '../../models/promoter.dart';
 import '../../models/rsvp.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../widgets/event_poster.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/state_views.dart';
 
@@ -23,7 +22,7 @@ class PromoterDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return NeonScaffold(
       appBar: AppBar(
-        title: const Text('Promoter'),
+        title: const Text('Promoter Studio'),
         actions: [
           IconButton(
             tooltip: 'Logout',
@@ -40,8 +39,9 @@ class PromoterDashboardScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingView(message: 'Loading promoter profile');
           }
-          if (snapshot.hasError)
+          if (snapshot.hasError) {
             return ErrorStateView(message: snapshot.error.toString());
+          }
           final promoter = snapshot.data;
           if (promoter == null) {
             return const EmptyView(
@@ -60,147 +60,157 @@ class PromoterDashboardScreen extends StatelessWidget {
 class _PromoterContent extends StatelessWidget {
   const _PromoterContent({required this.promoter});
 
+  static const _commissionPerApprovedRsvp = 120;
+
   final Promoter promoter;
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Rsvp>>(
       stream: FirestoreService.instance.promoterRsvpsStream(promoter.id),
-      builder: (context, snapshot) {
-        final rsvps = snapshot.data ?? [];
+      builder: (context, rsvpSnapshot) {
+        if (rsvpSnapshot.hasError) {
+          return ErrorStateView(message: rsvpSnapshot.error.toString());
+        }
+        final rsvps = rsvpSnapshot.data ?? [];
+        final pending = rsvps.where((rsvp) => rsvp.status == 'pending').length;
+        final approved = rsvps
+            .where((rsvp) => rsvp.status == 'approved')
+            .length;
+        final total = rsvps.length;
+        final conversion = total == 0 ? 0 : (approved / total * 100).round();
+        final estimatedEarnings = approved * _commissionPerApprovedRsvp;
+        final thisWeek = rsvps.where((rsvp) {
+          return DateTime.now().difference(rsvp.createdAt).inDays <= 7;
+        }).length;
         final eventCounts = <String, int>{};
         for (final rsvp in rsvps) {
           eventCounts[rsvp.eventId] = (eventCounts[rsvp.eventId] ?? 0) + 1;
         }
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final wide = constraints.maxWidth > 860;
+
+        return StreamBuilder<List<NightlifeEvent>>(
+          stream: FirestoreService.instance.activeEventsStream(),
+          builder: (context, eventSnapshot) {
+            if (eventSnapshot.hasError) {
+              return ErrorStateView(message: eventSnapshot.error.toString());
+            }
+            final events = eventSnapshot.data ?? [];
+            final bestEvent = _bestEventTitle(events, eventCounts);
+
             return ListView(
-              padding: const EdgeInsets.all(16),
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
               children: [
-                Wrap(
-                  spacing: 14,
-                  runSpacing: 14,
-                  children:
-                      [
-                            _MetricCard(
-                              title: 'Referral code',
-                              value: promoter.referralCode,
-                              icon: Icons.qr_code_2,
-                              action: IconButton(
-                                tooltip: 'Copy code',
-                                onPressed: () =>
-                                    _copy(context, promoter.referralCode),
-                                icon: const Icon(Icons.copy),
-                              ),
-                            ),
-                            _MetricCard(
-                              title: 'Total RSVP credits',
-                              value:
-                                  snapshot.connectionState ==
-                                      ConnectionState.waiting
-                                  ? '...'
-                                  : rsvps.length.toString(),
-                              icon: Icons.trending_up,
-                            ),
-                            _MetricCard(
-                              title: 'Status',
-                              value: promoter.isActive ? 'Active' : 'Inactive',
-                              icon: Icons.verified_user_outlined,
-                            ),
-                          ]
-                          .map(
-                            (child) => SizedBox(
-                              width: wide
-                                  ? (constraints.maxWidth - 60) / 3
-                                  : double.infinity,
-                              child: child,
-                            ),
-                          )
-                          .toList(),
+                _HeroPanel(
+                  promoter: promoter,
+                  total: total,
+                  earnings: estimatedEarnings,
+                  onCopy: (value) => _copy(context, value),
                 ),
-                Text(
-                  'Active Events',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Copy any live event link. Promoters can share immediately.',
-                  style: TextStyle(color: AppTheme.textMuted),
-                ),
-                const SizedBox(height: 10),
-                StreamBuilder<List<NightlifeEvent>>(
-                  stream: FirestoreService.instance.activeEventsStream(),
-                  builder: (context, eventSnapshot) {
-                    final events = eventSnapshot.data ?? [];
-                    if (eventSnapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return const Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    if (events.isEmpty) {
-                      return const EmptyView(
-                        title: 'No active events',
-                        message: 'Share event links and track your RSVPs.',
-                        icon: Icons.local_activity_outlined,
-                      );
-                    }
+                const SizedBox(height: 14),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final wide = constraints.maxWidth > 720;
+                    final width = wide
+                        ? (constraints.maxWidth - 12) / 2
+                        : double.infinity;
                     return Wrap(
-                      spacing: 14,
-                      runSpacing: 14,
-                      children: events
-                          .map(
-                            (event) => SizedBox(
-                              width: wide
-                                  ? (constraints.maxWidth - 46) / 2
-                                  : double.infinity,
-                              child: _PromoterEventCard(
-                                event: event,
-                                rsvpCount: eventCounts[event.id] ?? 0,
-                                referralLink: _eventReferralLink(
-                                  event,
-                                  promoter.referralCode,
+                      spacing: 12,
+                      runSpacing: 12,
+                      children:
+                          [
+                                _MetricCard(
+                                  title: 'Total RSVP credits',
+                                  value: total.toString(),
+                                  icon: Icons.trending_up,
                                 ),
-                                onCopy: (value) => _copy(context, value),
-                              ),
-                            ),
-                          )
-                          .toList(),
+                                _MetricCard(
+                                  title: 'Approved RSVPs',
+                                  value: approved.toString(),
+                                  icon: Icons.verified_outlined,
+                                  accent: AppTheme.neonLime,
+                                ),
+                                _MetricCard(
+                                  title: 'Conversion rate',
+                                  value: '$conversion%',
+                                  icon: Icons.insights_outlined,
+                                ),
+                                _MetricCard(
+                                  title: 'Estimated earnings',
+                                  value: 'INR $estimatedEarnings',
+                                  icon: Icons.payments_outlined,
+                                  accent: AppTheme.neonLime,
+                                ),
+                              ]
+                              .map(
+                                (child) => SizedBox(width: width, child: child),
+                              )
+                              .toList(),
                     );
                   },
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Generated RSVPs',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                _PerformancePanel(
+                  total: total,
+                  pending: pending,
+                  approved: approved,
+                  bestEvent: bestEvent,
+                  earnings: estimatedEarnings,
+                  thisWeek: thisWeek,
+                ),
+                const SizedBox(height: 16),
+                const _GrowthSuggestions(),
+                const SizedBox(height: 18),
+                _SectionHeader(
+                  title: 'Active Events',
+                  subtitle:
+                      eventSnapshot.connectionState == ConnectionState.waiting
+                      ? 'Loading events to promote...'
+                      : 'Pick the highest-fit event and push your link now.',
                 ),
                 const SizedBox(height: 10),
-                if (snapshot.connectionState == ConnectionState.waiting)
+                if (eventSnapshot.connectionState == ConnectionState.waiting)
                   const Padding(
-                    padding: EdgeInsets.all(28),
+                    padding: EdgeInsets.all(24),
                     child: Center(child: CircularProgressIndicator()),
                   )
-                else if (snapshot.hasError)
-                  ErrorStateView(message: snapshot.error.toString())
-                else if (rsvps.isEmpty)
+                else if (events.isEmpty)
                   const EmptyView(
-                    title: 'No RSVP credits yet',
+                    title: 'No active events',
                     message:
-                        'Share your referral link or code to start tracking.',
-                    icon: Icons.insights_outlined,
+                        'Events will appear here when venues publish nights you can promote.',
+                    icon: Icons.local_activity_outlined,
                   )
                 else
-                  Column(
-                    children: rsvps
-                        .map((rsvp) => _RsvpRow(rsvp: rsvp))
-                        .toList(),
+                  ...events.map(
+                    (event) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _PromoterEventCard(
+                        event: event,
+                        rsvpCount: eventCounts[event.id] ?? 0,
+                        commissionPerRsvp: _commissionPerApprovedRsvp,
+                        referralLink: _eventReferralLink(
+                          event,
+                          promoter.referralCode,
+                        ),
+                        onCopy: (value) => _copy(context, value),
+                      ),
+                    ),
                   ),
+                if (rsvpSnapshot.connectionState == ConnectionState.waiting)
+                  const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (rsvps.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  const _SectionHeader(
+                    title: 'Recent RSVP Credits',
+                    subtitle: 'Fresh activity from your referral traffic.',
+                  ),
+                  const SizedBox(height: 10),
+                  ...rsvps.take(5).map((rsvp) => _RsvpRow(rsvp: rsvp)),
+                ],
               ],
             );
           },
@@ -209,11 +219,31 @@ class _PromoterContent extends StatelessWidget {
     );
   }
 
+  static String _bestEventTitle(
+    List<NightlifeEvent> events,
+    Map<String, int> eventCounts,
+  ) {
+    if (eventCounts.isEmpty) return 'No winner yet';
+    final bestId = eventCounts.entries
+        .reduce((a, b) => a.value >= b.value ? a : b)
+        .key;
+    return events
+            .firstWhere(
+              (event) => event.id == bestId,
+              orElse: () => NightlifeEvent.empty(),
+            )
+            .title
+            .trim()
+            .isEmpty
+        ? 'Event $bestId'
+        : events.firstWhere((event) => event.id == bestId).title;
+  }
+
   void _copy(BuildContext context, String value) {
     Clipboard.setData(ClipboardData(text: value));
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Copied')));
+    ).showSnackBar(const SnackBar(content: Text('Copied referral link')));
   }
 
   String _eventReferralLink(NightlifeEvent event, String referralCode) {
@@ -221,73 +251,295 @@ class _PromoterContent extends StatelessWidget {
   }
 }
 
+class _HeroPanel extends StatelessWidget {
+  const _HeroPanel({
+    required this.promoter,
+    required this.total,
+    required this.earnings,
+    required this.onCopy,
+  });
+
+  final Promoter promoter;
+  final int total;
+  final int earnings;
+  final ValueChanged<String> onCopy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.glassSurface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.glassBorder),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.accentPink.withValues(alpha: 0.12),
+            blurRadius: 26,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.premiumGradient,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.campaign_outlined),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      promoter.name.isEmpty ? 'Promoter Studio' : promoter.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      promoter.isActive ? 'Active growth profile' : 'Inactive',
+                      style: TextStyle(
+                        color: promoter.isActive
+                            ? AppTheme.neonLime
+                            : AppTheme.textMuted,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.elevated.withValues(alpha: 0.64),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppTheme.glassBorder),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    promoter.referralCode,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                IconButton.filledTonal(
+                  tooltip: 'Copy referral code',
+                  onPressed: () => onCopy(promoter.referralCode),
+                  icon: const Icon(Icons.copy),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '$total tracked RSVPs - estimated INR $earnings earned',
+            style: const TextStyle(color: AppTheme.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PerformancePanel extends StatelessWidget {
+  const _PerformancePanel({
+    required this.total,
+    required this.pending,
+    required this.approved,
+    required this.bestEvent,
+    required this.earnings,
+    required this.thisWeek,
+  });
+
+  final int total;
+  final int pending;
+  final int approved;
+  final String bestEvent;
+  final int earnings;
+  final int thisWeek;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionHeader(
+            title: 'Promoter Performance',
+            subtitle: 'What your traffic is doing for the business.',
+          ),
+          const SizedBox(height: 12),
+          _InsightRow(label: 'Total RSVPs generated', value: total.toString()),
+          _InsightRow(label: 'Pending RSVPs', value: pending.toString()),
+          _InsightRow(label: 'Approved RSVPs', value: approved.toString()),
+          _InsightRow(label: 'Best performing event', value: bestEvent),
+          _InsightRow(label: 'Estimated commission', value: 'INR $earnings'),
+          _InsightRow(label: 'This week', value: '$thisWeek RSVPs'),
+        ],
+      ),
+    );
+  }
+}
+
+class _GrowthSuggestions extends StatelessWidget {
+  const _GrowthSuggestions();
+
+  static const _tips = [
+    'Share before 7 PM',
+    'Post story with referral link',
+    'Target nearby college crowd',
+    'Promote guestlist closing time',
+    'Share WhatsApp status',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionHeader(
+            title: 'Boost your RSVPs',
+            subtitle: 'Small moves that usually convert better tonight.',
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _tips
+                .map(
+                  (tip) => Chip(
+                    avatar: const Icon(Icons.bolt_outlined, size: 17),
+                    label: Text(tip),
+                    backgroundColor: AppTheme.accentPink.withValues(alpha: 0.1),
+                    side: BorderSide(
+                      color: AppTheme.accentPink.withValues(alpha: 0.28),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PromoterEventCard extends StatelessWidget {
   const _PromoterEventCard({
     required this.event,
     required this.rsvpCount,
+    required this.commissionPerRsvp,
     required this.referralLink,
     required this.onCopy,
   });
 
   final NightlifeEvent event;
   final int rsvpCount;
+  final int commissionPerRsvp;
   final String referralLink;
   final ValueChanged<String> onCopy;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    final earnings = rsvpCount * commissionPerRsvp;
+    final hot = rsvpCount >= 5;
+    return _Panel(
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: event.posterUrl.isEmpty
-                ? const _PosterFallback()
-                : Image.network(
-                    event.posterUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => const _PosterFallback(),
+          SizedBox(
+            height: 142,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                EventPoster(event: event, borderRadius: 8, showTitle: false),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Color(0xE6050509)],
+                    ),
                   ),
+                ),
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  bottom: 12,
+                  child: Text(
+                    event.title.isEmpty ? 'Untitled Event' : event.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  event.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                _EventLine(icon: Icons.place_outlined, text: event.venueName),
                 _EventLine(
-                  icon: Icons.location_city_outlined,
-                  text: event.city,
+                  icon: Icons.storefront_outlined,
+                  text: '${event.venueName} - ${event.city}',
                 ),
                 _EventLine(
                   icon: Icons.schedule,
                   text: Formatters.eventDate(event.dateTime),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    Chip(
-                      label: Text('$rsvpCount RSVPs'),
-                      avatar: const Icon(Icons.confirmation_number, size: 18),
+                    _MiniChip(label: '$rsvpCount RSVPs'),
+                    _MiniChip(label: 'INR $earnings est.'),
+                    _MiniChip(
+                      label: hot ? 'High intent' : 'Needs push',
+                      color: hot ? AppTheme.neonLime : AppTheme.accentPink,
                     ),
-                    OutlinedButton.icon(
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => onCopy(referralLink),
+                        icon: const Icon(Icons.link),
+                        label: const Text('Copy link'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.filledTonal(
+                      tooltip: 'Share',
                       onPressed: () => onCopy(referralLink),
-                      icon: const Icon(Icons.link),
-                      label: const Text('Copy referral link'),
+                      icon: const Icon(Icons.ios_share_outlined),
                     ),
                   ],
                 ),
@@ -300,17 +552,179 @@ class _PromoterEventCard extends StatelessWidget {
   }
 }
 
-class _PosterFallback extends StatelessWidget {
-  const _PosterFallback();
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    this.accent = AppTheme.accentPink,
+  });
+
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: accent.withValues(alpha: 0.14),
+            child: Icon(icon, color: accent),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: AppTheme.textMuted)),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RsvpRow extends StatelessWidget {
+  const _RsvpRow({required this.rsvp});
+
+  final Rsvp rsvp;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: _Panel(
+        child: Row(
+          children: [
+            const Icon(
+              Icons.confirmation_number_outlined,
+              color: AppTheme.accentPink,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    rsvp.eventTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  Text(
+                    '${rsvp.userName} - ${Formatters.eventDate(rsvp.createdAt)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _MiniChip(label: Formatters.titleCase(rsvp.status)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Panel extends StatelessWidget {
+  const _Panel({required this.child, this.padding = const EdgeInsets.all(14)});
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppTheme.elevated,
-      child: const Icon(
-        Icons.local_activity_outlined,
-        color: AppTheme.neonCyan,
-        size: 48,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: AppTheme.glassSurface.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.glassBorder),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.neonViolet.withValues(alpha: 0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 3),
+        Text(subtitle, style: const TextStyle(color: AppTheme.textMuted)),
+      ],
+    );
+  }
+}
+
+class _InsightRow extends StatelessWidget {
+  const _InsightRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(color: AppTheme.textMuted),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -326,10 +740,10 @@ class _EventLine extends StatelessWidget {
   Widget build(BuildContext context) {
     if (text.trim().isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
-          Icon(icon, size: 17, color: AppTheme.textMuted),
+          Icon(icon, size: 16, color: AppTheme.textMuted),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -345,78 +759,24 @@ class _EventLine extends StatelessWidget {
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    this.action,
-  });
+class _MiniChip extends StatelessWidget {
+  const _MiniChip({required this.label, this.color = AppTheme.neonViolet});
 
-  final String title;
-  final String value;
-  final IconData icon;
-  final Widget? action;
+  final String label;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: AppTheme.neonPink.withValues(alpha: 0.14),
-              child: Icon(icon, color: AppTheme.neonPink),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(color: AppTheme.textMuted),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    value,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            ?action,
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.36)),
       ),
-    );
-  }
-}
-
-class _RsvpRow extends StatelessWidget {
-  const _RsvpRow({required this.rsvp});
-
-  final Rsvp rsvp;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Card(
-        child: ListTile(
-          title: Text(
-            rsvp.eventTitle,
-            style: const TextStyle(fontWeight: FontWeight.w800),
-          ),
-          subtitle: Text(
-            '${rsvp.userName} - ${rsvp.userPhone} - ${Formatters.eventDate(rsvp.createdAt)}',
-            style: const TextStyle(color: AppTheme.textMuted),
-          ),
-          trailing: Chip(label: Text(Formatters.titleCase(rsvp.status))),
-        ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
       ),
     );
   }
