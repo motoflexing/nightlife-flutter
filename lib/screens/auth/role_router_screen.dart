@@ -17,24 +17,51 @@ import 'welcome_screen.dart';
 class RoleRouterScreen extends StatelessWidget {
   const RoleRouterScreen({super.key});
 
+  String _normalizeRole(String? role) {
+    return (role ?? '').trim().toLowerCase().replaceAll('_', '');
+  }
+
+  bool _isSuperAdminRole(String? role) {
+    final normalized = _normalizeRole(role);
+    return normalized == 'superadmin' || normalized == 'super-admin';
+  }
+
+  bool _isClubAdminRole(String? role) {
+    return _normalizeRole(role) == 'clubadmin';
+  }
+
+  bool _isPromoterRole(String? role) {
+    return _normalizeRole(role) == 'promoter';
+  }
+
+  bool _isSameRole(String? selectedRole, String? profileRole) {
+    return _normalizeRole(selectedRole) == _normalizeRole(profileRole);
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: AuthService.instance.authStateChanges,
       builder: (context, authSnapshot) {
+        debugPrint('RoleRouter entered.');
         if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const NeonScaffold(child: LoadingView());
         }
-        final user = authSnapshot.data;
-        if (user == null) return const WelcomeScreen();
+
+        final firebaseUser = authSnapshot.data;
+        if (firebaseUser == null) {
+          return const WelcomeScreen();
+        }
+
         return StreamBuilder<AppUser?>(
-          stream: AuthService.instance.profileStream(user.uid),
+          stream: AuthService.instance.profileStream(firebaseUser.uid),
           builder: (context, profileSnapshot) {
             if (profileSnapshot.connectionState == ConnectionState.waiting) {
               return const NeonScaffold(
                 child: LoadingView(message: 'Loading profile'),
               );
             }
+
             if (profileSnapshot.hasError) {
               return NeonScaffold(
                 child: ErrorStateView(
@@ -42,16 +69,19 @@ class RoleRouterScreen extends StatelessWidget {
                 ),
               );
             }
+
             final profile = profileSnapshot.data;
+
             if (profile == null) {
               return FutureBuilder<AppUser>(
-                future: AuthService.instance.ensureSafeProfile(user),
+                future: AuthService.instance.ensureSafeProfile(firebaseUser),
                 builder: (context, safeSnapshot) {
                   if (safeSnapshot.connectionState == ConnectionState.waiting) {
                     return const NeonScaffold(
                       child: LoadingView(message: 'Creating safe profile'),
                     );
                   }
+
                   if (safeSnapshot.hasError) {
                     return NeonScaffold(
                       child: ErrorStateView(
@@ -59,14 +89,59 @@ class RoleRouterScreen extends StatelessWidget {
                       ),
                     );
                   }
+
                   return const NeonScaffold(
                     child: LoadingView(message: 'Loading profile'),
                   );
                 },
               );
             }
+
             final requestedRole = AuthService.instance.requestedRole;
-            if (requestedRole != null && requestedRole != profile.role) {
+            final superAdminUnlockArmed =
+                AuthService.instance.isSuperAdminUnlockArmed;
+            debugPrint(
+              'RoleRouter profile loaded. requestedRole=$requestedRole profileRole=${profile.role}',
+            );
+
+            if (_isSuperAdminRole(requestedRole)) {
+              if (!superAdminUnlockArmed) {
+                return const AccessStateScreen(
+                  title: 'Access denied',
+                  message:
+                      'Super Admin access requires secure hidden unlock first.',
+                  icon: Icons.lock_outline,
+                );
+              }
+
+              return FutureBuilder<bool>(
+                future: AuthService.instance.verifyCurrentUserIsSuperAdmin(),
+                builder: (context, superAdminSnapshot) {
+                  if (superAdminSnapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const NeonScaffold(
+                      child: LoadingView(message: 'Opening secure panel'),
+                    );
+                  }
+
+                  if (superAdminSnapshot.hasError ||
+                      superAdminSnapshot.data != true ||
+                      !_isSuperAdminRole(profile.role)) {
+                    return const AccessStateScreen(
+                      title: 'Access denied',
+                      message: 'This account is not a verified Super Admin.',
+                      icon: Icons.lock_outline,
+                    );
+                  }
+
+                  debugPrint('Super admin route entered.');
+                  return SuperAdminScreen(currentUser: profile);
+                },
+              );
+            }
+
+            if (requestedRole != null &&
+                !_isSameRole(requestedRole, profile.role)) {
               return AccessStateScreen(
                 title: 'Access denied',
                 message:
@@ -74,6 +149,7 @@ class RoleRouterScreen extends StatelessWidget {
                 icon: Icons.lock_outline,
               );
             }
+
             if (profile.isRejected || !profile.isActive) {
               return AccessStateScreen(
                 title: 'Account rejected',
@@ -83,50 +159,25 @@ class RoleRouterScreen extends StatelessWidget {
                 icon: Icons.block_outlined,
               );
             }
-            if ((profile.isPromoter || profile.isClubAdmin) &&
+
+            if (_isClubAdminRole(profile.role) &&
                 !profile.onboardingCompleted) {
               return VerificationDetailsScreen(currentUser: profile);
             }
-            if ((profile.isPromoter || profile.isClubAdmin) &&
-                !profile.isApproved) {
+
+            if (_isClubAdminRole(profile.role) && !profile.isApproved) {
               return WaitingForApprovalScreen(currentUser: profile);
             }
-            switch (profile.role) {
-              case 'superAdmin':
-                if (!AuthService.instance.isSuperAdminUnlockArmed) {
-                  return const AccessStateScreen(
-                    title: 'Access denied',
-                    message:
-                        'Super Admin access requires an active secure unlock.',
-                    icon: Icons.lock_outline,
-                  );
-                }
-                return FutureBuilder<bool>(
-                  future: AuthService.instance.verifyCurrentUserIsSuperAdmin(),
-                  builder: (context, superAdminSnapshot) {
-                    if (superAdminSnapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return const NeonScaffold(
-                        child: LoadingView(message: 'Verifying role'),
-                      );
-                    }
-                    if (superAdminSnapshot.data != true) {
-                      return const AccessStateScreen(
-                        title: 'Access denied',
-                        message: 'This account is not a Super Admin.',
-                        icon: Icons.lock_outline,
-                      );
-                    }
-                    return SuperAdminScreen(currentUser: profile);
-                  },
-                );
-              case 'promoter':
-                return PromoterDashboardScreen(currentUser: profile);
-              case 'clubAdmin':
-                return ClubAdminDashboardScreen(currentUser: profile);
-              default:
-                return UserShellScreen(currentUser: profile);
+
+            if (_isPromoterRole(profile.role)) {
+              return PromoterDashboardScreen(currentUser: profile);
             }
+
+            if (_isClubAdminRole(profile.role)) {
+              return ClubAdminDashboardScreen(currentUser: profile);
+            }
+
+            return UserShellScreen(currentUser: profile);
           },
         );
       },
@@ -134,11 +185,14 @@ class RoleRouterScreen extends StatelessWidget {
   }
 }
 
-String _roleLabel(String role) {
-  return switch (role) {
+String _roleLabel(String? role) {
+  final normalized = (role ?? '').trim().toLowerCase().replaceAll('_', '');
+
+  return switch (normalized) {
     'promoter' => 'Promoter',
-    'clubAdmin' => 'Club Admin',
-    'superAdmin' => 'Super Admin',
+    'clubadmin' => 'Venue Admin',
+    'superadmin' => 'Super Admin',
+    'super-admin' => 'Super Admin',
     _ => 'User',
   };
 }

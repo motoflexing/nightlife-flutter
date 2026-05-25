@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -62,57 +63,59 @@ class _SuperAdminScreenState extends State<SuperAdminScreen> {
       ),
     ];
 
-    return Scaffold(
-      backgroundColor: _FireAdminColors.black,
-      appBar: AppBar(
-        title: Text(sections[_index].label),
-        actions: [
-          IconButton(
-            tooltip: 'Logout',
-            onPressed: AuthService.instance.signOut,
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _FireAdminColors.black,
-              _FireAdminColors.charcoal,
-              Color(0xFF1A0504),
-            ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned.fill(child: CustomPaint(painter: _FireGridPainter())),
-            SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final wide = constraints.maxWidth >= 860;
-                  return Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mobile = constraints.maxWidth < 860;
+
+        return Scaffold(
+          backgroundColor: _FireAdminColors.black,
+          appBar: mobile
+              ? null
+              : AppBar(
+                  title: Text(
+                    sections[_index].label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+          bottomNavigationBar: mobile
+              ? _SectionBottomNav(
+                  sections: sections,
+                  selectedIndex: _index,
+                  onSelected: (value) => setState(() => _index = value),
+                )
+              : null,
+          body: DecoratedBox(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  _FireAdminColors.black,
+                  _FireAdminColors.charcoal,
+                  Color(0xFF1A0504),
+                ],
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: CustomPaint(painter: _FireGridPainter()),
+                ),
+                SafeArea(
+                  bottom: false,
+                  child: Column(
                     children: [
-                      _CommandHeader(currentUser: widget.currentUser),
+                      _CommandHeader(
+                        currentUser: widget.currentUser,
+                        onLogout: AuthService.instance.signOut,
+                      ),
                       Expanded(
-                        child: wide
-                            ? Row(
+                        child: mobile
+                            ? sections[_index].child
+                            : Row(
                                 children: [
                                   _SectionRail(
-                                    sections: sections,
-                                    selectedIndex: _index,
-                                    onSelected: (value) {
-                                      setState(() => _index = value);
-                                    },
-                                  ),
-                                  Expanded(child: sections[_index].child),
-                                ],
-                              )
-                            : Column(
-                                children: [
-                                  _SectionTabs(
                                     sections: sections,
                                     selectedIndex: _index,
                                     onSelected: (value) {
@@ -124,13 +127,13 @@ class _SuperAdminScreenState extends State<SuperAdminScreen> {
                               ),
                       ),
                     ],
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -169,20 +172,29 @@ class _FireAdminColors {
 }
 
 class _CommandHeader extends StatelessWidget {
-  const _CommandHeader({required this.currentUser});
+  const _CommandHeader({required this.currentUser, required this.onLogout});
 
   final AppUser currentUser;
+  final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 640;
+    final avatarSize = mobile ? 38.0 : 50.0;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 12 : 16,
+        mobile ? 6 : 8,
+        mobile ? 12 : 16,
+        mobile ? 8 : 12,
+      ),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(mobile ? 10 : 14),
         decoration: BoxDecoration(
           color: _FireAdminColors.panel,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(mobile ? 14 : 18),
           border: Border.all(
             color: _FireAdminColors.lava.withValues(alpha: 0.34),
           ),
@@ -198,8 +210,8 @@ class _CommandHeader extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 54,
-              height: 54,
+              width: avatarSize,
+              height: avatarSize,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const RadialGradient(
@@ -219,10 +231,10 @@ class _CommandHeader extends StatelessWidget {
               child: const Icon(
                 Icons.admin_panel_settings_outlined,
                 color: Colors.black,
-                size: 30,
+                size: 24,
               ),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: mobile ? 10 : 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,6 +244,7 @@ class _CommandHeader extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontSize: mobile ? 16 : null,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
                     ),
@@ -241,15 +254,18 @@ class _CommandHeader extends StatelessWidget {
                     currentUser.email,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppTheme.textMuted,
                       fontWeight: FontWeight.w600,
+                      fontSize: mobile ? 11 : 13,
                     ),
                   ),
                 ],
               ),
             ),
-            const _LiveBadge(),
+            _LiveBadge(compact: mobile),
+            SizedBox(width: mobile ? 6 : 8),
+            _HeaderLogoutButton(compact: mobile, onTap: onLogout),
           ],
         ),
       ),
@@ -258,12 +274,17 @@ class _CommandHeader extends StatelessWidget {
 }
 
 class _LiveBadge extends StatelessWidget {
-  const _LiveBadge();
+  const _LiveBadge({this.compact = false});
+
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 7 : 10,
+        vertical: compact ? 5 : 7,
+      ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: _FireAdminColors.lava),
@@ -274,15 +295,49 @@ class _LiveBadge extends StatelessWidget {
         style: TextStyle(
           color: _FireAdminColors.gold,
           fontWeight: FontWeight.w900,
-          fontSize: 12,
+          fontSize: 11,
         ),
       ),
     );
   }
 }
 
-class _SectionTabs extends StatelessWidget {
-  const _SectionTabs({
+class _HeaderLogoutButton extends StatelessWidget {
+  const _HeaderLogoutButton({required this.compact, required this.onTap});
+
+  final bool compact;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Logout',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: Container(
+          width: compact ? 32 : 36,
+          height: compact ? 32 : 36,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: 0.06),
+            border: Border.all(
+              color: _FireAdminColors.lava.withValues(alpha: 0.32),
+            ),
+          ),
+          child: Icon(
+            Icons.logout,
+            size: compact ? 16 : 18,
+            color: _FireAdminColors.gold,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionBottomNav extends StatelessWidget {
+  const _SectionBottomNav({
     required this.sections,
     required this.selectedIndex,
     required this.onSelected,
@@ -294,40 +349,34 @@ class _SectionTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        scrollDirection: Axis.horizontal,
-        itemCount: sections.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final selected = selectedIndex == index;
-          return ChoiceChip(
-            selected: selected,
-            onSelected: (_) => onSelected(index),
-            avatar: Icon(
-              sections[index].icon,
-              size: 18,
-              color: selected ? Colors.black : _FireAdminColors.gold,
-            ),
-            label: Text(sections[index].label),
-            selectedColor: _FireAdminColors.lava,
-            backgroundColor: _FireAdminColors.panel,
-            labelStyle: TextStyle(
-              color: selected ? Colors.black : Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
-            side: BorderSide(
-              color: selected
-                  ? _FireAdminColors.gold
-                  : _FireAdminColors.lava.withValues(alpha: 0.36),
-            ),
-          );
-        },
-      ),
+    return NavigationBar(
+      height: 66,
+      selectedIndex: selectedIndex,
+      labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+      onDestinationSelected: onSelected,
+      backgroundColor: const Color(0xF2030304),
+      indicatorColor: _FireAdminColors.lava.withValues(alpha: 0.2),
+      destinations: [
+        for (final section in sections)
+          NavigationDestination(
+            icon: Icon(section.icon, size: 20),
+            selectedIcon: Icon(section.icon, size: 20),
+            label: _shortSectionLabel(section.label),
+          ),
+      ],
     );
   }
+}
+
+String _shortSectionLabel(String label) {
+  return switch (label) {
+    'Analytics Overview' => 'Analytics',
+    'All Events' => 'Events',
+    'All Users' => 'Users',
+    'Clubs/Venues' => 'Venues',
+    'Emergency Controls' => 'Emergency',
+    _ => label,
+  };
 }
 
 class _SectionRail extends StatelessWidget {
@@ -344,9 +393,9 @@ class _SectionRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 236,
+      width: 212,
       margin: const EdgeInsets.fromLTRB(16, 0, 12, 16),
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: _FireAdminColors.panel,
         borderRadius: BorderRadius.circular(20),
@@ -360,13 +409,13 @@ class _SectionRail extends StatelessWidget {
         itemBuilder: (context, index) {
           final selected = selectedIndex == index;
           return InkWell(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(10),
             onTap: () => onSelected(index),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(10),
                 gradient: selected
                     ? const LinearGradient(
                         colors: [_FireAdminColors.lava, _FireAdminColors.ember],
@@ -378,6 +427,7 @@ class _SectionRail extends StatelessWidget {
                 children: [
                   Icon(
                     sections[index].icon,
+                    size: 19,
                     color: selected ? Colors.black : _FireAdminColors.gold,
                   ),
                   const SizedBox(width: 10),
@@ -410,7 +460,7 @@ class _AnalyticsOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      padding: _adminListPadding(context),
       children: [
         _ResponsiveMetricGrid(
           children: [
@@ -486,18 +536,17 @@ class _ResponsiveMetricGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final columns = width >= 1000
+        final columns = width >= 1280
             ? 4
-            : width >= 680
+            : width >= 1000
             ? 3
-            : width >= 420
-            ? 2
-            : 1;
+            : 2;
+        final mobile = width < 640;
         return GridView.count(
           crossAxisCount: columns,
-          childAspectRatio: 1.55,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
+          childAspectRatio: mobile ? 1.72 : 1.65,
+          crossAxisSpacing: mobile ? 8 : 10,
+          mainAxisSpacing: mobile ? 8 : 10,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: children,
@@ -546,26 +595,57 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 640;
+
     return _Panel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      compact: true,
+      child: Row(
         children: [
-          Icon(icon, color: _FireAdminColors.gold),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
+          Container(
+            width: mobile ? 30 : 34,
+            height: mobile ? 30 : 34,
+            decoration: BoxDecoration(
+              color: _FireAdminColors.lava.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _FireAdminColors.lava.withValues(alpha: 0.28),
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: _FireAdminColors.gold,
+              size: mobile ? 17 : 19,
             ),
           ),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontWeight: FontWeight.w800,
+          SizedBox(width: mobile ? 8 : 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: mobile ? 21 : 24,
+                    height: 1,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppTheme.textMuted,
+                    fontWeight: FontWeight.w800,
+                    fontSize: mobile ? 11 : 12,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -593,9 +673,10 @@ class _AllEventsSection extends StatelessWidget {
           return const _CenterState(message: 'No events found');
         }
         return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: _adminListPadding(context),
           itemCount: events.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) =>
+              SizedBox(height: MediaQuery.sizeOf(context).width < 640 ? 8 : 12),
           itemBuilder: (context, index) {
             final event = events[index];
             return _Panel(
@@ -668,12 +749,14 @@ class _AllUsersSection extends StatelessWidget {
         }
         final users = snapshot.data ?? [];
         return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: _adminListPadding(context),
           itemCount: users.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) =>
+              SizedBox(height: MediaQuery.sizeOf(context).width < 640 ? 8 : 12),
           itemBuilder: (context, index) {
             final user = users[index];
             return _Panel(
+              onTap: () => _showUserDetailDialog(context, user),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -682,6 +765,9 @@ class _AllUsersSection extends StatelessWidget {
                     title: user.name.isEmpty ? user.email : user.name,
                     subtitle: '${user.email} - ${user.role}',
                     status: user.status,
+                    onStatusTap: _isReviewStatus(user.status)
+                        ? () => _showUserReviewDialog(context, user)
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   Wrap(
@@ -754,12 +840,14 @@ class _PromotersSection extends StatelessWidget {
           return const _CenterState(message: 'No promoters found');
         }
         return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: _adminListPadding(context),
           itemCount: promoters.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) =>
+              SizedBox(height: MediaQuery.sizeOf(context).width < 640 ? 8 : 12),
           itemBuilder: (context, index) {
             final promoter = promoters[index];
             return _Panel(
+              onTap: () => _showPromoterDetailDialog(context, promoter),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -817,18 +905,23 @@ class _ClubsSection extends StatelessWidget {
           return const _CenterState(message: 'No venues found');
         }
         return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: _adminListPadding(context),
           itemCount: clubs.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) =>
+              SizedBox(height: MediaQuery.sizeOf(context).width < 640 ? 8 : 12),
           itemBuilder: (context, index) {
             final club = clubs[index];
             return _Panel(
+              onTap: () => _showClubDetailDialog(context, club),
               child: _RecordHeader(
                 icon: Icons.storefront_outlined,
                 title: club.clubName,
                 subtitle:
                     '${club.city} - ${club.businessEmail} - ${club.address}',
                 status: club.verificationStatus,
+                onStatusTap: _isReviewStatus(club.verificationStatus)
+                    ? () => _showClubReviewDialog(context, club)
+                    : null,
               ),
             );
           },
@@ -852,7 +945,7 @@ class _EmergencyControlsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      padding: _adminListPadding(context),
       children: [
         _Panel(
           child: Column(
@@ -906,30 +999,40 @@ class _EmergencyControlsSection extends StatelessWidget {
 }
 
 class _Panel extends StatelessWidget {
-  const _Panel({required this.child});
+  const _Panel({required this.child, this.onTap, this.compact = false});
 
   final Widget child;
+  final VoidCallback? onTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
+    final mobile = MediaQuery.sizeOf(context).width < 640;
+    final panel = Container(
+      padding: EdgeInsets.all(compact ? (mobile ? 9 : 11) : (mobile ? 12 : 16)),
       decoration: BoxDecoration(
         color: _FireAdminColors.panel,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(mobile ? 12 : 16),
         border: Border.all(
           color: _FireAdminColors.lava.withValues(alpha: 0.22),
         ),
         boxShadow: [
           BoxShadow(
             color: _FireAdminColors.red.withValues(alpha: 0.18),
-            blurRadius: 28,
+            blurRadius: mobile ? 18 : 26,
             spreadRadius: -16,
-            offset: const Offset(0, 18),
+            offset: Offset(0, mobile ? 10 : 16),
           ),
         ],
       ),
       child: child,
+    );
+
+    if (onTap == null) return panel;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: panel,
     );
   }
 }
@@ -943,14 +1046,16 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 640;
     return Row(
       children: [
-        Icon(icon, color: _FireAdminColors.gold),
-        const SizedBox(width: 10),
+        Icon(icon, color: _FireAdminColors.gold, size: mobile ? 18 : 22),
+        SizedBox(width: mobile ? 8 : 10),
         Expanded(
           child: Text(
             title,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontSize: mobile ? 15 : null,
               fontWeight: FontWeight.w900,
               color: Colors.white,
             ),
@@ -985,21 +1090,26 @@ class _RecordHeader extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.status,
+    this.onStatusTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final String status;
+  final VoidCallback? onStatusTap;
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 640;
+    final iconSize = mobile ? 34.0 : 42.0;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 42,
-          height: 42,
+          width: iconSize,
+          height: iconSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: _FireAdminColors.lava.withValues(alpha: 0.12),
@@ -1007,9 +1117,13 @@ class _RecordHeader extends StatelessWidget {
               color: _FireAdminColors.lava.withValues(alpha: 0.42),
             ),
           ),
-          child: Icon(icon, color: _FireAdminColors.gold),
+          child: Icon(
+            icon,
+            color: _FireAdminColors.gold,
+            size: mobile ? 18 : 22,
+          ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: mobile ? 9 : 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1018,38 +1132,46 @@ class _RecordHeader extends StatelessWidget {
                 title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
-                  fontSize: 16,
+                  fontSize: mobile ? 14 : 16,
                 ),
               ),
-              const SizedBox(height: 3),
+              SizedBox(height: mobile ? 2 : 3),
               Text(
                 subtitle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppTheme.textMuted),
+                style: TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: mobile ? 12 : 14,
+                ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        _StatusPill(label: status),
+        SizedBox(width: mobile ? 6 : 8),
+        _StatusPill(label: status, onTap: onStatusTap),
       ],
     );
   }
 }
 
 class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label});
+  const _StatusPill({required this.label, this.onTap});
 
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+    final mobile = MediaQuery.sizeOf(context).width < 640;
+    final pill = Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: mobile ? 7 : 9,
+        vertical: mobile ? 5 : 6,
+      ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
         color: _FireAdminColors.red.withValues(alpha: 0.16),
@@ -1057,11 +1179,21 @@ class _StatusPill extends StatelessWidget {
       ),
       child: Text(
         Formatters.titleCase(label),
-        style: const TextStyle(
+        style: TextStyle(
           color: _FireAdminColors.gold,
           fontWeight: FontWeight.w900,
-          fontSize: 11,
+          fontSize: mobile ? 10 : 11,
         ),
+      ),
+    );
+
+    if (onTap == null) return pill;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: pill,
       ),
     );
   }
@@ -1134,6 +1266,579 @@ void _showActionError(BuildContext context, Object error) {
   ScaffoldMessenger.of(
     context,
   ).showSnackBar(SnackBar(content: Text(error.toString())));
+}
+
+bool _isReviewStatus(String status) {
+  final normalized = status.trim().toLowerCase();
+  return normalized == 'pending' || normalized == 'pending_review';
+}
+
+EdgeInsets _adminListPadding(BuildContext context) {
+  final mobile = MediaQuery.sizeOf(context).width < 640;
+  return EdgeInsets.fromLTRB(
+    mobile ? 12 : 16,
+    0,
+    mobile ? 12 : 16,
+    mobile ? 88 : 24,
+  );
+}
+
+Future<void> _showUserDetailDialog(BuildContext context, AppUser user) async {
+  await _showRecordDetailDialog(
+    context: context,
+    title: user.name.isEmpty ? user.email : user.name,
+    icon: Icons.person_outline,
+    status: user.status,
+    loadData: () => FirestoreService.instance.userRecordData(user.uid),
+    primaryFields: [
+      'name',
+      'email',
+      'phone',
+      'role',
+      'status',
+      'verificationStatus',
+      'city',
+      'businessName',
+      'venueName',
+      'gstNumber',
+      'ownerName',
+      'businessPhone',
+      'businessAddress',
+      'address',
+      'createdAt',
+      'updatedAt',
+      'onboardingCompleted',
+      'isActive',
+      'isApproved',
+      'rejectionReason',
+      'documentUrl',
+      'validIdUrl',
+    ],
+    onApprove: _isReviewStatus(user.status)
+        ? () => FirestoreService.instance.approveUser(user)
+        : null,
+    onReject: _isReviewStatus(user.status)
+        ? (reason) => FirestoreService.instance.rejectUserReview(
+            user,
+            rejectionReason: reason,
+          )
+        : null,
+    onToggleActive: user.isSuperAdmin
+        ? null
+        : () =>
+              FirestoreService.instance.setUserActive(user.uid, !user.isActive),
+    toggleActiveLabel: user.isActive ? 'Ban user' : 'Reinstate',
+  );
+}
+
+Future<void> _showPromoterDetailDialog(
+  BuildContext context,
+  Promoter promoter,
+) async {
+  await _showRecordDetailDialog(
+    context: context,
+    title: promoter.name.isEmpty ? promoter.email : promoter.name,
+    icon: Icons.campaign_outlined,
+    status: promoter.isActive ? 'Active' : 'Banned',
+    loadData: () => FirestoreService.instance.promoterRecordData(promoter.id),
+    primaryFields: [
+      'name',
+      'email',
+      'phone',
+      'role',
+      'status',
+      'verificationStatus',
+      'referralCode',
+      'totalRsvps',
+      'city',
+      'createdAt',
+      'updatedAt',
+      'onboardingCompleted',
+      'isActive',
+      'isApproved',
+      'rejectionReason',
+      'documentUrl',
+      'validIdUrl',
+    ],
+    onToggleActive: () => FirestoreService.instance.setPromoterActive(
+      promoter,
+      !promoter.isActive,
+    ),
+    toggleActiveLabel: promoter.isActive ? 'Ban promoter' : 'Reinstate',
+  );
+}
+
+Future<void> _showClubDetailDialog(BuildContext context, Club club) async {
+  await _showRecordDetailDialog(
+    context: context,
+    title: club.clubName.isEmpty ? club.ownerName : club.clubName,
+    icon: Icons.storefront_outlined,
+    status: club.verificationStatus,
+    loadData: () => FirestoreService.instance.clubRecordData(club.id),
+    primaryFields: [
+      'clubName',
+      'businessName',
+      'venueName',
+      'businessEmail',
+      'phone',
+      'role',
+      'status',
+      'verificationStatus',
+      'city',
+      'address',
+      'businessAddress',
+      'gstNumber',
+      'ownerName',
+      'ownerId',
+      'instagram',
+      'instagramLink',
+      'googleMapsLink',
+      'createdAt',
+      'updatedAt',
+      'onboardingCompleted',
+      'isActive',
+      'isApproved',
+      'rejectionReason',
+      'documentUrl',
+      'documentUploadStatus',
+    ],
+    onApprove: _isReviewStatus(club.verificationStatus)
+        ? () => FirestoreService.instance.approveClubReview(club)
+        : null,
+    onReject: _isReviewStatus(club.verificationStatus)
+        ? (reason) => FirestoreService.instance.rejectClubReview(
+            club,
+            rejectionReason: reason,
+          )
+        : null,
+  );
+}
+
+Future<void> _showUserReviewDialog(BuildContext context, AppUser user) async {
+  await _showReviewDialog(
+    context: context,
+    title: user.name.isEmpty ? user.email : user.name,
+    email: user.email,
+    role: user.role,
+    status: user.status,
+    onApprove: () => FirestoreService.instance.approveUser(user),
+    onReject: (reason) => FirestoreService.instance.rejectUserReview(
+      user,
+      rejectionReason: reason,
+    ),
+  );
+}
+
+Future<void> _showClubReviewDialog(BuildContext context, Club club) async {
+  await _showReviewDialog(
+    context: context,
+    title: club.clubName.isEmpty ? club.ownerName : club.clubName,
+    email: club.businessEmail,
+    role: 'clubAdmin',
+    status: club.verificationStatus,
+    onApprove: () => FirestoreService.instance.approveClubReview(club),
+    onReject: (reason) => FirestoreService.instance.rejectClubReview(
+      club,
+      rejectionReason: reason,
+    ),
+  );
+}
+
+Future<void> _showRecordDetailDialog({
+  required BuildContext context,
+  required String title,
+  required IconData icon,
+  required String status,
+  required Future<Map<String, dynamic>> Function() loadData,
+  required List<String> primaryFields,
+  Future<void> Function()? onApprove,
+  Future<void> Function(String? rejectionReason)? onReject,
+  Future<void> Function()? onToggleActive,
+  String? toggleActiveLabel,
+}) async {
+  final rootContext = context;
+  final messenger = ScaffoldMessenger.of(rootContext);
+  final rejectionReasonController = TextEditingController();
+  final detailsFuture = loadData();
+  var saving = false;
+
+  await showDialog<void>(
+    context: rootContext,
+    barrierDismissible: !saving,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (builderContext, setDialogState) {
+          Future<void> runDetailAction(
+            Future<void> Function() action,
+            String successMessage,
+          ) async {
+            if (saving) return;
+            setDialogState(() => saving = true);
+            try {
+              await action();
+              if (!dialogContext.mounted) return;
+              Navigator.of(dialogContext).pop();
+              messenger.showSnackBar(SnackBar(content: Text(successMessage)));
+            } catch (error) {
+              if (builderContext.mounted) {
+                _showActionError(builderContext, error);
+              }
+              if (dialogContext.mounted) {
+                setDialogState(() => saving = false);
+              }
+            }
+          }
+
+          return AlertDialog(
+            backgroundColor: _FireAdminColors.charcoal,
+            surfaceTintColor: Colors.transparent,
+            title: Row(
+              children: [
+                Icon(icon, color: _FireAdminColors.gold),
+                const SizedBox(width: 10),
+                Expanded(child: Text(title.isEmpty ? 'Details' : title)),
+              ],
+            ),
+            content: FutureBuilder<Map<String, dynamic>>(
+              future: detailsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    width: 420,
+                    height: 120,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return SizedBox(
+                    width: 420,
+                    child: Text(snapshot.error.toString()),
+                  );
+                }
+
+                final data = snapshot.data ?? const <String, dynamic>{};
+                final rows = _detailRows(data, primaryFields);
+                return ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _StatusPill(label: status),
+                        const SizedBox(height: 14),
+                        for (final row in rows)
+                          _DetailInfoRow(label: row.$1, value: row.$2),
+                        if (onReject != null) ...[
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: rejectionReasonController,
+                            enabled: !saving,
+                            minLines: 1,
+                            maxLines: 3,
+                            decoration: const InputDecoration(
+                              labelText: 'Rejection reason (optional)',
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            actions: [
+              TextButton(
+                onPressed: saving
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(),
+                child: const Text('Close'),
+              ),
+              if (onToggleActive != null && toggleActiveLabel != null)
+                OutlinedButton.icon(
+                  onPressed: saving
+                      ? null
+                      : () => runDetailAction(
+                          onToggleActive,
+                          '$toggleActiveLabel updated successfully.',
+                        ),
+                  icon: const Icon(Icons.block_outlined),
+                  label: Text(toggleActiveLabel),
+                ),
+              if (onReject != null)
+                OutlinedButton.icon(
+                  onPressed: saving
+                      ? null
+                      : () => runDetailAction(
+                          () => onReject(rejectionReasonController.text),
+                          'Review rejected successfully.',
+                        ),
+                  icon: saving
+                      ? const SizedBox.shrink()
+                      : const Icon(Icons.close),
+                  label: const Text('Reject'),
+                ),
+              if (onApprove != null)
+                ElevatedButton.icon(
+                  onPressed: saving
+                      ? null
+                      : () => runDetailAction(
+                          onApprove,
+                          'Review approved successfully.',
+                        ),
+                  icon: saving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check),
+                  label: Text(saving ? 'Saving' : 'Approve'),
+                ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  rejectionReasonController.dispose();
+}
+
+Future<void> _showReviewDialog({
+  required BuildContext context,
+  required String title,
+  required String email,
+  required String role,
+  required String status,
+  required Future<void> Function() onApprove,
+  required Future<void> Function(String? rejectionReason) onReject,
+}) async {
+  final rootContext = context;
+  final messenger = ScaffoldMessenger.of(rootContext);
+  final rejectionReasonController = TextEditingController();
+  var saving = false;
+
+  await showDialog<void>(
+    context: rootContext,
+    barrierDismissible: !saving,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (builderContext, setDialogState) {
+          Future<void> submitReview({required bool approved}) async {
+            if (saving) return;
+            setDialogState(() => saving = true);
+            try {
+              if (approved) {
+                await onApprove();
+              } else {
+                await onReject(rejectionReasonController.text);
+              }
+              if (!dialogContext.mounted) return;
+              Navigator.of(dialogContext).pop();
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    approved
+                        ? 'Review approved successfully.'
+                        : 'Review rejected successfully.',
+                  ),
+                ),
+              );
+            } catch (error) {
+              if (builderContext.mounted) {
+                _showActionError(builderContext, error);
+              }
+              if (dialogContext.mounted) {
+                setDialogState(() => saving = false);
+              }
+            }
+          }
+
+          return AlertDialog(
+            backgroundColor: _FireAdminColors.charcoal,
+            surfaceTintColor: Colors.transparent,
+            title: const Text('Review approval'),
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _ReviewInfoRow(label: 'Name', value: title),
+                  _ReviewInfoRow(label: 'Email', value: email),
+                  _ReviewInfoRow(label: 'Role', value: role),
+                  _ReviewInfoRow(label: 'Status', value: status),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: rejectionReasonController,
+                    enabled: !saving,
+                    minLines: 1,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Rejection reason (optional)',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: saving
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              OutlinedButton.icon(
+                onPressed: saving ? null : () => submitReview(approved: false),
+                icon: saving
+                    ? const SizedBox.shrink()
+                    : const Icon(Icons.close),
+                label: const Text('Reject'),
+              ),
+              ElevatedButton.icon(
+                onPressed: saving ? null : () => submitReview(approved: true),
+                icon: saving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.check),
+                label: Text(saving ? 'Saving' : 'Approve'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  rejectionReasonController.dispose();
+}
+
+class _ReviewInfoRow extends StatelessWidget {
+  const _ReviewInfoRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 74,
+            child: Text(
+              label,
+              style: const TextStyle(color: AppTheme.textMuted),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value.isEmpty ? '-' : value,
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+List<(String, String)> _detailRows(
+  Map<String, dynamic> data,
+  List<String> primaryFields,
+) {
+  final fields = <String>[];
+  for (final field in primaryFields) {
+    if (!fields.contains(field)) fields.add(field);
+  }
+
+  final remainingFields =
+      data.keys.where((field) => !fields.contains(field)).toList()..sort();
+  fields.addAll(remainingFields);
+
+  return fields
+      .map((field) => (_detailLabel(field), _detailValue(data[field])))
+      .toList();
+}
+
+String _detailLabel(String field) {
+  final spaced = field
+      .replaceAllMapped(
+        RegExp(r'([a-z0-9])([A-Z])'),
+        (match) => '${match.group(1)} ${match.group(2)}',
+      )
+      .replaceAll('_', ' ')
+      .trim();
+  if (spaced.isEmpty) return 'Field';
+  return spaced[0].toUpperCase() + spaced.substring(1);
+}
+
+String _detailValue(Object? value) {
+  if (value == null) return 'Not provided';
+  if (value is String) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? 'Not provided' : trimmed;
+  }
+  if (value is Timestamp) return Formatters.eventDate(value.toDate());
+  if (value is DateTime) return Formatters.eventDate(value);
+  if (value is bool) return value ? 'Yes' : 'No';
+  if (value is Iterable) {
+    final values = value.map(_detailValue).where((item) => item.isNotEmpty);
+    return values.isEmpty ? 'Not provided' : values.join(', ');
+  }
+  if (value is Map) {
+    if (value.isEmpty) return 'Not provided';
+    return value.entries
+        .map((entry) => '${entry.key}: ${_detailValue(entry.value)}')
+        .join('\n');
+  }
+  return value.toString();
+}
+
+class _DetailInfoRow extends StatelessWidget {
+  const _DetailInfoRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: _FireAdminColors.black.withValues(alpha: 0.28),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: _FireAdminColors.lava.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          SelectableText(
+            value.isEmpty ? 'Not provided' : value,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 Future<void> _confirmDeleteEvent(

@@ -51,6 +51,12 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.white,
+        toolbarHeight: 48,
+        titleTextStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.w900,
+        ),
       ),
       cardTheme: CardThemeData(
         color: glassSurface,
@@ -58,7 +64,7 @@ class AppTheme {
         margin: EdgeInsets.zero,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(8),
           side: const BorderSide(color: glassBorder),
         ),
       ),
@@ -69,33 +75,35 @@ class AppTheme {
         hintStyle: const TextStyle(color: Color(0x99B8B8D0)),
         prefixIconColor: textMuted,
         suffixIconColor: textMuted,
+        prefixIconConstraints: const BoxConstraints(minWidth: 42),
+        suffixIconConstraints: const BoxConstraints(minWidth: 42),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Color(0x332D2368)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: neonViolet, width: 1.5),
         ),
         disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Color(0x262D2368)),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: accentPink),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: accentPink, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+          horizontal: 12,
+          vertical: 12,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -106,21 +114,22 @@ class AppTheme {
           shadowColor: neonViolet.withValues(alpha: 0.45),
           disabledBackgroundColor: const Color(0xFF26213D),
           disabledForegroundColor: textMuted,
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          minimumSize: const Size(0, 40),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.white,
           side: const BorderSide(color: Color(0x66FF3D8B)),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          minimumSize: const Size(0, 40),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -148,7 +157,7 @@ class AppTheme {
             return const BorderSide(color: Color(0x33FF3D8B));
           }),
           shape: WidgetStateProperty.all(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           textStyle: WidgetStateProperty.all(
             const TextStyle(fontWeight: FontWeight.w700),
@@ -166,9 +175,10 @@ class AppTheme {
           neonViolet.withValues(alpha: 0.12),
         ),
         todayBorder: const BorderSide(color: neonViolet),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       navigationBarTheme: NavigationBarThemeData(
+        height: 64,
         backgroundColor: const Color(0xF20F1118),
         indicatorColor: accentPink.withValues(alpha: 0.18),
         labelTextStyle: WidgetStateProperty.resolveWith(

@@ -90,6 +90,7 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _loading = true);
 
     try {
+      final isPromoter = _selectedRole == 'promoter';
       debugPrint('Signup flow started.');
       final user = await AuthService.instance.createAuthUser(
         name: _name.text.trim(),
@@ -103,11 +104,11 @@ class _SignupScreenState extends State<SignupScreen> {
         email: _email.text.trim(),
         phone: _phone.text.trim(),
         requestedRole: _selectedRole,
-        title: _selectedTitle,
-        gender: _gender.text.trim(),
-        dob: _dob.text.trim(),
-        instagramId: _instagramId.text.trim(),
-        snapchatId: _snapchatId.text.trim(),
+        title: isPromoter ? '' : _selectedTitle,
+        gender: isPromoter ? '' : _gender.text.trim(),
+        dob: isPromoter ? '' : _dob.text.trim(),
+        instagramId: isPromoter ? '' : _instagramId.text.trim(),
+        snapchatId: isPromoter ? '' : _snapchatId.text.trim(),
         validIdUrl: '',
         businessName: _businessName.text.trim(),
         gstNumber: _gstNumber.text.trim(),
@@ -121,8 +122,7 @@ class _SignupScreenState extends State<SignupScreen> {
       );
       debugPrint('Signup flow completed.');
       if (mounted) {
-        final isBusinessRole =
-            _selectedRole == 'promoter' || _selectedRole == 'clubAdmin';
+        final isBusinessRole = _selectedRole == 'clubAdmin';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -225,7 +225,7 @@ class _SignupScreenState extends State<SignupScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Widget _gap() => const SizedBox(height: 14);
+  Widget _gap() => const SizedBox(height: 10);
 
   Widget _roleSelector() {
     return Container(
@@ -270,8 +270,9 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  bool get _isBusinessRole =>
-      _selectedRole == 'promoter' || _selectedRole == 'clubAdmin';
+  bool get _isBusinessRole => _selectedRole == 'clubAdmin';
+
+  bool get _isPromoterRole => _selectedRole == 'promoter';
 
   @override
   Widget build(BuildContext context) {
@@ -289,7 +290,7 @@ class _SignupScreenState extends State<SignupScreen> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 460),
               child: GlassCard(
-                padding: EdgeInsets.all(isPhone ? 18 : 22),
+                padding: EdgeInsets.all(isPhone ? 14 : 18),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -297,24 +298,24 @@ class _SignupScreenState extends State<SignupScreen> {
                     children: [
                       Align(
                         child: Container(
-                          width: 62,
-                          height: 62,
+                          width: isPhone ? 50 : 58,
+                          height: isPhone ? 50 : 58,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: AppTheme.premiumGradient,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.nightlife,
-                            size: 34,
+                            size: isPhone ? 28 : 32,
                             color: Colors.white,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 12),
                       Text(
                         'Create Account',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineMedium
+                        style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(height: 8),
@@ -323,37 +324,44 @@ class _SignupScreenState extends State<SignupScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: AppTheme.textMuted,
-                          fontSize: 16,
+                          fontSize: 13,
                         ),
                       ),
-                      const SizedBox(height: 26),
+                      const SizedBox(height: 16),
                       _roleSelector(),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 12),
 
-                      DropdownButtonFormField<String>(
-                        initialValue: _selectedTitle,
-                        decoration: const InputDecoration(
-                          labelText: 'Title',
-                          prefixIcon: Icon(Icons.badge_outlined),
+                      if (!_isPromoterRole) ...[
+                        DropdownButtonFormField<String>(
+                          initialValue: _selectedTitle,
+                          decoration: const InputDecoration(
+                            labelText: 'Title',
+                            prefixIcon: Icon(Icons.badge_outlined),
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'Mr', child: Text('Mr')),
+                            DropdownMenuItem(value: 'Mrs', child: Text('Mrs')),
+                            DropdownMenuItem(
+                              value: 'Miss',
+                              child: Text('Miss'),
+                            ),
+                            DropdownMenuItem(value: 'Ms', child: Text('Ms')),
+                            DropdownMenuItem(value: 'Dr', child: Text('Dr')),
+                            DropdownMenuItem(
+                              value: 'Prof',
+                              child: Text('Prof'),
+                            ),
+                          ],
+                          onChanged: _loading
+                              ? null
+                              : (value) {
+                                  if (value != null) {
+                                    setState(() => _selectedTitle = value);
+                                  }
+                                },
                         ),
-                        items: const [
-                          DropdownMenuItem(value: 'Mr', child: Text('Mr')),
-                          DropdownMenuItem(value: 'Mrs', child: Text('Mrs')),
-                          DropdownMenuItem(value: 'Miss', child: Text('Miss')),
-                          DropdownMenuItem(value: 'Ms', child: Text('Ms')),
-                          DropdownMenuItem(value: 'Dr', child: Text('Dr')),
-                          DropdownMenuItem(value: 'Prof', child: Text('Prof')),
-                        ],
-                        onChanged: _loading
-                            ? null
-                            : (value) {
-                                if (value != null) {
-                                  setState(() => _selectedTitle = value);
-                                }
-                              },
-                      ),
-
-                      _gap(),
+                        _gap(),
+                      ],
 
                       TextFormField(
                         controller: _name,
@@ -372,32 +380,31 @@ class _SignupScreenState extends State<SignupScreen> {
 
                       _gap(),
 
-                      TextFormField(
-                        controller: _gender,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'Gender',
-                          prefixIcon: Icon(Icons.wc_outlined),
-                          hintText: 'Male / Female / Other',
+                      if (!_isPromoterRole) ...[
+                        TextFormField(
+                          controller: _gender,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Gender',
+                            prefixIcon: Icon(Icons.wc_outlined),
+                            hintText: 'Male / Female / Other',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Enter your gender';
+                            }
+                            return null;
+                          },
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Enter your gender';
-                          }
-                          return null;
-                        },
-                      ),
-
-                      _gap(),
+                        _gap(),
+                      ],
 
                       if (_isBusinessRole) ...[
                         TextFormField(
                           controller: _businessName,
                           textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
-                            labelText: _selectedRole == 'clubAdmin'
-                                ? 'Business / Venue name'
-                                : 'Business / Promoter brand name',
+                            labelText: 'Business / Venue name',
                             prefixIcon: const Icon(Icons.storefront_outlined),
                           ),
                           validator: (value) {
@@ -520,23 +527,24 @@ class _SignupScreenState extends State<SignupScreen> {
                         _gap(),
                       ],
 
-                      TextFormField(
-                        controller: _dob,
-                        readOnly: true,
-                        onTap: _loading ? null : _pickDob,
-                        decoration: const InputDecoration(
-                          labelText: 'Date of birth',
-                          prefixIcon: Icon(Icons.calendar_month_outlined),
+                      if (!_isPromoterRole) ...[
+                        TextFormField(
+                          controller: _dob,
+                          readOnly: true,
+                          onTap: _loading ? null : _pickDob,
+                          decoration: const InputDecoration(
+                            labelText: 'Date of birth',
+                            prefixIcon: Icon(Icons.calendar_month_outlined),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Select your date of birth';
+                            }
+                            return null;
+                          },
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Select your date of birth';
-                          }
-                          return null;
-                        },
-                      ),
-
-                      _gap(),
+                        _gap(),
+                      ],
 
                       TextFormField(
                         controller: _email,
@@ -577,25 +585,26 @@ class _SignupScreenState extends State<SignupScreen> {
 
                       _gap(),
 
-                      TextFormField(
-                        controller: _instagramId,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'Instagram ID (optional)',
-                          prefixIcon: Icon(Icons.alternate_email),
+                      if (!_isPromoterRole) ...[
+                        TextFormField(
+                          controller: _instagramId,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Instagram ID (optional)',
+                            prefixIcon: Icon(Icons.alternate_email),
+                          ),
                         ),
-                      ),
-
-                      _gap(),
-
-                      TextFormField(
-                        controller: _snapchatId,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'Snapchat ID (optional)',
-                          prefixIcon: Icon(Icons.camera_alt_outlined),
+                        _gap(),
+                        TextFormField(
+                          controller: _snapchatId,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Snapchat ID (optional)',
+                            prefixIcon: Icon(Icons.camera_alt_outlined),
+                          ),
                         ),
-                      ),
+                        _gap(),
+                      ],
 
                       TextFormField(
                         controller: _password,
@@ -622,7 +631,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         },
                       ),
 
-                      const SizedBox(height: 22),
+                      const SizedBox(height: 16),
 
                       PremiumGradientButton(
                         onPressed: _loading ? null : _submit,

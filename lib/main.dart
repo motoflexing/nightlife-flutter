@@ -8,11 +8,13 @@ import 'screens/admin/super_admin_login_screen.dart';
 import 'screens/auth/splash_screen.dart';
 import 'screens/user/event_link_screen.dart';
 import 'services/referral_service.dart';
+import 'services/storage_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   ReferralService.instance.captureFromUri(Uri.base);
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  StorageService.instance.configureRetryLimits();
   runApp(const NightlifePlatformApp());
 }
 

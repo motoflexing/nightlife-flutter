@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/app_user.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/neon_scaffold.dart';
 import 'explore_screen.dart';
 import 'favorites_screen.dart';
@@ -25,55 +26,63 @@ class _UserShellScreenState extends State<UserShellScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      HomeScreen(currentUser: widget.currentUser),
-      ExploreScreen(currentUser: widget.currentUser),
-      SearchScreen(currentUser: widget.currentUser),
-      MyRsvpsScreen(currentUser: widget.currentUser),
-      FavoritesScreen(onExplore: () => setState(() => _index = 1)),
-      ProfileScreen(currentUser: widget.currentUser),
-      const _PlaceholderScreen(
-        icon: Icons.settings_outlined,
-        title: 'Settings',
-        message:
-            'Fine-tune notifications, discovery, privacy, and account preferences.',
-      ),
-      const _PlaceholderScreen(
-        icon: Icons.support_agent_outlined,
-        title: 'Help & Support',
-        message: 'Get fast answers, contact support, and report event issues.',
-      ),
-    ];
+    return StreamBuilder<AppUser?>(
+      stream: AuthService.instance.profileStream(widget.currentUser.uid),
+      builder: (context, snapshot) {
+        final currentUser = snapshot.data ?? widget.currentUser;
 
-    return NeonScaffold(
-      appBar: AppBar(
-        title: Text(_titleFor(_index)),
-        leading: Builder(
-          builder: (context) => IconButton.filledTonal(
-            tooltip: 'Open menu',
-            onPressed: () => Scaffold.of(context).openDrawer(),
-            icon: const Icon(Icons.menu),
+        final pages = [
+          HomeScreen(currentUser: currentUser),
+          ExploreScreen(currentUser: currentUser),
+          SearchScreen(currentUser: currentUser),
+          MyRsvpsScreen(currentUser: currentUser),
+          FavoritesScreen(onExplore: () => setState(() => _index = 1)),
+          ProfileScreen(currentUser: currentUser),
+          const _PlaceholderScreen(
+            icon: Icons.settings_outlined,
+            title: 'Settings',
+            message:
+                'Fine-tune notifications, discovery, privacy, and account preferences.',
           ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Profile',
-            onPressed: () => setState(() => _index = 5),
-            icon: const Icon(Icons.person_outline),
+          const _PlaceholderScreen(
+            icon: Icons.support_agent_outlined,
+            title: 'Help & Support',
+            message:
+                'Get fast answers, contact support, and report event issues.',
           ),
-        ],
-      ),
-      drawer: MenuScreen(
-        currentUser: widget.currentUser,
-        selectedIndex: _index,
-        onSelect: (value) => setState(() => _index = value),
-      ),
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 260),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeInCubic,
-        child: KeyedSubtree(key: ValueKey(_index), child: pages[_index]),
-      ),
+        ];
+
+        return NeonScaffold(
+          appBar: AppBar(
+            title: Text(_titleFor(_index)),
+            leading: Builder(
+              builder: (context) => IconButton.filledTonal(
+                tooltip: 'Open menu',
+                onPressed: () => Scaffold.of(context).openDrawer(),
+                icon: const Icon(Icons.menu),
+              ),
+            ),
+            actions: [
+              IconButton(
+                tooltip: 'Profile',
+                onPressed: () => setState(() => _index = 5),
+                icon: const Icon(Icons.person_outline),
+              ),
+            ],
+          ),
+          drawer: MenuScreen(
+            currentUser: currentUser,
+            selectedIndex: _index,
+            onSelect: (value) => setState(() => _index = value),
+          ),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 260),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            child: KeyedSubtree(key: ValueKey(_index), child: pages[_index]),
+          ),
+        );
+      },
     );
   }
 

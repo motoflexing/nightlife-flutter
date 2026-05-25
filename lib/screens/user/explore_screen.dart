@@ -7,6 +7,7 @@ import '../../models/event.dart';
 import '../../services/app_preferences_service.dart';
 import '../../services/event_discovery_service.dart';
 import '../../services/firestore_service.dart';
+import '../../widgets/compact_ui.dart';
 import '../../widgets/event_card.dart';
 import '../../widgets/state_views.dart';
 import 'event_details_screen.dart';
@@ -68,10 +69,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
         return ListView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+          padding: compactScreenPadding(context, bottom: 28),
           children: [
             _ExploreHeader(count: events.length),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             DropdownButtonFormField<String>(
               initialValue: _city,
               decoration: const InputDecoration(
@@ -89,7 +90,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 AppPreferencesService.instance.saveSelectedCity(value);
               },
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -103,9 +104,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 );
               }).toList(),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             const _CollectionsStrip(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
             Text(
               'All Events',
               style: Theme.of(
@@ -152,7 +153,7 @@ class _ExploreHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppTheme.glassSurface,
         borderRadius: BorderRadius.circular(8),
@@ -161,8 +162,8 @@ class _ExploreHeader extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
               gradient: AppTheme.premiumGradient,
               borderRadius: BorderRadius.circular(8),
@@ -204,7 +205,7 @@ class _CollectionsStrip extends StatelessWidget {
       ('Late Night', Icons.dark_mode_outlined),
     ];
     return SizedBox(
-      height: 96,
+      height: 82,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: collections.length,
@@ -212,8 +213,8 @@ class _CollectionsStrip extends StatelessWidget {
         itemBuilder: (context, index) {
           final item = collections[index];
           return Container(
-            width: 156,
-            padding: const EdgeInsets.all(12),
+            width: 140,
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: AppTheme.elevated.withValues(alpha: 0.68),
               borderRadius: BorderRadius.circular(8),

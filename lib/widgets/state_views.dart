@@ -10,13 +10,36 @@ class LoadingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 14),
-          Text(message, style: const TextStyle(color: AppTheme.textMuted)),
-        ],
+      child: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppTheme.glassSurface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppTheme.glassBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                message,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.textMuted,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -38,26 +61,36 @@ class EmptyView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 46, color: AppTheme.neonViolet),
-            const SizedBox(height: 14),
-            Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: const TextStyle(color: AppTheme.textMuted),
-              textAlign: TextAlign.center,
-            ),
-          ],
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.glassSurface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppTheme.glassBorder),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 34, color: AppTheme.neonViolet),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                message,
+                style: const TextStyle(color: AppTheme.textMuted, height: 1.35),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -74,26 +107,38 @@ class ErrorStateView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.error_outline,
-              color: AppTheme.accentPink,
-              size: 42,
+        padding: const EdgeInsets.all(16),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.glassSurface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppTheme.accentPink.withValues(alpha: 0.28),
             ),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            if (onRetry != null) ...[
-              const SizedBox(height: 14),
-              OutlinedButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                color: AppTheme.accentPink,
+                size: 34,
               ),
+              const SizedBox(height: 10),
+              Text(message, textAlign: TextAlign.center),
+              if (onRetry != null) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

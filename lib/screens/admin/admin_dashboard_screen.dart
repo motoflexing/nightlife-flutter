@@ -17,6 +17,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/location_service.dart';
 import '../../services/storage_service.dart';
+import '../../widgets/compact_ui.dart';
 import '../../widgets/event_card.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/state_views.dart';
@@ -129,66 +130,76 @@ class _AdminOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: compactScreenPadding(context),
       children: [
-        Wrap(
-          spacing: 14,
-          runSpacing: 14,
-          children: [
-            _StreamCountCard<NightlifeEvent>(
-              title: 'Events',
-              icon: Icons.local_activity,
-              stream: FirestoreService.instance.adminEventsStream(),
-            ),
-            _StreamCountCard<AppUser>(
-              title: 'Users',
-              icon: Icons.people,
-              stream: FirestoreService.instance.usersStream(),
-            ),
-            _StreamCountCard<Promoter>(
-              title: 'Promoters',
-              icon: Icons.campaign,
-              stream: FirestoreService.instance.promotersStream(),
-            ),
-            _StreamCountCard<Rsvp>(
-              title: 'RSVPs',
-              icon: Icons.fact_check,
-              stream: FirestoreService.instance.allRsvpsStream(),
-            ),
-            _StreamCountCard<Club>(
-              title: 'Clubs',
-              icon: Icons.storefront,
-              stream: FirestoreService.instance.clubsStream(),
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 1100
+                ? 4
+                : constraints.maxWidth >= 760
+                ? 3
+                : 2;
+            return GridView.count(
+              crossAxisCount: columns,
+              childAspectRatio: constraints.maxWidth < 640 ? 1.72 : 1.65,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               children: [
-                Text(
-                  'Operator console',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                _StreamCountCard<NightlifeEvent>(
+                  title: 'Events',
+                  icon: Icons.local_activity,
+                  stream: FirestoreService.instance.adminEventsStream(),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Manage inventory, roles, referral distribution, and RSVP approvals from one Firebase-backed control room.',
-                  style: TextStyle(color: AppTheme.textMuted),
+                _StreamCountCard<AppUser>(
+                  title: 'Users',
+                  icon: Icons.people,
+                  stream: FirestoreService.instance.usersStream(),
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () =>
-                      FirestoreService.instance.seedDemoEvents(currentUser.uid),
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Seed demo events'),
+                _StreamCountCard<Promoter>(
+                  title: 'Promoters',
+                  icon: Icons.campaign,
+                  stream: FirestoreService.instance.promotersStream(),
+                ),
+                _StreamCountCard<Rsvp>(
+                  title: 'RSVPs',
+                  icon: Icons.fact_check,
+                  stream: FirestoreService.instance.allRsvpsStream(),
+                ),
+                _StreamCountCard<Club>(
+                  title: 'Clubs',
+                  icon: Icons.storefront,
+                  stream: FirestoreService.instance.clubsStream(),
                 ),
               ],
-            ),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        CompactPanel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Operator console',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Manage inventory, roles, referral distribution, and RSVP approvals.',
+                style: TextStyle(color: AppTheme.textMuted, height: 1.35),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: () =>
+                    FirestoreService.instance.seedDemoEvents(currentUser.uid),
+                icon: const Icon(Icons.auto_awesome),
+                label: const Text('Seed demo events'),
+              ),
+            ],
           ),
         ),
       ],
@@ -209,43 +220,16 @@ class _StreamCountCard<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 220,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: StreamBuilder<List<T>>(
-            stream: stream,
-            builder: (context, snapshot) {
-              return Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: AppTheme.neonCyan.withValues(alpha: 0.14),
-                    child: Icon(icon, color: AppTheme.neonCyan),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(color: AppTheme.textMuted),
-                      ),
-                      Text(
-                        snapshot.hasData
-                            ? snapshot.data!.length.toString()
-                            : '...',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w900),
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      ),
+    return StreamBuilder<List<T>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        return CompactStatCard(
+          icon: icon,
+          value: snapshot.hasData ? snapshot.data!.length.toString() : '...',
+          label: title,
+          accent: AppTheme.neonCyan,
+        );
+      },
     );
   }
 }
@@ -272,7 +256,7 @@ class _ApprovalsAdmin extends StatelessWidget {
           );
         }
         return ListView.separated(
-          padding: const EdgeInsets.all(16),
+          padding: compactScreenPadding(context),
           itemCount: users.length,
           separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (context, index) {
@@ -350,7 +334,7 @@ class _EventsAdmin extends StatelessWidget {
           return ErrorStateView(message: snapshot.error.toString());
         final events = snapshot.data ?? [];
         return ListView(
-          padding: const EdgeInsets.all(16),
+          padding: compactScreenPadding(context),
           children: [
             Align(
               alignment: Alignment.centerLeft,
@@ -376,9 +360,9 @@ class _EventsAdmin extends StatelessWidget {
                     itemCount: events.length,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: columns,
-                      childAspectRatio: columns == 1 ? 0.8 : 0.78,
-                      crossAxisSpacing: 14,
-                      mainAxisSpacing: 14,
+                      mainAxisExtent: columns == 1 ? 204 : 214,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
                     ),
                     itemBuilder: (context, index) {
                       final event = events[index];
@@ -620,19 +604,19 @@ class _EventFormState extends State<_EventForm> {
           child: ListView(
             controller: controller,
             padding: EdgeInsets.fromLTRB(
-              16,
-              16,
-              16,
+              12,
+              12,
+              12,
               MediaQuery.of(context).viewInsets.bottom + 24,
             ),
             children: [
               Text(
                 _event.id.isEmpty ? 'Add event' : 'Edit event',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _TextField(controller: _title, label: 'Title'),
               Row(
                 children: [
@@ -871,7 +855,7 @@ class _UsersAdmin extends StatelessWidget {
           return ErrorStateView(message: snapshot.error.toString());
         final users = snapshot.data ?? [];
         return ListView.separated(
-          padding: const EdgeInsets.all(16),
+          padding: compactScreenPadding(context),
           itemCount: users.length,
           separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (context, index) {
@@ -942,7 +926,7 @@ class _ClubsAdmin extends StatelessWidget {
           );
         }
         return ListView.separated(
-          padding: const EdgeInsets.all(16),
+          padding: compactScreenPadding(context),
           itemCount: clubs.length,
           separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (context, index) {
@@ -991,7 +975,7 @@ class _PromotersAdmin extends StatelessWidget {
           );
         }
         return ListView.separated(
-          padding: const EdgeInsets.all(16),
+          padding: compactScreenPadding(context),
           itemCount: promoters.length,
           separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (context, index) {
@@ -1038,7 +1022,7 @@ class _RsvpsAdmin extends StatelessWidget {
           );
         }
         return ListView.separated(
-          padding: const EdgeInsets.all(16),
+          padding: compactScreenPadding(context),
           itemCount: rsvps.length,
           separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (context, index) {

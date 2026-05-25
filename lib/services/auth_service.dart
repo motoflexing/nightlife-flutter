@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
@@ -34,7 +36,12 @@ class AuthService {
 
     final doc = await _db.collection('users').doc(user.uid).get();
     final role = doc.data()?['role'] as String?;
-    return doc.exists && role == 'superAdmin';
+    final normalizedRole = (role ?? '').trim().toLowerCase().replaceAll(
+      '_',
+      '',
+    );
+    return doc.exists &&
+        (normalizedRole == 'superadmin' || normalizedRole == 'super-admin');
   }
 
   Future<AppUser?> getCurrentProfile() async {
@@ -49,10 +56,56 @@ class AuthService {
     return AppUser.fromDoc(doc);
   }
 
+  Future<void> refreshCurrentUserProfileState({
+    String? displayName,
+    String? photoUrl,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final cleanName = displayName?.trim();
+    final cleanPhotoUrl = photoUrl?.trim();
+    try {
+      if (cleanName != null && cleanName.isNotEmpty) {
+        await user
+            .updateDisplayName(cleanName)
+            .timeout(const Duration(seconds: 10));
+      }
+      if (cleanPhotoUrl != null && cleanPhotoUrl.isNotEmpty) {
+        await user
+            .updatePhotoURL(cleanPhotoUrl)
+            .timeout(const Duration(seconds: 10));
+      }
+      await user.reload().timeout(const Duration(seconds: 10));
+      debugPrint('Auth local user state refreshed: uid=${user.uid}');
+    } on FirebaseAuthException catch (error, stackTrace) {
+      debugPrint(
+        'Auth local user state refresh failed: '
+        'code=${error.code} message=${error.message}',
+      );
+      debugPrintStack(stackTrace: stackTrace);
+    } on TimeoutException catch (error, stackTrace) {
+      debugPrint('Auth local user state refresh timed out: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    } catch (error, stackTrace) {
+      debugPrint('Auth local user state refresh failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
   Stream<AppUser?> profileStream(String uid) {
-    return _db.collection('users').doc(uid).snapshots().map((doc) {
+    return _db.collection('users').doc(uid).snapshots().asyncMap((doc) async {
       if (!doc.exists) return null;
-      return AppUser.fromDoc(doc);
+      final profile = AppUser.fromDoc(doc);
+      if (profile.isPromoter &&
+          profile.isActive &&
+          !profile.isRejected &&
+          profile.status != 'approved') {
+        await _approvePromoterProfileIfNeeded(_auth.currentUser);
+        final updatedDoc = await doc.reference.get();
+        return AppUser.fromDoc(updatedDoc);
+      }
+      return profile;
     });
   }
 
@@ -63,11 +116,14 @@ class AuthService {
   }) async {
     try {
       _requestedRole = requestedRole;
+      debugPrint('AuthService.signIn started. requestedRole=$requestedRole');
 
-      await _auth.signInWithEmailAndPassword(
+      final credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
+      await _approvePromoterProfileIfNeeded(credential.user);
+      debugPrint('AuthService.signIn success. requestedRole=$requestedRole');
     } on FirebaseAuthException catch (error) {
       throw AuthException(_friendlyAuthError(error));
     }
@@ -169,7 +225,7 @@ class AuthService {
     final cleanPhone = phone.trim();
     final cleanValidIdUrl = validIdUrl.trim();
     final role = _safeRequestedRole(requestedRole);
-    final requiresReview = role == 'promoter' || role == 'clubAdmin';
+    final requiresReview = role == 'clubAdmin';
     final status = requiresReview ? 'pending_review' : 'approved';
     final promoterCode = role == 'promoter'
         ? _makePromoterCode(cleanName, user.uid)
@@ -322,6 +378,29 @@ class AuthService {
     _requestedRole = null;
     _superAdminUnlockArmed = false;
     return _auth.signOut();
+  }
+
+  Future<void> _approvePromoterProfileIfNeeded(User? user) async {
+    if (user == null) return;
+    final ref = _db.collection('users').doc(user.uid);
+    final doc = await ref.get();
+    final data = doc.data();
+    if (!doc.exists || data == null || data['role'] != 'promoter') return;
+
+    final status = data['status'] as String? ?? '';
+    final isActive = data['isActive'] as bool? ?? true;
+    final onboardingCompleted = data['onboardingCompleted'] as bool? ?? true;
+    if (status == 'rejected' || !isActive) return;
+    if (status == 'approved' && isActive && onboardingCompleted) return;
+
+    await ref.set({
+      'status': 'approved',
+      'verificationStatus': 'approved',
+      'documentUploadStatus': 'not_required',
+      'onboardingCompleted': true,
+      'isActive': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   Future<void> updateCurrentUserValidIdUrl(String validIdUrl) async {

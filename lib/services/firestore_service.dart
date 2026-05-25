@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../core/constants/app_constants.dart';
 import '../models/app_user.dart';
@@ -21,6 +23,7 @@ class FirestoreService {
   static final instance = FirestoreService._();
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<PagedEvents> fetchEvents({
     String city = 'All',
@@ -231,23 +234,6 @@ class FirestoreService {
     }
   }
 
-  Future<void> updateUserLastKnownLocation({
-    required String userId,
-    required double latitude,
-    required double longitude,
-    required String city,
-    required String fullAddress,
-  }) async {
-    await _db.collection('users').doc(userId).set({
-      'lastLatitude': latitude,
-      'lastLongitude': longitude,
-      'lastKnownCity': city,
-      'lastKnownAddress': fullAddress,
-      'lastLocationAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-  }
-
   Future<void> deactivateEvent(String eventId) async {
     await _db.collection('events').doc(eventId).update({
       'isActive': false,
@@ -255,20 +241,57 @@ class FirestoreService {
     });
   }
 
-  Future<void> setEventFeatured(String eventId, bool isFeatured) async {
-    await _db.collection('events').doc(eventId).set({
-      'isFeatured': isFeatured,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+  Future<void> deleteEvent(String eventId) async {
+    final cleanEventId = eventId.trim();
+    if (cleanEventId.isEmpty) {
+      throw const FirestoreAppException('Event id is required.');
+    }
+
+    await _runFirestoreWrite(() async {
+      final rsvps = await _db
+          .collection('rsvps')
+          .where('eventId', isEqualTo: cleanEventId)
+          .get();
+      var batch = _db.batch();
+      var writes = 0;
+
+      Future<void> flushIfFull() async {
+        if (writes < 499) return;
+        await batch.commit();
+        batch = _db.batch();
+        writes = 0;
+      }
+
+      batch.delete(_db.collection('events').doc(cleanEventId));
+      writes += 1;
+      for (final doc in rsvps.docs) {
+        await flushIfFull();
+        batch.delete(doc.reference);
+        writes += 1;
+      }
+
+      if (writes > 0) await batch.commit();
+    });
   }
 
-  Future<void> deleteEvent(String eventId) async {
-    await _db.collection('events').doc(eventId).delete();
+  Future<void> setEventFeatured(String eventId, bool isFeatured) async {
+    final cleanEventId = eventId.trim();
+    if (cleanEventId.isEmpty) {
+      throw const FirestoreAppException('Event id is required.');
+    }
+
+    await _runFirestoreWrite(() async {
+      await _db.collection('events').doc(cleanEventId).set({
+        'isFeatured': isFeatured,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    });
   }
 
   Future<void> updateRsvpStatus(String rsvpId, String status) async {
     await _db.collection('rsvps').doc(rsvpId).update({
       'status': status,
+      'rsvpStatus': status,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -278,57 +301,218 @@ class FirestoreService {
     required AppUser user,
     String? promoterCode,
   }) async {
+    const collectionPath = 'rsvps';
+    final currentUserId = user.uid.trim();
+    final authUserId = _auth.currentUser?.uid.trim();
+    final userId = authUserId ?? currentUserId;
+    final eventId = event.id.trim();
+    final eventTitle = event.title.trim();
+
+    debugPrint(
+      'RSVP debug: currentUser.uid=$currentUserId '
+      'firebaseAuth.uid=${authUserId ?? '<null>'} event.id=$eventId',
+    );
+
+    if (authUserId == null || authUserId.isEmpty) {
+      throw const FirestoreAppException('Please sign in again to RSVP.');
+    }
+    if (currentUserId.isNotEmpty && currentUserId != authUserId) {
+      debugPrint(
+        'RSVP debug: UID mismatch. currentUser.uid=$currentUserId '
+        'firebaseAuth.uid=$authUserId. Using Firebase Auth UID for lookup.',
+      );
+    }
     if (!user.isUser || !user.isApproved) {
+      throw const FirestoreAppException('Only approved users can RSVP.');
+    }
+    if (eventId.isEmpty) {
       throw const FirestoreAppException(
-        'Only approved user accounts can RSVP.',
+        'This event is not ready for RSVP yet.',
+      );
+    }
+    if (eventTitle.isEmpty) {
+      throw const FirestoreAppException(
+        'This event is missing a title. Please try another event.',
       );
     }
 
-    final code = promoterCode == null || promoterCode.trim().isEmpty
-        ? null
-        : ReferralService.normalize(promoterCode);
-    String? promoterId;
-    String? resolvedCode;
-
-    if (code != null) {
-      final referralDoc = await _db.collection('referralCodes').doc(code).get();
-      final referral = referralDoc.data();
-      if (!referralDoc.exists ||
-          referral == null ||
-          referral['isActive'] != true) {
-        throw const FirestoreAppException('Referral code is not active.');
+    try {
+      debugPrint('RSVP debug: reading users/$userId before RSVP create');
+      final userDoc = await _db.collection('users').doc(userId).get();
+      final profileData = userDoc.data();
+      debugPrint(
+        'RSVP debug: user profile exists=${userDoc.exists} '
+        'doc.id=${userDoc.id} data=${profileData ?? <String, dynamic>{}}',
+      );
+      if (!userDoc.exists) {
+        throw const FirestoreAppException(
+          'Your profile could not be found. Please sign in again.',
+        );
       }
-      promoterId = referral['promoterId'] as String?;
-      resolvedCode = referral['referralCode'] as String? ?? code;
-      if (promoterId == null || promoterId.trim().isEmpty) {
-        throw const FirestoreAppException('Referral code is not active.');
+      final profile = AppUser.fromDoc(userDoc);
+      if (profile.uid.trim() != authUserId) {
+        debugPrint(
+          'RSVP debug: profile UID mismatch. profile.uid=${profile.uid} '
+          'firebaseAuth.uid=$authUserId doc.id=${userDoc.id}',
+        );
+        throw const FirestoreAppException(
+          'Your session profile does not match. Please sign in again.',
+        );
       }
-    }
-
-    final rsvpId = '${user.uid}_${event.id}';
-    final rsvpRef = _db.collection('rsvps').doc(rsvpId);
-
-    await _db.runTransaction((transaction) async {
-      final existing = await transaction.get(rsvpRef);
-
-      if (existing.exists) {
-        throw FirestoreAppException('You have already RSVPed for this event.');
+      if (!profile.isUser || !profile.isApproved) {
+        throw const FirestoreAppException('Only approved users can RSVP.');
       }
 
-      transaction.set(rsvpRef, {
-        'userId': user.uid,
-        'userName': user.name,
-        'userPhone': user.phone,
-        'eventId': event.id,
-        'eventTitle': event.title,
-        'clubId': event.clubId,
+      debugPrint('RSVP debug: reading events/$eventId before RSVP create');
+      final eventDoc = await _db.collection('events').doc(eventId).get();
+      final eventData = eventDoc.data();
+      debugPrint(
+        'RSVP debug: event exists=${eventDoc.exists} '
+        'doc.id=${eventDoc.id} data=${eventData ?? <String, dynamic>{}}',
+      );
+      if (!eventDoc.exists || eventData == null) {
+        throw FirestoreAppException(
+          'missing-event-id: This event could not be found.',
+          debugMessage: 'missing-event-id: events/$eventId does not exist',
+        );
+      }
+      if (eventData['isActive'] != true) {
+        throw FirestoreAppException(
+          'inactive-event: This event is no longer accepting RSVPs.',
+          debugMessage: 'inactive-event: events/$eventId isActive is not true',
+        );
+      }
+
+      final code = promoterCode == null || promoterCode.trim().isEmpty
+          ? null
+          : ReferralService.normalize(promoterCode);
+      String? promoterId;
+      String? resolvedCode;
+
+      if (code != null) {
+        debugPrint(
+          'RSVP debug: reading referralCodes/$code before RSVP create',
+        );
+        final referralDoc = await _db
+            .collection('referralCodes')
+            .doc(code)
+            .get();
+        final referral = referralDoc.data();
+        if (!referralDoc.exists ||
+            referral == null ||
+            referral['isActive'] != true) {
+          throw const FirestoreAppException('Referral code is not active.');
+        }
+        promoterId = (referral['promoterId'] as String?)?.trim();
+        resolvedCode = (referral['referralCode'] as String?)?.trim();
+        if (promoterId == null || promoterId.isEmpty) {
+          throw const FirestoreAppException('Referral code is not active.');
+        }
+        if (resolvedCode == null || resolvedCode.isEmpty) {
+          resolvedCode = code;
+        }
+      }
+
+      final rsvpId = '${userId}_$eventId';
+      final rsvpRef = _db.collection(collectionPath).doc(rsvpId);
+      final eventClubId = _stringValue(eventData['clubId']);
+      final clubId = eventClubId?.trim().isNotEmpty == true
+          ? eventClubId!.trim()
+          : event.clubId?.trim();
+      final venueId = clubId?.trim().isNotEmpty == true
+          ? clubId!.trim()
+          : (eventData['createdBy'] as String?)?.trim() ?? event.createdBy;
+      final userName = profile.name.trim();
+      final userPhone = profile.phone.trim();
+      final rsvpData = _cleanFirestorePayload({
+        'userId': userId,
+        'userName': userName.isEmpty ? 'Guest' : userName,
+        'userPhone': userPhone,
+        'eventId': eventId,
+        'venueId': venueId,
+        'eventTitle': eventTitle,
+        'clubId': clubId,
         'promoterId': promoterId,
         'promoterCode': resolvedCode,
-        'status': 'pending',
+        'paymentMethod': 'pay_at_venue',
+        'paymentStatus': 'pending_at_venue',
+        'rsvpStatus': 'confirmed',
+        'status': 'confirmed',
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
-    });
+
+      if (!_isValidFirestorePayload(rsvpData)) {
+        throw FirestoreAppException(
+          'invalid-payload: RSVP details are incomplete.',
+          debugMessage: 'invalid-payload: $rsvpData',
+        );
+      }
+
+      debugPrint(
+        'RSVP debug: collectionPath=$collectionPath documentId=$rsvpId '
+        'documentPath=$collectionPath/$rsvpId',
+      );
+      debugPrint('RSVP debug: COMPLETE RSVP payload=$rsvpData');
+      debugPrint(
+        'RSVP debug: duplicate-check read $collectionPath/$rsvpId before RSVP create',
+      );
+      try {
+        final existingRsvp = await rsvpRef.get();
+        if (existingRsvp.exists) {
+          throw const FirestoreAppException(
+            'duplicate-rsvp: You have already RSVPed for this event.',
+            debugMessage: 'duplicate-rsvp: RSVP document already exists',
+          );
+        }
+      } on FirestoreAppException {
+        rethrow;
+      } on FirebaseException catch (error, stackTrace) {
+        debugPrint(
+          'RSVP debug: duplicate-check FirebaseException '
+          'code=${error.code} message=${error.message} plugin=${error.plugin}',
+        );
+        debugPrintStack(stackTrace: stackTrace);
+        debugPrint(
+          'RSVP debug: continuing to RSVP create because duplicate pre-read '
+          'may be blocked by Firestore rules for missing documents.',
+        );
+      }
+
+      debugPrint(
+        'RSVP debug: BEFORE Firestore write set($collectionPath/$rsvpId)',
+      );
+      debugPrint('RSVP debug: WRITE PAYLOAD $rsvpData');
+
+      await rsvpRef.set(rsvpData);
+    } on FirestoreAppException {
+      rethrow;
+    } on FirebaseException catch (error, stackTrace) {
+      debugPrint(
+        'FirestoreService.createRsvp FirebaseException '
+        'code=${error.code} message=${error.message} plugin=${error.plugin}',
+      );
+      debugPrintStack(stackTrace: stackTrace);
+      throw FirestoreAppException(
+        _friendlyFirestoreError(error),
+        debugMessage:
+            'FirebaseException code=${error.code} message=${error.message}',
+      );
+    } on Exception catch (error, stackTrace) {
+      debugPrint('FirestoreService.createRsvp Exception: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      throw FirestoreAppException(
+        'Unable to create RSVP right now. Please try again.',
+        debugMessage: error.toString(),
+      );
+    } catch (error, stackTrace) {
+      debugPrint('FirestoreService.createRsvp non-Exception error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      throw FirestoreAppException(
+        'Unable to create RSVP right now. Please try again.',
+        debugMessage: error.toString(),
+      );
+    }
   }
 
   Future<void> updateUserRole(AppUser user, String role) async {
@@ -378,38 +562,116 @@ class FirestoreService {
     }
   }
 
-  Future<void> setPromoterActive(Promoter promoter, bool isActive) async {
-    await _db.collection('promoters').doc(promoter.id).set({
-      'isActive': isActive,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    if (promoter.userId.isNotEmpty) {
-      await _db.collection('users').doc(promoter.userId).set({
-        'isActive': isActive,
-        'status': isActive ? 'approved' : 'rejected',
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+  Future<void> updateUserProfile({
+    required String userId,
+    required String name,
+    required String phone,
+    required String city,
+    String? profilePhotoUrl,
+  }) async {
+    final cleanUserId = userId.trim();
+    final cleanName = name.trim();
+    if (cleanUserId.isEmpty) {
+      throw const FirestoreAppException('User id is required.');
+    }
+    if (cleanName.isEmpty) {
+      throw const FirestoreAppException('Name cannot be empty.');
     }
 
-    await _ensureReferralCode(
-      promoterId: promoter.userId,
-      referralCode: promoter.referralCode,
-      isActive: isActive,
-    );
+    final updates = <String, dynamic>{
+      'name': cleanName,
+      'phone': phone.trim(),
+      'lastKnownCity': city.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    final cleanPhotoUrl = profilePhotoUrl?.trim();
+    if (cleanPhotoUrl != null && cleanPhotoUrl.isNotEmpty) {
+      updates['profilePhotoUrl'] = cleanPhotoUrl;
+      updates['profileImageUrl'] = cleanPhotoUrl;
+      updates['photoUrl'] = cleanPhotoUrl;
+    }
+
+    debugPrint('Firestore profile update started: users/$cleanUserId');
+    await _runFirestoreWrite(() async {
+      await _db
+          .collection('users')
+          .doc(cleanUserId)
+          .set(updates, SetOptions(merge: true))
+          .timeout(const Duration(seconds: 20));
+    });
+    debugPrint('Firestore profile updated: users/$cleanUserId');
   }
 
-  Future<void> setMaintenanceModePlaceholder(bool enabled) async {
-    await _db.collection('platform').doc('settings').set({
-      'maintenanceMode': enabled,
-      'maintenanceModeUpdatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+  Future<void> updateUserProfilePhoto({
+    required String userId,
+    required String profilePhotoUrl,
+  }) async {
+    final cleanUserId = userId.trim();
+    final cleanPhotoUrl = profilePhotoUrl.trim();
+    if (cleanUserId.isEmpty) {
+      throw const FirestoreAppException('User id is required.');
+    }
+    if (cleanPhotoUrl.isEmpty) {
+      throw const FirestoreAppException('Profile photo URL is required.');
+    }
+
+    debugPrint('Firestore profile photo update started: users/$cleanUserId');
+    await _runFirestoreWrite(() async {
+      await _db
+          .collection('users')
+          .doc(cleanUserId)
+          .set({
+            'profileImageUrl': cleanPhotoUrl,
+            'profilePhotoUrl': cleanPhotoUrl,
+            'photoUrl': cleanPhotoUrl,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true))
+          .timeout(const Duration(seconds: 20));
+    });
+    debugPrint('Firestore profile photo updated: users/$cleanUserId');
+  }
+
+  Future<void> setPromoterActive(Promoter promoter, bool isActive) async {
+    final promoterId = promoter.id.trim();
+    final userId = promoter.userId.trim().isEmpty
+        ? promoterId
+        : promoter.userId.trim();
+    if (promoterId.isEmpty && userId.isEmpty) {
+      throw const FirestoreAppException('Promoter id is required.');
+    }
+
+    await _runFirestoreWrite(() async {
+      final batch = _db.batch();
+      if (promoterId.isNotEmpty) {
+        batch.set(_db.collection('promoters').doc(promoterId), {
+          'isActive': isActive,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+      if (userId.isNotEmpty) {
+        batch.set(_db.collection('users').doc(userId), {
+          'isActive': isActive,
+          'status': isActive ? 'approved' : 'rejected',
+          'verificationStatus': isActive ? 'approved' : 'rejected',
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+      await batch.commit();
+      await _ensureReferralCode(
+        promoterId: promoterId.isEmpty ? userId : promoterId,
+        referralCode: promoter.referralCode,
+        isActive: isActive,
+      );
+    });
   }
 
   Future<void> approveUser(AppUser user) async {
     final updates = <String, dynamic>{
       'status': 'approved',
+      'verificationStatus': 'approved',
       'isActive': true,
+      'onboardingCompleted': true,
+      'rejectionReason': '',
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
@@ -422,6 +684,8 @@ class FirestoreService {
     if (user.isClubAdmin && user.clubId != null) {
       await _db.collection('clubs').doc(user.clubId).update({
         'verificationStatus': 'approved',
+        'rejectionReason': '',
+        'updatedAt': FieldValue.serverTimestamp(),
       });
     } else if (user.isClubAdmin) {
       throw const FirestoreAppException(
@@ -449,6 +713,94 @@ class FirestoreService {
       await _ensurePromoter(user, isActive: false);
       await _deactivateReferralCode(user.promoterCode);
     }
+  }
+
+  Future<void> rejectUserReview(AppUser user, {String? rejectionReason}) async {
+    await _runFirestoreWrite(() async {
+      final reason = rejectionReason?.trim() ?? '';
+      final batch = _db.batch();
+      batch.set(_db.collection('users').doc(user.uid), {
+        'status': 'rejected',
+        'verificationStatus': 'rejected',
+        'isActive': false,
+        'rejectionReason': reason,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (user.isClubAdmin && user.clubId != null) {
+        batch.set(_db.collection('clubs').doc(user.clubId), {
+          'verificationStatus': 'rejected',
+          'rejectionReason': reason,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit();
+      if (user.isPromoter) {
+        await _ensurePromoter(user, isActive: false);
+        await _deactivateReferralCode(user.promoterCode);
+      }
+    });
+  }
+
+  Future<void> approveClubReview(Club club) async {
+    final clubId = club.id.trim();
+    if (clubId.isEmpty) {
+      throw const FirestoreAppException('Club id is required.');
+    }
+
+    await _runFirestoreWrite(() async {
+      final batch = _db.batch();
+      batch.set(_db.collection('clubs').doc(clubId), {
+        'verificationStatus': 'approved',
+        'rejectionReason': '',
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (club.ownerId.trim().isNotEmpty) {
+        batch.set(_db.collection('users').doc(club.ownerId), {
+          'clubId': clubId,
+          'status': 'approved',
+          'verificationStatus': 'approved',
+          'isActive': true,
+          'onboardingCompleted': true,
+          'rejectionReason': '',
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit();
+    });
+  }
+
+  Future<void> rejectClubReview(Club club, {String? rejectionReason}) async {
+    final clubId = club.id.trim();
+    if (clubId.isEmpty) {
+      throw const FirestoreAppException('Club id is required.');
+    }
+
+    await _runFirestoreWrite(() async {
+      final reason = rejectionReason?.trim() ?? '';
+      final batch = _db.batch();
+      batch.set(_db.collection('clubs').doc(clubId), {
+        'verificationStatus': 'rejected',
+        'rejectionReason': reason,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (club.ownerId.trim().isNotEmpty) {
+        batch.set(_db.collection('users').doc(club.ownerId), {
+          'clubId': clubId,
+          'status': 'rejected',
+          'verificationStatus': 'rejected',
+          'isActive': false,
+          'rejectionReason': reason,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit();
+    });
   }
 
   Future<void> submitClubOnboarding({
@@ -499,68 +851,184 @@ class FirestoreService {
     required String businessAddress,
     required String city,
     required String instagramLink,
-    String documentUrl = '',
-    String documentUploadStatus = 'pending_upload',
+    required String documentUploadStatus,
   }) async {
-    final role = user.role;
-    final details = {
-      'businessName': businessName.trim(),
-      'venueName': role == 'clubAdmin' ? businessName.trim() : null,
-      'gstNumber': gstNumber.trim(),
-      'ownerName': ownerName.trim(),
-      'businessPhone': businessPhone.trim(),
-      'businessAddress': businessAddress.trim(),
-      'city': city.trim(),
-      'instagramLink': instagramLink.trim(),
-      'documentUrl': documentUrl.trim(),
-      'documentUploadStatus': documentUrl.trim().isEmpty
-          ? documentUploadStatus
-          : 'uploaded_pending_review',
-      'verificationStatus': 'pending_review',
-      'status': 'pending_review',
-      'onboardingCompleted': true,
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
+    if (!user.isClubAdmin) {
+      throw const FirestoreAppException(
+        'Only venue admin accounts can submit verification details.',
+      );
+    }
 
-    await _db
-        .collection('users')
-        .doc(user.uid)
-        .set(details, SetOptions(merge: true))
-        .timeout(const Duration(seconds: 20));
+    final cleanBusinessName = businessName.trim();
+    final cleanOwnerName = ownerName.trim();
+    final cleanBusinessPhone = businessPhone.trim();
+    final cleanBusinessAddress = businessAddress.trim();
+    if (cleanBusinessName.isEmpty ||
+        cleanOwnerName.isEmpty ||
+        cleanBusinessPhone.isEmpty ||
+        cleanBusinessAddress.isEmpty ||
+        city.trim().isEmpty) {
+      throw const FirestoreAppException(
+        'Complete all required verification details.',
+      );
+    }
 
-    if (role == 'clubAdmin') {
-      final clubRef = user.clubId == null
+    await _runFirestoreWrite(() async {
+      final clubRef = user.clubId == null || user.clubId!.trim().isEmpty
           ? _db.collection('clubs').doc()
           : _db.collection('clubs').doc(user.clubId);
-      await clubRef
-          .set({
-            'ownerId': user.uid,
-            'clubName': businessName.trim(),
-            'ownerName': ownerName.trim(),
-            'businessEmail': user.email,
-            'phone': businessPhone.trim(),
-            'city': city.trim(),
-            'address': businessAddress.trim(),
-            'instagram': instagramLink.trim(),
-            'documentUrl': documentUrl.trim(),
-            'documentUploadStatus': documentUrl.trim().isEmpty
-                ? documentUploadStatus
-                : 'uploaded_pending_review',
-            'verificationStatus': 'pending_review',
-            'createdAt': FieldValue.serverTimestamp(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true))
-          .timeout(const Duration(seconds: 20));
+      final cleanCity = city.trim();
+      final cleanInstagram = instagramLink.trim();
+      final cleanDocumentStatus = documentUploadStatus.trim().isEmpty
+          ? 'pending_upload'
+          : documentUploadStatus.trim();
 
-      await _db
-          .collection('users')
-          .doc(user.uid)
-          .set({
-            'clubId': clubRef.id,
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true))
-          .timeout(const Duration(seconds: 20));
-    }
+      final batch = _db.batch();
+      batch.set(_db.collection('users').doc(user.uid), {
+        'role': 'clubAdmin',
+        'status': 'pending_review',
+        'verificationStatus': 'pending_review',
+        'documentUploadStatus': cleanDocumentStatus,
+        'onboardingCompleted': true,
+        'rejectionReason': '',
+        'clubId': clubRef.id,
+        'businessName': cleanBusinessName,
+        'venueName': cleanBusinessName,
+        'gstNumber': gstNumber.trim(),
+        'ownerName': cleanOwnerName,
+        'businessPhone': cleanBusinessPhone,
+        'businessAddress': cleanBusinessAddress,
+        'city': cleanCity,
+        'instagramLink': cleanInstagram,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      batch.set(clubRef, {
+        'ownerId': user.uid,
+        'clubName': cleanBusinessName,
+        'ownerName': cleanOwnerName,
+        'businessEmail': user.email.trim().toLowerCase(),
+        'phone': cleanBusinessPhone,
+        'city': cleanCity,
+        'address': cleanBusinessAddress,
+        'instagram': cleanInstagram,
+        'documentUploadStatus': cleanDocumentStatus,
+        'verificationStatus': 'pending_review',
+        'rejectionReason': '',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      await batch.commit();
+    });
+  }
+
+  Future<void> updateUserLastKnownLocation({
+    required String userId,
+    required double latitude,
+    required double longitude,
+    required String city,
+    required String fullAddress,
+  }) async {
+    final cleanUserId = userId.trim();
+    if (cleanUserId.isEmpty) return;
+
+    await _runFirestoreWrite(() async {
+      await _db.collection('users').doc(cleanUserId).set({
+        'lastLatitude': latitude,
+        'lastLongitude': longitude,
+        'lastKnownCity': city.trim(),
+        'lastKnownAddress': fullAddress.trim(),
+        'lastLocationAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    });
+  }
+
+  Future<void> setMaintenanceModePlaceholder(bool enabled) async {
+    await _runFirestoreWrite(() async {
+      await _db.collection('platform').doc('settings').set({
+        'maintenanceMode': enabled,
+        'maintenanceModeUpdatedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    });
+  }
+
+  Future<Map<String, dynamic>> userRecordData(String userId) async {
+    final cleanUserId = userId.trim();
+    if (cleanUserId.isEmpty) return const <String, dynamic>{};
+
+    return _runFirestoreRead(() async {
+      final doc = await _db.collection('users').doc(cleanUserId).get();
+      final data = _docData(doc, fallbackIdKey: 'uid');
+      if (data.isEmpty) return {'uid': cleanUserId};
+
+      final clubId = data['clubId'] as String?;
+      if (clubId != null && clubId.trim().isNotEmpty) {
+        final clubDoc = await _db.collection('clubs').doc(clubId).get();
+        final clubData = _docData(clubDoc, fallbackIdKey: 'clubId');
+        if (clubData.isNotEmpty) data['club'] = clubData;
+      }
+
+      return _withRecordDefaults(data);
+    }, const <String, dynamic>{});
+  }
+
+  Future<Map<String, dynamic>> promoterRecordData(String promoterId) async {
+    final cleanPromoterId = promoterId.trim();
+    if (cleanPromoterId.isEmpty) return const <String, dynamic>{};
+
+    return _runFirestoreRead(() async {
+      var promoterDoc = await _db
+          .collection('promoters')
+          .doc(cleanPromoterId)
+          .get();
+      if (!promoterDoc.exists) {
+        final query = await _db
+            .collection('promoters')
+            .where('userId', isEqualTo: cleanPromoterId)
+            .limit(1)
+            .get();
+        if (query.docs.isNotEmpty) promoterDoc = query.docs.first;
+      }
+
+      final promoterData = _docData(promoterDoc, fallbackIdKey: 'promoterId');
+      if (promoterData.isEmpty) return {'promoterId': cleanPromoterId};
+
+      final userId = promoterData['userId'] as String? ?? cleanPromoterId;
+      final userDoc = await _db.collection('users').doc(userId).get();
+      final userData = _docData(userDoc, fallbackIdKey: 'uid');
+
+      return _withRecordDefaults({
+        ...userData,
+        ...promoterData,
+        'uid': userId,
+        'promoterId': promoterDoc.id,
+      });
+    }, const <String, dynamic>{});
+  }
+
+  Future<Map<String, dynamic>> clubRecordData(String clubId) async {
+    final cleanClubId = clubId.trim();
+    if (cleanClubId.isEmpty) return const <String, dynamic>{};
+
+    return _runFirestoreRead(() async {
+      final clubDoc = await _db.collection('clubs').doc(cleanClubId).get();
+      final clubData = _docData(clubDoc, fallbackIdKey: 'clubId');
+      if (clubData.isEmpty) return {'clubId': cleanClubId};
+
+      final ownerId = clubData['ownerId'] as String?;
+      final userData = <String, dynamic>{};
+      if (ownerId != null && ownerId.trim().isNotEmpty) {
+        final userDoc = await _db.collection('users').doc(ownerId).get();
+        userData.addAll(_docData(userDoc, fallbackIdKey: 'uid'));
+      }
+
+      return _withRecordDefaults({
+        ...userData,
+        ...clubData,
+        'clubId': cleanClubId,
+      });
+    }, const <String, dynamic>{});
   }
 
   Future<void> seedDemoEvents(String adminId) async {
@@ -579,8 +1047,7 @@ class FirestoreService {
         description:
             'A high-energy Friday night built for RSVP-driven discovery.',
         priceText: 'Guestlist entry before 10 PM',
-        posterUrl:
-            'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=85',
+        posterUrl: '',
         isActive: true,
       ),
       NightlifeEvent.empty(createdBy: adminId).copyWith(
@@ -595,8 +1062,7 @@ class FirestoreService {
         description:
             'Underground sounds, RSVP credits, and promoter-led distribution.',
         priceText: 'Cover starts at INR 999',
-        posterUrl:
-            'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=1200&q=85',
+        posterUrl: '',
         isActive: true,
       ),
     ];
@@ -680,12 +1146,138 @@ class FirestoreService {
 
     return '$base${user.uid.substring(0, 4).toUpperCase()}';
   }
+
+  Map<String, dynamic> _docData(
+    DocumentSnapshot<Map<String, dynamic>> doc, {
+    required String fallbackIdKey,
+  }) {
+    final data = doc.data();
+    if (!doc.exists || data == null) return <String, dynamic>{};
+    return {fallbackIdKey: data[fallbackIdKey] ?? doc.id, ...data};
+  }
+
+  Map<String, dynamic> _withRecordDefaults(Map<String, dynamic> data) {
+    return {
+      'name': '',
+      'email': '',
+      'phone': '',
+      'role': '',
+      'status': '',
+      'verificationStatus': '',
+      'documentUploadStatus': '',
+      'onboardingCompleted': false,
+      'isActive': false,
+      'isApproved':
+          data['status'] == 'approved' && (data['isActive'] as bool? ?? false),
+      'rejectionReason': '',
+      'documentUrl': '',
+      'validIdUrl': '',
+      ...data,
+    };
+  }
+
+  Map<String, dynamic> _cleanFirestorePayload(Map<String, dynamic> payload) {
+    final clean = <String, dynamic>{};
+    for (final entry in payload.entries) {
+      final value = entry.value;
+      if (value == null) continue;
+      clean[entry.key] = value;
+    }
+    return clean;
+  }
+
+  bool _isValidFirestorePayload(Map<String, dynamic> payload) {
+    return _stringValue(payload['userId'])?.isNotEmpty == true &&
+        _stringValue(payload['userName'])?.isNotEmpty == true &&
+        payload['userPhone'] is String &&
+        _stringValue(payload['eventId'])?.isNotEmpty == true &&
+        _stringValue(payload['venueId'])?.isNotEmpty == true &&
+        _stringValue(payload['eventTitle'])?.isNotEmpty == true &&
+        payload['paymentMethod'] == 'pay_at_venue' &&
+        payload['paymentStatus'] == 'pending_at_venue' &&
+        payload['rsvpStatus'] == 'confirmed' &&
+        payload['status'] == 'confirmed' &&
+        payload['createdAt'] is FieldValue &&
+        payload['updatedAt'] is FieldValue &&
+        payload.values.every(_isFirestoreSerializableValue);
+  }
+
+  bool _isFirestoreSerializableValue(Object? value) {
+    if (value == null) return false;
+    if (value is String ||
+        value is num ||
+        value is bool ||
+        value is Timestamp) {
+      return true;
+    }
+    if (value is FieldValue ||
+        value is GeoPoint ||
+        value is DocumentReference) {
+      return true;
+    }
+    if (value is Iterable) {
+      return value.every(_isFirestoreSerializableValue);
+    }
+    if (value is Map) {
+      return value.keys.every((key) => key is String) &&
+          value.values.every(_isFirestoreSerializableValue);
+    }
+    return false;
+  }
+
+  String? _stringValue(Object? value) {
+    if (value is String) return value.trim();
+    return null;
+  }
+
+  Future<T> _runFirestoreRead<T>(
+    Future<T> Function() action,
+    T fallback,
+  ) async {
+    try {
+      return await action();
+    } on FirebaseException {
+      return fallback;
+    }
+  }
+
+  Future<void> _runFirestoreWrite(Future<void> Function() action) async {
+    try {
+      await action();
+    } on FirebaseException catch (error) {
+      debugPrint(
+        'FirestoreService write FirebaseException: '
+        '${error.code} ${error.message}',
+      );
+      throw FirestoreAppException(
+        error.message ?? 'Unable to update Firestore right now.',
+      );
+    }
+  }
+
+  String _friendlyFirestoreError(FirebaseException error) {
+    return switch (error.code) {
+      'permission-denied' =>
+        'You do not have permission to RSVP for this event.',
+      'unavailable' =>
+        'RSVP service is temporarily unavailable. Please try again.',
+      'deadline-exceeded' =>
+        'RSVP request timed out. Please check your connection and try again.',
+      'not-found' => 'This event or profile could not be found.',
+      'already-exists' => 'You have already RSVPed for this event.',
+      _ =>
+        error.message == null || error.message!.trim().isEmpty
+            ? 'Unable to create RSVP right now. Please try again.'
+            : 'Unable to create RSVP: ${error.message}',
+    };
+  }
 }
 
 class FirestoreAppException implements Exception {
-  const FirestoreAppException(this.message);
+  const FirestoreAppException(this.message, {this.debugMessage});
 
   final String message;
+  final String? debugMessage;
 
   @override
   String toString() => message;

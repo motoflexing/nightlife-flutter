@@ -5,6 +5,7 @@ import '../../core/utils/formatters.dart';
 import '../../models/app_user.dart';
 import '../../models/rsvp.dart';
 import '../../services/firestore_service.dart';
+import '../../widgets/compact_ui.dart';
 import '../../widgets/state_views.dart';
 
 class MyRsvpsScreen extends StatelessWidget {
@@ -41,10 +42,10 @@ class MyRsvpsScreen extends StatelessWidget {
 
         return ListView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
+          padding: compactScreenPadding(context, bottom: 28),
           children: [
             _SummaryCard(total: rsvps.length, approved: approved.length),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             _RsvpSection(title: 'Upcoming', rsvps: upcoming),
             _RsvpSection(title: 'Pending', rsvps: pending),
             _RsvpSection(title: 'Approved', rsvps: approved, showQr: true),
@@ -65,7 +66,7 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppTheme.glassSurface,
         borderRadius: BorderRadius.circular(8),
@@ -77,7 +78,7 @@ class _SummaryCard extends StatelessWidget {
             Icons.confirmation_number_outlined,
             color: AppTheme.accentPink,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               '$total RSVPs tracked',
@@ -118,7 +119,7 @@ class _RsvpSection extends StatelessWidget {
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           ...rsvps.map(
             (rsvp) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -140,7 +141,7 @@ class _RsvpTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppTheme.elevated.withValues(alpha: 0.68),
         borderRadius: BorderRadius.circular(8),
@@ -150,8 +151,8 @@ class _RsvpTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               gradient: AppTheme.premiumGradient,
               borderRadius: BorderRadius.circular(8),
@@ -160,7 +161,7 @@ class _RsvpTile extends StatelessWidget {
               showQr ? Icons.qr_code_2 : Icons.local_activity_outlined,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

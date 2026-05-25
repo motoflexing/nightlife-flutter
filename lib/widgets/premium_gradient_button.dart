@@ -9,7 +9,7 @@ class PremiumGradientButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.loading = false,
-    this.height = 54,
+    this.height = 46,
   });
 
   final String label;
@@ -41,15 +41,15 @@ class PremiumGradientButton extends StatelessWidget {
               ? [
                   BoxShadow(
                     color: AppTheme.neonViolet.withValues(alpha: 0.34),
-                    blurRadius: 24,
+                    blurRadius: 18,
                     spreadRadius: -6,
-                    offset: const Offset(0, 12),
+                    offset: const Offset(0, 8),
                   ),
                   BoxShadow(
                     color: AppTheme.accentPink.withValues(alpha: 0.18),
-                    blurRadius: 32,
+                    blurRadius: 22,
                     spreadRadius: -14,
-                    offset: const Offset(0, 16),
+                    offset: const Offset(0, 10),
                   ),
                 ]
               : null,
@@ -85,7 +85,7 @@ class PremiumGradientButton extends StatelessWidget {
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w800,
-                              fontSize: 15,
+                              fontSize: 14,
                             ),
                           ),
                         ],

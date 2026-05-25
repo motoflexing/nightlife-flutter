@@ -9,6 +9,7 @@ import '../../models/promoter.dart';
 import '../../models/rsvp.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../widgets/compact_ui.dart';
 import '../../widgets/event_poster.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/state_views.dart';
@@ -99,7 +100,7 @@ class _PromoterContent extends StatelessWidget {
 
             return ListView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+              padding: compactScreenPadding(context, bottom: 28),
               children: [
                 _HeroPanel(
                   promoter: promoter,
@@ -110,13 +111,12 @@ class _PromoterContent extends StatelessWidget {
                 const SizedBox(height: 14),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final wide = constraints.maxWidth > 720;
-                    final width = wide
-                        ? (constraints.maxWidth - 12) / 2
-                        : double.infinity;
+                    final columns = constraints.maxWidth >= 980 ? 4 : 2;
+                    final width =
+                        (constraints.maxWidth - ((columns - 1) * 8)) / columns;
                     return Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
+                      spacing: 8,
+                      runSpacing: 8,
                       children:
                           [
                                 _MetricCard(
@@ -266,8 +266,9 @@ class _HeroPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 640;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(mobile ? 12 : 16),
       decoration: BoxDecoration(
         color: AppTheme.glassSurface,
         borderRadius: BorderRadius.circular(8),
@@ -286,8 +287,8 @@ class _HeroPanel extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 50,
-                height: 50,
+                width: mobile ? 40 : 50,
+                height: mobile ? 40 : 50,
                 decoration: BoxDecoration(
                   gradient: AppTheme.premiumGradient,
                   borderRadius: BorderRadius.circular(8),
@@ -321,9 +322,9 @@ class _HeroPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: mobile ? 10 : 14),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(mobile ? 9 : 12),
             decoration: BoxDecoration(
               color: AppTheme.elevated.withValues(alpha: 0.64),
               borderRadius: BorderRadius.circular(8),
@@ -335,6 +336,7 @@ class _HeroPanel extends StatelessWidget {
                   child: Text(
                     promoter.referralCode,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontSize: mobile ? 20 : null,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -567,33 +569,11 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Panel(
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: accent.withValues(alpha: 0.14),
-            child: Icon(icon, color: accent),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(color: AppTheme.textMuted)),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return CompactStatCard(
+      icon: icon,
+      value: value,
+      label: title,
+      accent: accent,
     );
   }
 }
@@ -653,8 +633,11 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 640;
     return Container(
-      padding: padding,
+      padding: padding == const EdgeInsets.all(14)
+          ? EdgeInsets.all(mobile ? 12 : 14)
+          : padding,
       decoration: BoxDecoration(
         color: AppTheme.glassSurface.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(8),
@@ -662,8 +645,8 @@ class _Panel extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: AppTheme.neonViolet.withValues(alpha: 0.08),
-            blurRadius: 22,
-            offset: const Offset(0, 12),
+            blurRadius: mobile ? 14 : 22,
+            offset: Offset(0, mobile ? 8 : 12),
           ),
         ],
       ),

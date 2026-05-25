@@ -10,6 +10,7 @@ import '../../services/firestore_service.dart';
 import '../../services/location_service.dart';
 import '../../services/maps_availability.dart';
 import '../../services/referral_service.dart';
+import '../../widgets/compact_ui.dart';
 import '../../widgets/event_poster.dart';
 import '../../widgets/neon_scaffold.dart';
 
@@ -30,6 +31,7 @@ class EventDetailsScreen extends StatefulWidget {
 class _EventDetailsScreenState extends State<EventDetailsScreen> {
   late final TextEditingController _codeController;
   bool _submitting = false;
+  bool _rsvpCreated = false;
   double? _distanceKm;
 
   @override
@@ -38,7 +40,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     _codeController = TextEditingController(
       text: ReferralService.instance.code ?? '',
     );
-    _loadDistance();
   }
 
   @override
@@ -47,50 +48,86 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     super.dispose();
   }
 
-  Future<void> _loadDistance() async {
-    final latitude = widget.event.latitude;
-    final longitude = widget.event.longitude;
-    if (latitude == null || longitude == null) return;
+  Future<void> _openRsvpConfirmation() async {
+    if (_submitting || _rsvpCreated) return;
+    if (!_validateRsvpRequest()) return;
 
-    final permission = await LocationService.instance.requestPermission();
-    if (!permission.isGranted) return;
-
-    try {
-      final position = await LocationService.instance.getCurrentPosition();
-      if (!mounted) return;
-      setState(() {
-        _distanceKm = LocationService.instance.distanceInKm(
-          fromLatitude: position.latitude,
-          fromLongitude: position.longitude,
-          toLatitude: latitude,
-          toLongitude: longitude,
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return _RsvpConfirmationSheet(
+          event: widget.event,
+          user: widget.currentUser,
+          promoterCode: _codeController.text,
+          onConfirm: _submitRsvp,
         );
-      });
-    } catch (_) {
-      // Details stay usable when location is unavailable.
-    }
+      },
+    );
   }
 
-  Future<void> _rsvp() async {
+  bool _validateRsvpRequest() {
+    final user = widget.currentUser;
+    final event = widget.event;
+    if (user.uid.trim().isEmpty) {
+      _showError('Please sign in again to RSVP.');
+      return false;
+    }
+    if (!user.isUser || !user.isApproved) {
+      _showError('Only approved users can RSVP.');
+      return false;
+    }
+    if (event.id.trim().isEmpty) {
+      _showError('This event is not ready for RSVP yet.');
+      return false;
+    }
+    if (event.title.trim().isEmpty) {
+      _showError('This event is missing a title. Please try another event.');
+      return false;
+    }
+    return true;
+  }
+
+  Future<bool> _submitRsvp() async {
+    if (_submitting || _rsvpCreated) return false;
+    if (!_validateRsvpRequest()) return false;
+
+    final user = widget.currentUser;
+    final event = widget.event;
     setState(() => _submitting = true);
     try {
       await FirestoreService.instance.createRsvp(
-        event: widget.event,
-        user: widget.currentUser,
+        event: event,
+        user: user,
         promoterCode: _codeController.text,
       );
       ReferralService.instance.clear();
-      if (!mounted) return;
+      if (!mounted) return true;
+      setState(() => _rsvpCreated = true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('RSVP created. Status is pending approval.'),
+          content: Text('RSVP confirmed. Please pay at the venue.'),
         ),
       );
-      Navigator.of(context).pop();
+      return true;
     } on FirestoreAppException catch (error) {
-      _showError(error.message);
+      debugPrint(
+        'EventDetails RSVP failed: ${error.message} '
+        'debug=${error.debugMessage ?? ''}',
+      );
+      final debugMessage = error.debugMessage?.trim();
+      _showError(
+        kDebugMode && debugMessage != null && debugMessage.isNotEmpty
+            ? debugMessage
+            : error.message,
+      );
+      return false;
     } catch (error) {
-      _showError(error.toString());
+      debugPrint('EventDetails RSVP unexpected error: $error');
+      _showError('Unable to create RSVP right now. Please try again.');
+      return false;
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -128,8 +165,9 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                         currentUser: widget.currentUser,
                         codeController: _codeController,
                         submitting: _submitting,
+                        rsvpCreated: _rsvpCreated,
                         distanceKm: _distanceKm,
-                        onRsvp: _rsvp,
+                        onRsvp: _openRsvpConfirmation,
                       ),
                     ),
                   ],
@@ -137,21 +175,22 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _HeroPoster(event: event, aspectRatio: 16 / 11),
-                    const SizedBox(height: 14),
+                    _HeroPoster(event: event, aspectRatio: 16 / 9.6),
+                    const SizedBox(height: 10),
                     _DetailsContent(
                       event: event,
                       currentUser: widget.currentUser,
                       codeController: _codeController,
                       submitting: _submitting,
+                      rsvpCreated: _rsvpCreated,
                       distanceKm: _distanceKm,
-                      onRsvp: _rsvp,
+                      onRsvp: _openRsvpConfirmation,
                     ),
                   ],
                 );
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 112),
+            padding: compactScreenPadding(context, bottom: 112),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1080),
@@ -160,6 +199,238 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _RsvpConfirmationSheet extends StatefulWidget {
+  const _RsvpConfirmationSheet({
+    required this.event,
+    required this.user,
+    required this.promoterCode,
+    required this.onConfirm,
+  });
+
+  final NightlifeEvent event;
+  final AppUser user;
+  final String promoterCode;
+  final Future<bool> Function() onConfirm;
+
+  @override
+  State<_RsvpConfirmationSheet> createState() => _RsvpConfirmationSheetState();
+}
+
+class _RsvpConfirmationSheetState extends State<_RsvpConfirmationSheet> {
+  bool _submitting = false;
+
+  Future<void> _confirm() async {
+    if (_submitting) return;
+    setState(() => _submitting = true);
+    final success = await widget.onConfirm();
+    if (!mounted) return;
+    setState(() => _submitting = false);
+    if (success) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final promoterCode = widget.promoterCode.trim();
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              decoration: const BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+                border: Border(top: BorderSide(color: AppTheme.glassBorder)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppTheme.glassBorder,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Confirm RSVP',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.event.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _ConfirmLine(
+                      icon: Icons.storefront_outlined,
+                      label: widget.event.venueName.trim().isEmpty
+                          ? widget.event.city
+                          : widget.event.venueName,
+                    ),
+                    _ConfirmLine(
+                      icon: Icons.schedule,
+                      label: Formatters.eventDate(widget.event.dateTime),
+                    ),
+                    _ConfirmLine(
+                      icon: Icons.person_outline,
+                      label: widget.user.name.trim().isEmpty
+                          ? 'Guest'
+                          : widget.user.name.trim(),
+                    ),
+                    _ConfirmLine(
+                      icon: Icons.phone_outlined,
+                      label: widget.user.phone.trim().isEmpty
+                          ? 'Phone not added'
+                          : widget.user.phone.trim(),
+                    ),
+                    if (promoterCode.isNotEmpty)
+                      _ConfirmLine(
+                        icon: Icons.qr_code_2,
+                        label: 'Promoter code: ${promoterCode.toUpperCase()}',
+                      ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.elevated.withValues(alpha: 0.72),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.glassBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppTheme.neonLime.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppTheme.neonLime.withValues(
+                                  alpha: 0.36,
+                                ),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.payments_outlined,
+                              color: AppTheme.neonLime,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Pay at Venue',
+                                  style: TextStyle(fontWeight: FontWeight.w900),
+                                ),
+                                SizedBox(height: 3),
+                                Text(
+                                  'Payment will be collected at the venue.',
+                                  style: TextStyle(
+                                    color: AppTheme.textMuted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(
+                            Icons.check_circle,
+                            color: AppTheme.neonLime,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: _submitting ? null : _confirm,
+                        icon: _submitting
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.how_to_reg),
+                        label: Text(
+                          _submitting ? 'Confirming RSVP' : 'Confirm RSVP',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: _submitting
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ConfirmLine extends StatelessWidget {
+  const _ConfirmLine({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    if (label.trim().isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: AppTheme.textMuted),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -177,7 +448,7 @@ class _HeroPoster extends StatelessWidget {
       aspectRatio: aspectRatio,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
               color: AppTheme.accentPink.withValues(alpha: 0.22),
@@ -187,7 +458,7 @@ class _HeroPoster extends StatelessWidget {
             ),
           ],
         ),
-        child: EventPoster(event: event, borderRadius: 24, showTitle: true),
+        child: EventPoster(event: event, borderRadius: 8, showTitle: true),
       ),
     );
   }
@@ -199,6 +470,7 @@ class _DetailsContent extends StatelessWidget {
     required this.currentUser,
     required this.codeController,
     required this.submitting,
+    required this.rsvpCreated,
     required this.distanceKm,
     required this.onRsvp,
   });
@@ -207,6 +479,7 @@ class _DetailsContent extends StatelessWidget {
   final AppUser currentUser;
   final TextEditingController codeController;
   final bool submitting;
+  final bool rsvpCreated;
   final double? distanceKm;
   final VoidCallback onRsvp;
 
@@ -304,17 +577,21 @@ class _DetailsContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 SizedBox(
-                  height: 54,
+                  height: 46,
                   child: ElevatedButton.icon(
-                    onPressed: submitting ? null : onRsvp,
+                    onPressed: submitting || rsvpCreated ? null : onRsvp,
                     icon: submitting
                         ? const SizedBox(
                             width: 18,
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.how_to_reg),
-                    label: const Text('RSVP now'),
+                        : Icon(
+                            rsvpCreated
+                                ? Icons.check_circle_outline
+                                : Icons.how_to_reg,
+                          ),
+                    label: Text(rsvpCreated ? 'RSVP confirmed' : 'Book spot'),
                   ),
                 ),
               ],
@@ -481,18 +758,19 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 640;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(mobile ? 12 : 16),
       decoration: BoxDecoration(
         color: AppTheme.surface.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppTheme.glassBorder),
         boxShadow: [
           BoxShadow(
             color: AppTheme.primaryViolet.withValues(alpha: 0.12),
-            blurRadius: 26,
+            blurRadius: mobile ? 16 : 24,
             spreadRadius: -14,
-            offset: const Offset(0, 16),
+            offset: Offset(0, mobile ? 8 : 14),
           ),
         ],
       ),

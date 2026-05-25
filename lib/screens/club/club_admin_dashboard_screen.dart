@@ -11,6 +11,7 @@ import '../../models/rsvp.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/location_service.dart';
+import '../../widgets/compact_ui.dart';
 import '../../widgets/event_card.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/state_views.dart';
@@ -84,7 +85,7 @@ class _ClubEvents extends StatelessWidget {
           return ErrorStateView(message: snapshot.error.toString());
         final events = snapshot.data ?? [];
         return ListView(
-          padding: const EdgeInsets.all(16),
+          padding: compactScreenPadding(context),
           children: [
             Align(
               alignment: Alignment.centerLeft,
@@ -112,9 +113,9 @@ class _ClubEvents extends StatelessWidget {
                     itemCount: events.length,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: columns,
-                      childAspectRatio: columns == 1 ? 0.8 : 0.78,
-                      crossAxisSpacing: 14,
-                      mainAxisSpacing: 14,
+                      mainAxisExtent: columns == 1 ? 204 : 214,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
                     ),
                     itemBuilder: (context, index) {
                       final event = events[index];
@@ -206,7 +207,7 @@ class _ClubRsvps extends StatelessWidget {
           );
         }
         return ListView.separated(
-          padding: const EdgeInsets.all(16),
+          padding: compactScreenPadding(context),
           itemCount: rsvps.length,
           separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (context, index) {
@@ -387,19 +388,19 @@ class _ClubEventFormState extends State<_ClubEventForm> {
           child: ListView(
             controller: controller,
             padding: EdgeInsets.fromLTRB(
-              16,
-              16,
-              16,
+              12,
+              12,
+              12,
               MediaQuery.of(context).viewInsets.bottom + 24,
             ),
             children: [
               Text(
                 _event.id.isEmpty ? 'Create event' : 'Edit event',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _Field(controller: _title, label: 'Title'),
               DropdownButtonFormField<String>(
                 initialValue: _event.city,

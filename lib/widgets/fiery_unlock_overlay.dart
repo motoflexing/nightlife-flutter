@@ -9,16 +9,21 @@ Future<void> showFieryUnlockOverlay(BuildContext context) async {
   final overlay = Overlay.of(context);
   final completer = Completer<void>();
   late final OverlayEntry entry;
+  var removed = false;
+
+  void removeOverlay() {
+    if (removed) return;
+    removed = true;
+    debugPrint('Fiery unlock overlay dismissed.');
+    entry.remove();
+    if (!completer.isCompleted) completer.complete();
+  }
 
   entry = OverlayEntry(
-    builder: (_) => SuperAdminUnlockOverlay(
-      onComplete: () {
-        entry.remove();
-        if (!completer.isCompleted) completer.complete();
-      },
-    ),
+    builder: (_) => SuperAdminUnlockOverlay(onComplete: removeOverlay),
   );
 
+  debugPrint('Fiery unlock overlay inserted.');
   overlay.insert(entry);
   return completer.future;
 }
@@ -45,7 +50,10 @@ class _SuperAdminUnlockOverlayState extends State<SuperAdminUnlockOverlay>
           vsync: this,
           duration: const Duration(milliseconds: 1900),
         )..addStatusListener((status) {
-          if (status == AnimationStatus.completed) widget.onComplete();
+          if (status == AnimationStatus.completed) {
+            debugPrint('Fiery unlock overlay animation completed.');
+            widget.onComplete();
+          }
         });
     _controller.forward();
   }

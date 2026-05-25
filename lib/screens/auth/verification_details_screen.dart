@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../widgets/compact_ui.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_gradient_button.dart';
@@ -54,6 +55,7 @@ class _VerificationDetailsScreenState extends State<VerificationDetailsScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!widget.currentUser.isClubAdmin) return;
     setState(() => _saving = true);
     try {
       await FirestoreService.instance.submitVerificationDetails(
@@ -83,7 +85,7 @@ class _VerificationDetailsScreenState extends State<VerificationDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final roleLabel = widget.currentUser.isClubAdmin ? 'Venue' : 'Promoter';
+    const roleLabel = 'Venue Admin';
     return NeonScaffold(
       appBar: AppBar(
         title: Text('$roleLabel verification'),
@@ -97,7 +99,7 @@ class _VerificationDetailsScreenState extends State<VerificationDetailsScreen> {
       ),
       child: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(18),
+          padding: compactScreenPadding(context),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 620),
             child: GlassCard(
@@ -108,31 +110,28 @@ class _VerificationDetailsScreenState extends State<VerificationDetailsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Icon(
-                      widget.currentUser.isClubAdmin
-                          ? Icons.storefront_outlined
-                          : Icons.campaign_outlined,
+                      Icons.storefront_outlined,
                       color: AppTheme.accentPink,
-                      size: 42,
+                      size: 34,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Text(
                       'Complete $roleLabel details',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w900),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     const Text(
                       'Submit business details for manual admin review. Document upload is optional for now.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: AppTheme.textMuted),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
                     _Field(
                       controller: _businessName,
-                      label: widget.currentUser.isClubAdmin
-                          ? 'Business / Venue name'
-                          : 'Business / Promoter brand name',
+                      label: 'Business / Venue name',
                     ),
                     _Field(controller: _gstNumber, label: 'GST number'),
                     _Field(controller: _ownerName, label: 'Owner name'),
@@ -157,7 +156,7 @@ class _VerificationDetailsScreenState extends State<VerificationDetailsScreen> {
                           ? null
                           : (value) => setState(() => _city = value ?? _city),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _Field(
                       controller: _instagramLink,
                       label: 'Instagram link',
@@ -165,7 +164,7 @@ class _VerificationDetailsScreenState extends State<VerificationDetailsScreen> {
                     ),
                     const SizedBox(height: 2),
                     const _DocumentUploadNotice(),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 14),
                     PremiumGradientButton(
                       onPressed: _saving ? null : _submit,
                       loading: _saving,

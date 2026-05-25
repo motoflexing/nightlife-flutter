@@ -7,6 +7,8 @@ import '../../core/theme/app_theme.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../widgets/compact_ui.dart';
+import '../../widgets/glass_card.dart';
 import '../../widgets/neon_scaffold.dart';
 
 class ClubOnboardingScreen extends StatefulWidget {
@@ -94,83 +96,76 @@ class _ClubOnboardingScreenState extends State<ClubOnboardingScreen> {
       ),
       child: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: compactScreenPadding(context),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 620),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(22),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Verify your club',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w900),
+            child: GlassCard(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Verify your club',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Dashboard access unlocks after Super Admin approval.',
-                        style: TextStyle(color: AppTheme.textMuted),
-                      ),
-                      const SizedBox(height: 20),
-                      _Field(controller: _clubName, label: 'Club name'),
-                      _Field(controller: _ownerName, label: 'Owner name'),
-                      _Field(
-                        controller: _businessEmail,
-                        label: 'Business email',
-                      ),
-                      _Field(controller: _phone, label: 'Phone'),
-                      DropdownButtonFormField<String>(
-                        initialValue: _city,
-                        decoration: const InputDecoration(labelText: 'City'),
-                        items: AppConstants.cities
-                            .where((city) => city != 'All')
-                            .map(
-                              (city) => DropdownMenuItem(
-                                value: city,
-                                child: Text(city),
-                              ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Dashboard access unlocks after Super Admin approval.',
+                      style: TextStyle(color: AppTheme.textMuted),
+                    ),
+                    const SizedBox(height: 14),
+                    _Field(controller: _clubName, label: 'Club name'),
+                    _Field(controller: _ownerName, label: 'Owner name'),
+                    _Field(controller: _businessEmail, label: 'Business email'),
+                    _Field(controller: _phone, label: 'Phone'),
+                    DropdownButtonFormField<String>(
+                      initialValue: _city,
+                      decoration: const InputDecoration(labelText: 'City'),
+                      items: AppConstants.cities
+                          .where((city) => city != 'All')
+                          .map(
+                            (city) => DropdownMenuItem(
+                              value: city,
+                              child: Text(city),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _city = value ?? _city),
+                    ),
+                    const SizedBox(height: 10),
+                    _Field(controller: _address, label: 'Address'),
+                    _Field(
+                      controller: _instagram,
+                      label: 'Instagram link',
+                      isRequired: false,
+                    ),
+                    _Field(
+                      controller: _maps,
+                      label: 'Google Maps link',
+                      isRequired: false,
+                    ),
+                    _Field(
+                      controller: _document,
+                      label: 'GST/license/document link',
+                      isRequired: false,
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton.icon(
+                      onPressed: _saving ? null : _submit,
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                            .toList(),
-                        onChanged: (value) =>
-                            setState(() => _city = value ?? _city),
-                      ),
-                      const SizedBox(height: 12),
-                      _Field(controller: _address, label: 'Address'),
-                      _Field(
-                        controller: _instagram,
-                        label: 'Instagram link',
-                        isRequired: false,
-                      ),
-                      _Field(
-                        controller: _maps,
-                        label: 'Google Maps link',
-                        isRequired: false,
-                      ),
-                      _Field(
-                        controller: _document,
-                        label: 'GST/license/document link',
-                        isRequired: false,
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: _saving ? null : _submit,
-                        icon: _saving
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.verified_outlined),
-                        label: const Text('Submit for approval'),
-                      ),
-                    ],
-                  ),
+                          : const Icon(Icons.verified_outlined),
+                      label: const Text('Submit for approval'),
+                    ),
+                  ],
                 ),
               ),
             ),

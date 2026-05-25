@@ -13,7 +13,7 @@ class WaitingForApprovalScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final roleLabel = currentUser.isClubAdmin ? 'venue' : 'promoter';
+    const roleLabel = 'venue admin';
     return NeonScaffold(
       child: Center(
         child: SingleChildScrollView(

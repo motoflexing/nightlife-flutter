@@ -6,7 +6,7 @@ import '../models/event.dart';
 import '../services/location_service.dart';
 import 'event_poster.dart';
 
-class EventCard extends StatelessWidget {
+class EventCard extends StatefulWidget {
   const EventCard({
     super.key,
     required this.event,
@@ -23,292 +23,337 @@ class EventCard extends StatelessWidget {
   final double? distanceKm;
 
   @override
+  State<EventCard> createState() => _EventCardState();
+}
+
+class _EventCardState extends State<EventCard> {
+  bool _saved = false;
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final mobile = width < 600;
-    final hasEventLocation = event.latitude != null && event.longitude != null;
-    final distanceLabel = hasEventLocation
-        ? distanceKm == null
-              ? event.city
-              : LocationService.instance.formatDistance(distanceKm!)
-        : 'Location not added';
-    final dateText = [
-      Formatters.eventDate(event.dateTime),
-      if (!hasEventLocation)
-        'Location not added'
-      else if (distanceKm != null)
-        LocationService.instance.formatDistance(distanceKm!),
-    ].join(' - ');
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final horizontal = width < 560 || widget.compact;
+        final card = horizontal
+            ? _horizontalCard(context)
+            : _verticalCard(context);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
+        return MouseRegion(
+          onEnter: (_) => setState(() => _pressed = true),
+          onExit: (_) => setState(() => _pressed = false),
+          child: GestureDetector(
+            onTapDown: (_) => setState(() => _pressed = true),
+            onTapCancel: () => setState(() => _pressed = false),
+            onTapUp: (_) => setState(() => _pressed = false),
+            child: AnimatedScale(
+              scale: _pressed ? 0.992 : 1,
+              duration: const Duration(milliseconds: 120),
+              curve: Curves.easeOut,
+              child: card,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _horizontalCard(BuildContext context) {
+    final event = widget.event;
+    final posterWidth = widget.compact ? 106.0 : 118.0;
+
+    return _CardShell(
+      onTap: widget.onTap,
+      child: SizedBox(
+        height: widget.compact ? 146 : 158,
+        child: Row(
+          children: [
+            SizedBox(
+              width: posterWidth,
+              height: double.infinity,
+              child: EventPoster(event: event, borderRadius: 8),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                child: _CardDetails(
+                  event: event,
+                  distanceKm: widget.distanceKm,
+                  saved: _saved,
+                  dense: true,
+                  onSave: _toggleSaved,
+                  onPrimary: widget.onRsvp ?? widget.onTap,
+                  onDetails: widget.onTap,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _verticalCard(BuildContext context) {
+    final event = widget.event;
+
+    return _CardShell(
+      onTap: widget.onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 8.6,
+            child: EventPoster(event: event, borderRadius: 8),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            child: _CardDetails(
+              event: event,
+              distanceKm: widget.distanceKm,
+              saved: _saved,
+              dense: false,
+              onSave: _toggleSaved,
+              onPrimary: widget.onRsvp ?? widget.onTap,
+              onDetails: widget.onTap,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _toggleSaved() {
+    setState(() => _saved = !_saved);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_saved ? 'Event saved' : 'Event removed from saves'),
+        duration: const Duration(milliseconds: 1200),
+      ),
+    );
+  }
+}
+
+class _CardShell extends StatelessWidget {
+  const _CardShell({required this.child, required this.onTap});
+
+  final Widget child;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
+        borderRadius: BorderRadius.circular(8),
         onTap: onTap,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final cardWidth = constraints.maxWidth.isFinite
-                ? constraints.maxWidth
-                : width;
-            final narrow = cardWidth < 270;
-            final posterAspectRatio = compact
-                ? 16 / 7.6
-                : (narrow ? 16 / 10 : 16 / 9);
-            final contentPadding = narrow
-                ? const EdgeInsets.fromLTRB(11, 10, 11, 11)
-                : const EdgeInsets.all(13);
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AspectRatio(
-                  aspectRatio: posterAspectRatio,
-                  child: _Poster(event: event),
-                ),
-                Padding(
-                  padding: contentPadding,
-                  child: LayoutBuilder(
-                    builder: (context, contentConstraints) {
-                      final metaMaxWidth = (contentConstraints.maxWidth - 8)
-                          .clamp(96.0, 220.0);
-                      final compactMetaMaxWidth =
-                          ((contentConstraints.maxWidth - 7) / 2).clamp(
-                            82.0,
-                            150.0,
-                          );
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (narrow)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _Title(event.title, maxLines: compact ? 1 : 2),
-                                const SizedBox(height: 8),
-                                _Pill(label: distanceLabel),
-                              ],
-                            )
-                          else
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _Title(
-                                    event.title,
-                                    maxLines: compact ? 1 : 2,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Flexible(child: _Pill(label: distanceLabel)),
-                              ],
-                            ),
-                          SizedBox(height: compact ? 6 : 8),
-                          _IconLine(
-                            icon: Icons.place_outlined,
-                            text: '${event.venueName} - ${event.address}',
-                            maxLines: mobile && !compact ? 2 : 1,
-                          ),
-                          SizedBox(height: compact ? 3 : 5),
-                          _IconLine(icon: Icons.schedule, text: dateText),
-                          if (!compact) ...[
-                            const SizedBox(height: 8),
-                            _GoingRow(event: event),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 7,
-                              runSpacing: 7,
-                              children: [
-                                _Meta(
-                                  label: event.musicType,
-                                  maxWidth: narrow
-                                      ? compactMetaMaxWidth
-                                      : metaMaxWidth,
-                                ),
-                                _Meta(
-                                  label: event.priceText,
-                                  maxWidth: narrow
-                                      ? compactMetaMaxWidth
-                                      : metaMaxWidth,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: SizedBox(
-                                    height: 42,
-                                    child: ElevatedButton(
-                                      onPressed: onRsvp ?? onTap,
-                                      child: const Text(
-                                        'RSVP',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: SizedBox(
-                                    height: 42,
-                                    child: OutlinedButton(
-                                      onPressed: onTap,
-                                      child: Text(
-                                        narrow ? 'Details' : 'Check-in',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ] else ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _Meta(
-                                    label: _compactStatus(event),
-                                    maxWidth: double.infinity,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                TextButton(
-                                  onPressed: onTap,
-                                  child: const Text('Details'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
-          },
+        child: Ink(
+          decoration: BoxDecoration(
+            color: AppTheme.glassSurface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppTheme.glassBorder),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.accentPink.withValues(alpha: 0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: child,
         ),
       ),
     );
   }
 }
 
-String _compactStatus(NightlifeEvent event) {
-  if (event.priceText.trim().isNotEmpty) return event.priceText;
-  final hours = event.dateTime.difference(DateTime.now()).inHours;
-  if (hours <= 24 && hours >= 0) return 'Guestlist closes soon';
-  return 'RSVP available';
-}
-
-class _GoingRow extends StatelessWidget {
-  const _GoingRow({required this.event});
+class _CardDetails extends StatelessWidget {
+  const _CardDetails({
+    required this.event,
+    required this.distanceKm,
+    required this.saved,
+    required this.dense,
+    required this.onSave,
+    required this.onPrimary,
+    required this.onDetails,
+  });
 
   final NightlifeEvent event;
+  final double? distanceKm;
+  final bool saved;
+  final bool dense;
+  final VoidCallback onSave;
+  final VoidCallback onPrimary;
+  final VoidCallback onDetails;
 
   @override
   Widget build(BuildContext context) {
-    final going = 18 + event.title.codeUnits.fold<int>(0, (a, b) => a + b) % 74;
-    return Row(
+    final title = event.title.trim().isEmpty ? 'Untitled Night' : event.title;
+    final venue = event.venueName.trim().isEmpty ? event.city : event.venueName;
+    final location = event.address.trim().isEmpty ? event.city : event.address;
+    final primaryLabel = _isPaid(event) ? 'Book Spot' : 'RSVP';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 54,
-          height: 24,
-          child: Stack(
-            children: List.generate(3, (index) {
-              return Positioned(
-                left: index * 15,
-                child: CircleAvatar(
-                  radius: 12,
-                  backgroundColor: [
-                    AppTheme.accentPink,
-                    AppTheme.neonViolet,
-                    AppTheme.neonLime,
-                  ][index],
-                  child: Text(
-                    ['A', 'R', 'N'][index],
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
-                    ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                maxLines: dense ? 2 : 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontSize: dense ? 15 : 16,
+                  height: 1.08,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _SaveButton(saved: saved, onTap: onSave),
+          ],
+        ),
+        const SizedBox(height: 6),
+        _IconLine(icon: Icons.place_outlined, text: '$venue - $location'),
+        const SizedBox(height: 4),
+        _IconLine(
+          icon: Icons.schedule,
+          text: Formatters.eventDate(event.dateTime),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            _Tag(label: _safeLabel(event.priceText, fallback: 'Guestlist')),
+            if (event.musicType.trim().isNotEmpty) _Tag(label: event.musicType),
+            if (distanceKm != null)
+              _Tag(
+                label: LocationService.instance.formatDistance(distanceKm!),
+                accent: true,
+              ),
+          ],
+        ),
+        SizedBox(height: dense ? 8 : 10),
+        Row(
+          children: [
+            SizedBox(
+              height: 32,
+              child: ElevatedButton(
+                onPressed: onPrimary,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 13),
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-              );
-            }),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            '$going going - ${event.crowdType.isEmpty ? 'Premium crowd' : event.crowdType}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+                child: Text(primaryLabel),
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 32,
+              child: OutlinedButton(
+                onPressed: onDetails,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                child: const Text('Details'),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        _Meta(label: _compactStatus(event), maxWidth: 128),
       ],
     );
   }
-}
 
-class _Title extends StatelessWidget {
-  const _Title(this.text, {required this.maxLines});
+  bool _isPaid(NightlifeEvent event) {
+    final value = event.priceText.trim().toLowerCase();
+    if (value.isEmpty) return false;
+    return !value.contains('free') &&
+        !value.contains('guest') &&
+        value != '0' &&
+        !value.contains('rs 0') &&
+        !value.contains('inr 0');
+  }
 
-  final String text;
-  final int maxLines;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      maxLines: maxLines,
-      overflow: TextOverflow.ellipsis,
-      style: Theme.of(
-        context,
-      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-    );
+  String _safeLabel(String value, {required String fallback}) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? fallback : trimmed;
   }
 }
 
-class _Poster extends StatelessWidget {
-  const _Poster({required this.event});
+class _SaveButton extends StatelessWidget {
+  const _SaveButton({required this.saved, required this.onTap});
 
-  final NightlifeEvent event;
+  final bool saved;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return EventPoster(event: event);
+    return Tooltip(
+      message: saved ? 'Saved' : 'Save event',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.06),
+            shape: BoxShape.circle,
+            border: Border.all(color: AppTheme.glassBorder),
+          ),
+          child: Icon(
+            saved ? Icons.favorite : Icons.favorite_border,
+            size: 16,
+            color: saved ? AppTheme.accentPink : Colors.white,
+          ),
+        ),
+      ),
+    );
   }
 }
 
 class _IconLine extends StatelessWidget {
-  const _IconLine({required this.icon, required this.text, this.maxLines = 1});
+  const _IconLine({required this.icon, required this.text});
 
   final IconData icon;
   final String text;
-  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppTheme.textMuted),
-        const SizedBox(width: 6),
+        Icon(icon, size: 13, color: AppTheme.textMuted),
+        const SizedBox(width: 5),
         Expanded(
           child: Text(
             text,
-            maxLines: maxLines,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+            style: const TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -316,53 +361,36 @@ class _IconLine extends StatelessWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill({required this.label});
+class _Tag extends StatelessWidget {
+  const _Tag({required this.label, this.accent = false});
 
   final String label;
+  final bool accent;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      constraints: const BoxConstraints(maxWidth: 112),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppTheme.primaryViolet.withValues(alpha: 0.16),
+        color: accent
+            ? AppTheme.accentPink.withValues(alpha: 0.15)
+            : Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppTheme.neonViolet.withValues(alpha: 0.42)),
+        border: Border.all(
+          color: accent
+              ? AppTheme.accentPink.withValues(alpha: 0.42)
+              : AppTheme.glassBorder,
+        ),
       ),
       child: Text(
         label,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-}
-
-class _Meta extends StatelessWidget {
-  const _Meta({required this.label, required this.maxWidth});
-
-  final String label;
-  final double maxWidth;
-
-  @override
-  Widget build(BuildContext context) {
-    if (label.isEmpty) return const SizedBox.shrink();
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppTheme.deepPurple.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(7),
-          border: Border.all(color: AppTheme.glassBorder),
-        ),
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+        style: TextStyle(
+          color: accent ? Colors.white : AppTheme.textMuted,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
         ),
       ),
     );

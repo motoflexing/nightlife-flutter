@@ -79,6 +79,9 @@ service cloud.firestore {
           'name',
           'email',
           'phone',
+          'profileImageUrl',
+          'profilePhotoUrl',
+          'photoUrl',
           'gender',
           'dob',
           'instagramId',
@@ -122,6 +125,10 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).changedKeys().hasOnly([
             'name',
             'phone',
+            'lastKnownCity',
+            'profileImageUrl',
+            'profilePhotoUrl',
+            'photoUrl',
             'validIdUrl',
             'verificationStatus',
             'idVerificationStatus',
@@ -220,6 +227,9 @@ service cloud.firestore {
     }
 
     match /rsvps/{rsvpId} {
+      allow get: if signedIn()
+        && rsvpId.matches(request.auth.uid + '_.*');
+
       allow read: if isSuperAdmin()
         || (signedIn() && resource.data.userId == request.auth.uid)
         || (isPromoter() && resource.data.promoterCode == currentPromoterCode())
@@ -229,29 +239,44 @@ service cloud.firestore {
         && rsvpId == request.auth.uid + '_' + request.resource.data.eventId
         && !exists(/databases/$(database)/documents/rsvps/$(rsvpId))
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.status == 'pending'
+        && request.resource.data.paymentMethod == 'pay_at_venue'
+        && request.resource.data.paymentStatus == 'pending_at_venue'
+        && request.resource.data.rsvpStatus == 'confirmed'
+        && request.resource.data.status == 'confirmed'
+        && request.resource.data.venueId is string
+        && request.resource.data.venueId.size() > 0
         && request.resource.data.keys().hasOnly([
           'userId',
           'userName',
           'userPhone',
           'eventId',
+          'venueId',
           'eventTitle',
           'clubId',
           'promoterId',
           'promoterCode',
+          'paymentMethod',
+          'paymentStatus',
+          'rsvpStatus',
           'status',
           'createdAt',
           'updatedAt'
         ])
         && exists(/databases/$(database)/documents/events/$(request.resource.data.eventId))
         && get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.isActive == true
-        && request.resource.data.clubId ==
-          get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.clubId
         && (
           (
-            request.resource.data.promoterId == null
-            && request.resource.data.promoterCode == null
+            !request.resource.data.keys().hasAny(['clubId'])
+            && (
+              !get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.keys().hasAny(['clubId'])
+              || get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.clubId == null
+            )
           )
+          || request.resource.data.clubId ==
+            get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.clubId
+        )
+        && (
+          !request.resource.data.keys().hasAny(['promoterId', 'promoterCode'])
           || (
             request.resource.data.promoterId is string
             && request.resource.data.promoterCode is string

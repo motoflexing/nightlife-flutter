@@ -17,6 +17,7 @@ class AppUser {
     required this.lastLongitude,
     required this.lastKnownCity,
     required this.lastKnownAddress,
+    required this.profilePhotoUrl,
     required this.verificationStatus,
     required this.documentUploadStatus,
     required this.onboardingCompleted,
@@ -38,6 +39,7 @@ class AppUser {
   final double? lastLongitude;
   final String lastKnownCity;
   final String lastKnownAddress;
+  final String profilePhotoUrl;
   final String verificationStatus;
   final String documentUploadStatus;
   final bool onboardingCompleted;
@@ -71,6 +73,11 @@ class AppUser {
       lastLongitude: _readDouble(data['lastLongitude']),
       lastKnownCity: data['lastKnownCity'] as String? ?? '',
       lastKnownAddress: data['lastKnownAddress'] as String? ?? '',
+      profilePhotoUrl:
+          data['profilePhotoUrl'] as String? ??
+          data['profileImageUrl'] as String? ??
+          data['photoUrl'] as String? ??
+          '',
       verificationStatus:
           data['verificationStatus'] as String? ??
           data['status'] as String? ??
@@ -79,7 +86,7 @@ class AppUser {
           data['documentUploadStatus'] as String? ?? 'not_selected',
       onboardingCompleted:
           data['onboardingCompleted'] as bool? ??
-          roleIsUser(data['role'] as String?),
+          roleSkipsOnboarding(data['role'] as String?),
       rejectionReason: data['rejectionReason'] as String? ?? '',
     );
   }
@@ -101,6 +108,7 @@ class AppUser {
       'lastLongitude': lastLongitude,
       'lastKnownCity': lastKnownCity,
       'lastKnownAddress': lastKnownAddress,
+      'profilePhotoUrl': profilePhotoUrl,
       'verificationStatus': verificationStatus,
       'documentUploadStatus': documentUploadStatus,
       'onboardingCompleted': onboardingCompleted,
@@ -110,6 +118,11 @@ class AppUser {
 
   static bool roleIsUser(String? role) {
     return _normalizeRole(role) == 'user';
+  }
+
+  static bool roleSkipsOnboarding(String? role) {
+    final normalizedRole = _normalizeRole(role);
+    return normalizedRole == 'user' || normalizedRole == 'promoter';
   }
 
   static String _normalizeRole(String? role) {

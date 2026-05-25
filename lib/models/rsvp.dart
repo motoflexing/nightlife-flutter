@@ -8,9 +8,13 @@ class Rsvp {
     required this.userPhone,
     required this.eventId,
     required this.eventTitle,
+    required this.venueId,
     required this.clubId,
     required this.promoterId,
     required this.promoterCode,
+    required this.paymentMethod,
+    required this.paymentStatus,
+    required this.rsvpStatus,
     required this.status,
     required this.createdAt,
     required this.updatedAt,
@@ -22,15 +26,22 @@ class Rsvp {
   final String userPhone;
   final String eventId;
   final String eventTitle;
+  final String venueId;
   final String? clubId;
   final String? promoterId;
   final String? promoterCode;
+  final String paymentMethod;
+  final String paymentStatus;
+  final String rsvpStatus;
   final String status;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   factory Rsvp.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
+    final legacyStatus = data['status'] as String?;
+    final rsvpStatus =
+        data['rsvpStatus'] as String? ?? legacyStatus ?? 'pending';
     return Rsvp(
       id: doc.id,
       userId: data['userId'] as String? ?? '',
@@ -38,10 +49,15 @@ class Rsvp {
       userPhone: data['userPhone'] as String? ?? '',
       eventId: data['eventId'] as String? ?? '',
       eventTitle: data['eventTitle'] as String? ?? '',
+      venueId:
+          (data['venueId'] as String?) ?? (data['clubId'] as String?) ?? '',
       clubId: data['clubId'] as String?,
       promoterId: data['promoterId'] as String?,
       promoterCode: data['promoterCode'] as String?,
-      status: data['status'] as String? ?? 'pending',
+      paymentMethod: data['paymentMethod'] as String? ?? '',
+      paymentStatus: data['paymentStatus'] as String? ?? '',
+      rsvpStatus: rsvpStatus,
+      status: legacyStatus ?? rsvpStatus,
       createdAt: _readDate(data['createdAt']),
       updatedAt: _readDate(data['updatedAt']),
     );

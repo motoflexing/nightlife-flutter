@@ -136,14 +136,7 @@ class _DrawerHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: AppTheme.accentPink.withValues(alpha: 0.22),
-            child: Text(
-              _initials(currentUser.name),
-              style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
-            ),
-          ),
+          _DrawerAvatar(currentUser: currentUser),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -175,12 +168,6 @@ class _DrawerHeader extends StatelessWidget {
     );
   }
 
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
-    final initials = parts.take(2).map((p) => p[0].toUpperCase()).join();
-    return initials.isEmpty ? '?' : initials;
-  }
-
   String _roleLabel(String role) {
     return switch (role) {
       'promoter' => 'Promoter',
@@ -188,6 +175,53 @@ class _DrawerHeader extends StatelessWidget {
       'superAdmin' => 'Admin',
       _ => 'Member',
     };
+  }
+}
+
+class _DrawerAvatar extends StatelessWidget {
+  const _DrawerAvatar({required this.currentUser});
+
+  final AppUser currentUser;
+
+  @override
+  Widget build(BuildContext context) {
+    final photoUrl = currentUser.profilePhotoUrl.trim();
+    const size = 56.0;
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppTheme.accentPink.withValues(alpha: 0.22),
+        border: Border.all(color: AppTheme.accentPink.withValues(alpha: 0.28)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: photoUrl.isNotEmpty
+          ? Image.network(
+              photoUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) =>
+                  _DrawerInitials(name: currentUser.name),
+            )
+          : _DrawerInitials(name: currentUser.name),
+    );
+  }
+}
+
+class _DrawerInitials extends StatelessWidget {
+  const _DrawerInitials({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        _initials(name),
+        style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+      ),
+    );
   }
 }
 
@@ -240,6 +274,12 @@ class _DrawerItem extends StatelessWidget {
       ),
     );
   }
+}
+
+String _initials(String name) {
+  final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
+  final initials = parts.take(2).map((p) => p[0].toUpperCase()).join();
+  return initials.isEmpty ? '?' : initials;
 }
 
 class _MenuItem {

@@ -5,6 +5,7 @@ import '../../models/app_user.dart';
 import '../../models/event.dart';
 import '../../services/event_discovery_service.dart';
 import '../../services/firestore_service.dart';
+import '../../widgets/compact_ui.dart';
 import '../../widgets/event_card.dart';
 import '../../widgets/state_views.dart';
 import 'event_details_screen.dart';
@@ -49,7 +50,7 @@ class _SearchScreenState extends State<SearchScreen> {
           category: _category,
         );
         return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+          padding: compactScreenPadding(context),
           children: [
             TextField(
               controller: _controller,
@@ -69,7 +70,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -85,12 +86,12 @@ class _SearchScreenState extends State<SearchScreen> {
                   )
                   .toList(),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppTheme.glassBorder),
               ),
               child: const Row(
@@ -106,7 +107,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 14),
             Text(
               'Boosted Brands',
               style: Theme.of(
@@ -115,17 +116,17 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             const SizedBox(height: 10),
             SizedBox(
-              height: 104,
+              height: 86,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: 5,
                 separatorBuilder: (_, _) => const SizedBox(width: 10),
                 itemBuilder: (context, index) => Container(
-                  width: 128,
-                  padding: const EdgeInsets.all(14),
+                  width: 116,
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: AppTheme.elevated,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: AppTheme.glassBorder),
                   ),
                   child: Column(
@@ -147,7 +148,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 14),
             Text(
               'Events',
               style: Theme.of(
