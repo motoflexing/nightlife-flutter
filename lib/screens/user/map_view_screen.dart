@@ -10,6 +10,7 @@ import '../../models/event.dart';
 import '../../services/location_service.dart';
 import '../../services/maps_availability.dart';
 import '../../widgets/neon_scaffold.dart';
+import '../../widgets/premium_loader.dart';
 import 'event_details_screen.dart';
 
 class MapViewScreen extends StatefulWidget {
@@ -113,11 +114,7 @@ class _MapViewScreenState extends State<MapViewScreen> {
                     foregroundColor: Colors.white,
                     onPressed: _locating ? null : _locateMe,
                     child: _locating
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                        ? const PremiumLoader.compact(size: 18)
                         : const Icon(Icons.my_location),
                   ),
                 ),
@@ -264,11 +261,7 @@ class _MapLoadingCard extends StatelessWidget {
           padding: EdgeInsets.all(14),
           child: Row(
             children: [
-              SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+              PremiumLoader.compact(size: 18),
               SizedBox(width: 10),
               Text(
                 'Loading map...',
@@ -434,11 +427,7 @@ class _UnavailableMapContent extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onLocate,
                 icon: locating
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                    ? const PremiumLoader.compact(size: 16)
                     : const Icon(Icons.my_location),
                 label: Text(locating ? 'Loading map...' : 'Update location'),
               ),

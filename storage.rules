@@ -26,6 +26,14 @@ service firebase.storage {
         && request.resource.contentType.matches('image/.*');
     }
 
+    match /profile_photos/{userId}/avatar.jpg {
+      allow read: if true;
+      allow write: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
     match /users/{userId}/profile/{fileName} {
       allow read: if true;
       allow write: if signedIn()

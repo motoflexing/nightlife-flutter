@@ -9,6 +9,7 @@ import '../../services/app_preferences_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/location_service.dart';
 import '../../widgets/event_card.dart';
+import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 import 'event_details_screen.dart';
 
@@ -360,14 +361,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           SliverToBoxAdapter(
-            child: _PremiumHeroBanner(
-              eventCount: visibleEvents.length,
-              locationMessage: _filter == _DiscoveryFilter.nearby
-                  ? _locationMessage
-                  : null,
-            ),
-          ),
-          SliverToBoxAdapter(
             child: _DiscoveryControls(
               title: _sectionTitle(visibleEvents.length),
               subtitle: _sectionSubtitle(visibleEvents.length),
@@ -433,6 +426,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _sectionSubtitle(int count) {
     if (_filter == _DiscoveryFilter.nearby) {
+      final locationMessage = _locationMessage?.trim();
+      if (locationMessage != null && locationMessage.isNotEmpty) {
+        return locationMessage;
+      }
       return _nearbyEnabled
           ? '$count nights sorted by distance'
           : 'Tap Nearby to enable location';
@@ -509,12 +506,12 @@ class _HomeTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
       child: Row(
         children: [
           Container(
-            width: 34,
-            height: 34,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               gradient: AppTheme.premiumGradient,
               borderRadius: BorderRadius.circular(8),
@@ -528,7 +525,7 @@ class _HomeTopBar extends StatelessWidget {
             ),
             child: const Icon(Icons.nightlife, size: 19, color: Colors.white),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 9),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,9 +602,9 @@ class _CompactSelector<T> extends StatelessWidget {
             .toList();
       },
       child: Container(
-        height: 34,
-        constraints: const BoxConstraints(maxWidth: 104),
-        padding: const EdgeInsets.symmetric(horizontal: 9),
+        height: 32,
+        constraints: const BoxConstraints(maxWidth: 100),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
           color: AppTheme.glassSurface,
           borderRadius: BorderRadius.circular(8),
@@ -657,9 +654,9 @@ class _DatePickerButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         onTap: onTap,
         child: Container(
-          height: 34,
-          constraints: const BoxConstraints(maxWidth: 104),
-          padding: const EdgeInsets.symmetric(horizontal: 9),
+          height: 32,
+          constraints: const BoxConstraints(maxWidth: 100),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             color: AppTheme.glassSurface,
             borderRadius: BorderRadius.circular(8),
@@ -689,132 +686,6 @@ class _DatePickerButton extends StatelessWidget {
   }
 }
 
-class _PremiumHeroBanner extends StatelessWidget {
-  const _PremiumHeroBanner({
-    required this.eventCount,
-    required this.locationMessage,
-  });
-
-  final int eventCount;
-  final String? locationMessage;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 118,
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF17101D), Color(0xFF250B19), Color(0xFF08090F)],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.accentPink.withValues(alpha: 0.16),
-            blurRadius: 26,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned.fill(child: CustomPaint(painter: _HeroLinePainter())),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Unlock premium parties before everyone else',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 20,
-                        height: 1.08,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      locationMessage ??
-                          'Curated guestlists, tickets, and late-night drops',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppTheme.textMuted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                width: 58,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppTheme.accentPink.withValues(alpha: 0.38),
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$eventCount',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const Text(
-                      'LIVE',
-                      style: TextStyle(
-                        color: AppTheme.accentPink,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeroLinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final line = Paint()
-      ..color = Colors.white.withValues(alpha: 0.05)
-      ..strokeWidth = 1;
-    for (var x = -size.height; x < size.width; x += 20) {
-      canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), line);
-    }
-
-    final glow = Paint()
-      ..color = AppTheme.accentPink.withValues(alpha: 0.16)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30);
-    canvas.drawCircle(Offset(size.width * 0.92, size.height * 0.08), 56, glow);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
 class _DiscoveryControls extends StatelessWidget {
   const _DiscoveryControls({
     required this.title,
@@ -833,11 +704,12 @@ class _DiscoveryControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Column(
@@ -849,7 +721,7 @@ class _DiscoveryControls extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       subtitle,
                       maxLines: 1,
@@ -862,6 +734,7 @@ class _DiscoveryControls extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: 10),
               PopupMenuButton<_DiscoveryFilter>(
                 tooltip: 'Filter events',
                 onSelected: onFilterSelected,
@@ -887,14 +760,15 @@ class _DiscoveryControls extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           SizedBox(
-            height: 36,
+            height: 32,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
+              clipBehavior: Clip.none,
               itemCount: _DiscoveryFilter.values.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              separatorBuilder: (_, _) => const SizedBox(width: 7),
               itemBuilder: (context, index) {
                 final filter = _DiscoveryFilter.values[index];
                 return _FilterChipButton(
@@ -932,8 +806,8 @@ class _FilterChipButton extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 13),
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 11),
         decoration: BoxDecoration(
           color: selected
               ? AppTheme.accentPink.withValues(alpha: 0.18)
@@ -949,18 +823,14 @@ class _FilterChipButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (loading) ...[
-              const SizedBox(
-                width: 12,
-                height: 12,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+              const PremiumLoader.compact(size: 12),
               const SizedBox(width: 7),
             ],
             Text(
               label,
               style: TextStyle(
                 color: selected ? Colors.white : AppTheme.textMuted,
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1053,7 +923,9 @@ class _VerticalEventsList extends StatelessWidget {
         if (index == events.length) {
           return const Padding(
             padding: EdgeInsets.only(top: 4),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(
+              child: PremiumLoader(message: 'Curating more nights...'),
+            ),
           );
         }
         final event = events[index];
@@ -1102,7 +974,9 @@ class _ResponsiveEventsGrid extends StatelessWidget {
       ),
       itemBuilder: (context, index) {
         if (index == events.length) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: PremiumLoader(message: 'Curating more nights...'),
+          );
         }
         final event = events[index];
         return EventCard(
@@ -1122,104 +996,9 @@ class _LoadingFeedSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
-      child: Column(
-        children: [
-          const LinearProgressIndicator(minHeight: 3),
-          const SizedBox(height: 12),
-          for (var i = 0; i < 4; i++) ...[
-            const _SkeletonCard(),
-            if (i != 3) const SizedBox(height: 10),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SkeletonCard extends StatelessWidget {
-  const _SkeletonCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 146,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: AppTheme.glassSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 96,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _SkeletonLine(widthFactor: 0.72),
-                const SizedBox(height: 10),
-                _SkeletonLine(widthFactor: 0.54),
-                const SizedBox(height: 10),
-                _SkeletonLine(widthFactor: 0.62),
-                const SizedBox(height: 16),
-                Row(
-                  children: const [
-                    Expanded(child: _SkeletonPill()),
-                    SizedBox(width: 8),
-                    Expanded(child: _SkeletonPill()),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SkeletonLine extends StatelessWidget {
-  const _SkeletonLine({required this.widthFactor});
-
-  final double widthFactor;
-
-  @override
-  Widget build(BuildContext context) {
-    return FractionallySizedBox(
-      widthFactor: widthFactor,
-      alignment: Alignment.centerLeft,
-      child: Container(
-        height: 10,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(999),
-        ),
-      ),
-    );
-  }
-}
-
-class _SkeletonPill extends StatelessWidget {
-  const _SkeletonPill();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 28,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-      ),
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(16, 28, 16, 112),
+      child: PremiumLoader(message: 'Curating your night...'),
     );
   }
 }

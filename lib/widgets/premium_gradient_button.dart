@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
+import 'premium_loader.dart';
 
 class PremiumGradientButton extends StatelessWidget {
   const PremiumGradientButton({
@@ -63,16 +64,9 @@ class PremiumGradientButton extends StatelessWidget {
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
                 child: loading
-                    ? const SizedBox(
+                    ? const PremiumLoader.compact(
                         key: ValueKey('loading'),
-                        width: 19,
-                        height: 19,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
-                        ),
+                        size: 19,
                       )
                     : Row(
                         key: const ValueKey('label'),

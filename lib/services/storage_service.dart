@@ -72,17 +72,24 @@ class StorageService {
   }) async {
     final extension = fileName.split('.').last.toLowerCase();
     final safeExtension = _imageExtension(extension, contentType);
-    final safeUserId = userId.replaceAll(RegExp(r'[^a-zA-Z0-9_.-]'), '_');
+    final cleanUserId = userId.trim();
+    if (cleanUserId.isEmpty) {
+      throw FirebaseException(
+        plugin: 'firebase_storage',
+        code: 'invalid-user',
+        message: 'User id is required to upload a profile photo.',
+      );
+    }
     final normalizedContentType = _imageContentType(contentType, safeExtension);
-    final path = 'users/$safeUserId/profile/profile.$safeExtension';
+    final path = 'profile_photos/$cleanUserId/avatar.jpg';
     debugPrint(
-      'Profile photo upload started: path=$path uid=$safeUserId '
+      'Profile photo upload started: path=$path uid=$cleanUserId '
       'bytes=${bytes.lengthInBytes} kIsWeb=$kIsWeb contentType=$normalizedContentType',
     );
     final ref = _storage.ref(path);
     final metadata = SettableMetadata(
       contentType: normalizedContentType,
-      customMetadata: {'uid': safeUserId, 'kind': 'profile_picture'},
+      customMetadata: {'uid': cleanUserId, 'kind': 'profile_picture'},
     );
     final uploadTask = startProfilePhotoUpload(
       ref: ref,
@@ -90,71 +97,9 @@ class StorageService {
       filePath: filePath,
       metadata: metadata,
     );
-    final task = await _waitForProfilePhotoUpload(uploadTask, path);
-    final url = await task.ref.getDownloadURL().timeout(
-      const Duration(seconds: 20),
-    );
-    debugPrint('Profile photo download URL received: $url');
-    return url;
-  }
-
-  Future<TaskSnapshot> _waitForProfilePhotoUpload(
-    UploadTask uploadTask,
-    String path,
-  ) async {
-    final completer = Completer<TaskSnapshot>();
-
-    void completeWithSnapshot(TaskSnapshot snapshot) {
-      if (!completer.isCompleted) completer.complete(snapshot);
-    }
-
-    void completeWithError(Object error, StackTrace stackTrace) {
-      if (!completer.isCompleted) completer.completeError(error, stackTrace);
-    }
-
-    final subscription = uploadTask.snapshotEvents.listen(
-      (snapshot) {
-        final total = snapshot.totalBytes;
-        final transferred = snapshot.bytesTransferred;
-        final percent = total <= 0
-            ? 0
-            : ((transferred / total) * 100).clamp(0, 100).round();
-        debugPrint(
-          'Profile photo upload progress: path=$path '
-          '$transferred/$total bytes ($percent%) state=${snapshot.state}',
-        );
-        if (snapshot.state == TaskState.success) {
-          completeWithSnapshot(snapshot);
-        } else if (snapshot.state == TaskState.canceled ||
-            snapshot.state == TaskState.error) {
-          completeWithError(
-            StateError(
-              'Profile photo upload ended with state ${snapshot.state}.',
-            ),
-            StackTrace.current,
-          );
-        }
-      },
-      onError: (Object error, StackTrace stackTrace) {
-        debugPrint('Profile photo upload progress error: $error');
-        debugPrintStack(stackTrace: stackTrace);
-        completeWithError(error, stackTrace);
-      },
-    );
-
-    unawaited(
-      uploadTask.then(
-        completeWithSnapshot,
-        onError: (Object error, StackTrace stackTrace) {
-          debugPrint('Profile photo upload task failed: $error');
-          debugPrintStack(stackTrace: stackTrace);
-          completeWithError(error, stackTrace);
-        },
-      ),
-    );
 
     try {
-      final task = await completer.future.timeout(
+      final snapshot = await uploadTask.timeout(
         const Duration(seconds: 60),
         onTimeout: () {
           debugPrint('Profile photo upload timeout: path=$path');
@@ -163,11 +108,20 @@ class StorageService {
         },
       );
       debugPrint(
-        'Profile photo upload success: path=$path state=${task.state}',
+        'Profile photo upload success: path=$path state=${snapshot.state}',
       );
-      return task;
-    } finally {
-      await subscription.cancel();
+      final url = await snapshot.ref.getDownloadURL().timeout(
+        const Duration(seconds: 20),
+      );
+      debugPrint('Profile photo download URL received: $url');
+      return url;
+    } on FirebaseException catch (error, stackTrace) {
+      debugPrint(
+        'Profile photo upload FirebaseException: '
+        'code=${error.code} message=${error.message}',
+      );
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
     }
   }
 

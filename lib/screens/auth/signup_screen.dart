@@ -7,6 +7,7 @@ import '../../services/auth_service.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_gradient_button.dart';
+import '../../widgets/premium_loader.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -723,12 +724,7 @@ class _ValidIdUploader extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w900),
                 ),
               ),
-              if (uploading)
-                const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+              if (uploading) const PremiumLoader.compact(size: 18),
             ],
           ),
           if (file != null) ...[
@@ -748,7 +744,7 @@ class _ValidIdUploader extends StatelessWidget {
                 if (!snapshot.hasData) {
                   return const SizedBox(
                     height: 96,
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: PremiumLoader.compact(size: 22)),
                   );
                 }
                 return ClipRRect(

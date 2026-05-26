@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -13,6 +14,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/compact_ui.dart';
+import '../../widgets/premium_loader.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, required this.currentUser});
@@ -347,7 +349,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       debugPrint('Profile image download URL received: $url');
       if (!mounted) return;
       await NetworkImage(url).evict();
-      setState(() => _photoUrl = url);
       await FirestoreService.instance.updateUserProfilePhoto(
         userId: widget.user.uid,
         profilePhotoUrl: url,
@@ -359,6 +360,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       );
       debugPrint('Profile image local state refreshed: ${widget.user.uid}');
       if (!mounted) return;
+      setState(() => _photoUrl = url);
       _showSnack('Profile photo updated');
     } on TimeoutException catch (error, stackTrace) {
       debugPrint('Profile image upload timeout: $error');
@@ -366,6 +368,15 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       if (!mounted) return;
       setState(() => _photoUrl = previousPhotoUrl);
       _showSnack('Image upload timed out. Please try again.');
+    } on FirebaseException catch (error, stackTrace) {
+      debugPrint(
+        'Profile image FirebaseException: '
+        'plugin=${error.plugin} code=${error.code} message=${error.message}',
+      );
+      debugPrintStack(stackTrace: stackTrace);
+      if (!mounted) return;
+      setState(() => _photoUrl = previousPhotoUrl);
+      _showSnack(_profileImageErrorMessage(error));
     } catch (error, stackTrace) {
       debugPrint('Profile image upload failed: $error');
       if (error is FirestoreAppException && error.debugMessage != null) {
@@ -457,11 +468,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   FilledButton.icon(
                     onPressed: _uploadingPhoto || _saving ? null : _pickPhoto,
                     icon: _uploadingPhoto
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                        ? const PremiumLoader.compact(size: 16)
                         : const Icon(Icons.camera_alt_outlined, size: 18),
                     label: Text(
                       _uploadingPhoto ? 'Uploading photo...' : 'Change photo',
@@ -526,11 +533,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
             ElevatedButton.icon(
               onPressed: _saving || _uploadingPhoto ? null : _save,
               icon: _saving
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                  ? const PremiumLoader.compact(size: 18)
                   : const Icon(Icons.save_outlined),
               label: Text(_saving ? 'Saving...' : 'Save profile'),
             ),
@@ -606,13 +609,7 @@ class _SafeInitialsAvatar extends StatelessWidget {
           if (uploading)
             ColoredBox(
               color: Colors.black.withValues(alpha: 0.42),
-              child: const Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
+              child: const Center(child: PremiumLoader.compact(size: 22)),
             ),
         ],
       ),
@@ -909,6 +906,21 @@ bool _hasWebpSignature(Uint8List bytes) {
 
 String _profileImageErrorMessage(Object error) {
   if (error is FirestoreAppException) return error.message;
+  if (error is FirebaseException) {
+    return switch (error.code) {
+      'unauthorized' || 'permission-denied' =>
+        'Image upload is not allowed yet. Check Storage rules.',
+      'canceled' => 'Image upload was cancelled. Please try again.',
+      'object-not-found' => 'Image upload did not finish. Please try again.',
+      'retry-limit-exceeded' =>
+        'Image upload timed out. Please check your connection and try again.',
+      'invalid-user' => 'Please sign in again before changing your photo.',
+      _ =>
+        error.message == null || error.message!.trim().isEmpty
+            ? 'Failed to upload image. Your old avatar is unchanged.'
+            : error.message!,
+    };
+  }
 
   final message = error.toString().toLowerCase();
   if (message.contains('bucket') ||

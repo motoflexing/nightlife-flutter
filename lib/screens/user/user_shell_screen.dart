@@ -56,9 +56,15 @@ class _UserShellScreenState extends State<UserShellScreen> {
           appBar: AppBar(
             title: Text(_titleFor(_index)),
             leading: Builder(
-              builder: (context) => IconButton.filledTonal(
+              builder: (context) => IconButton(
                 tooltip: 'Open menu',
                 onPressed: () => Scaffold.of(context).openDrawer(),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  hoverColor: Colors.white.withValues(alpha: 0.06),
+                  highlightColor: AppTheme.accentPink.withValues(alpha: 0.12),
+                ),
                 icon: const Icon(Icons.menu),
               ),
             ),
@@ -66,6 +72,12 @@ class _UserShellScreenState extends State<UserShellScreen> {
               IconButton(
                 tooltip: 'Profile',
                 onPressed: () => setState(() => _index = 5),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  hoverColor: Colors.white.withValues(alpha: 0.06),
+                  highlightColor: AppTheme.accentPink.withValues(alpha: 0.12),
+                ),
                 icon: const Icon(Icons.person_outline),
               ),
             ],

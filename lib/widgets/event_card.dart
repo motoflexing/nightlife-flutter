@@ -35,9 +35,11 @@ class _EventCardState extends State<EventCard> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
+        final screenWidth = MediaQuery.sizeOf(context).width;
+        final mobile = width < 420 || screenWidth < 480;
         final horizontal = width < 560 || widget.compact;
         final card = horizontal
-            ? _horizontalCard(context)
+            ? _horizontalCard(context, mobile: mobile)
             : _verticalCard(context);
 
         return MouseRegion(
@@ -59,29 +61,34 @@ class _EventCardState extends State<EventCard> {
     );
   }
 
-  Widget _horizontalCard(BuildContext context) {
+  Widget _horizontalCard(BuildContext context, {required bool mobile}) {
     final event = widget.event;
-    final posterWidth = widget.compact ? 106.0 : 118.0;
+    final posterWidth = mobile ? 112.0 : (widget.compact ? 116.0 : 118.0);
+    final minPosterHeight = mobile ? 150.0 : 158.0;
 
     return _CardShell(
       onTap: widget.onTap,
-      child: SizedBox(
-        height: widget.compact ? 146 : 158,
+      child: IntrinsicHeight(
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(
-              width: posterWidth,
-              height: double.infinity,
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: posterWidth,
+                maxWidth: posterWidth,
+                minHeight: minPosterHeight,
+              ),
               child: EventPoster(event: event, borderRadius: 8),
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                padding: EdgeInsets.fromLTRB(12, 10, 10, mobile ? 12 : 10),
                 child: _CardDetails(
                   event: event,
                   distanceKm: widget.distanceKm,
                   saved: _saved,
                   dense: true,
+                  mobile: mobile,
                   onSave: _toggleSaved,
                   onPrimary: widget.onRsvp ?? widget.onTap,
                   onDetails: widget.onTap,
@@ -113,6 +120,7 @@ class _EventCardState extends State<EventCard> {
               distanceKm: widget.distanceKm,
               saved: _saved,
               dense: false,
+              mobile: false,
               onSave: _toggleSaved,
               onPrimary: widget.onRsvp ?? widget.onTap,
               onDetails: widget.onTap,
@@ -173,6 +181,7 @@ class _CardDetails extends StatelessWidget {
     required this.distanceKm,
     required this.saved,
     required this.dense,
+    required this.mobile,
     required this.onSave,
     required this.onPrimary,
     required this.onDetails,
@@ -182,6 +191,7 @@ class _CardDetails extends StatelessWidget {
   final double? distanceKm;
   final bool saved;
   final bool dense;
+  final bool mobile;
   final VoidCallback onSave;
   final VoidCallback onPrimary;
   final VoidCallback onDetails;
@@ -192,6 +202,18 @@ class _CardDetails extends StatelessWidget {
     final venue = event.venueName.trim().isEmpty ? event.city : event.venueName;
     final location = event.address.trim().isEmpty ? event.city : event.address;
     final primaryLabel = _isPaid(event) ? 'Book Spot' : 'RSVP';
+    final tags = <_CardTagData>[
+      _CardTagData(_safeLabel(event.priceText, fallback: 'Guestlist')),
+      if (event.musicType.trim().isNotEmpty)
+        _CardTagData(event.musicType.trim()),
+      if (distanceKm != null)
+        _CardTagData(
+          LocationService.instance.formatDistance(distanceKm!),
+          accent: true,
+        ),
+    ];
+    final visibleTags = tags.take(2).toList();
+    final hiddenTagCount = tags.length - visibleTags.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,7 +224,7 @@ class _CardDetails extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                maxLines: dense ? 2 : 1,
+                maxLines: dense ? (mobile ? 2 : 1) : 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontSize: dense ? 15 : 16,
@@ -227,55 +249,83 @@ class _CardDetails extends StatelessWidget {
           spacing: 6,
           runSpacing: 6,
           children: [
-            _Tag(label: _safeLabel(event.priceText, fallback: 'Guestlist')),
-            if (event.musicType.trim().isNotEmpty) _Tag(label: event.musicType),
-            if (distanceKm != null)
+            for (final tag in visibleTags)
               _Tag(
-                label: LocationService.instance.formatDistance(distanceKm!),
-                accent: true,
+                label: tag.label,
+                accent: tag.accent,
+                maxWidth: mobile ? 96 : 112,
+              ),
+            if (hiddenTagCount > 0)
+              _Tag(
+                label: '+$hiddenTagCount',
+                maxWidth: mobile ? 46 : 54,
+                compact: true,
               ),
           ],
         ),
-        SizedBox(height: dense ? 8 : 10),
+        const SizedBox(height: 10),
         Row(
           children: [
-            SizedBox(
-              height: 32,
-              child: ElevatedButton(
-                onPressed: onPrimary,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 13),
-                  minimumSize: const Size(0, 32),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            Expanded(
+              flex: 5,
+              child: SizedBox(
+                height: 30,
+                child: ElevatedButton(
+                  onPressed: onPrimary,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.accentPink.withValues(
+                      alpha: 0.86,
+                    ),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    minimumSize: const Size(0, 30),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                  textStyle: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
+                  child: Text(
+                    primaryLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                child: Text(primaryLabel),
               ),
             ),
             const SizedBox(width: 8),
-            SizedBox(
-              height: 32,
-              child: OutlinedButton(
-                onPressed: onDetails,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  minimumSize: const Size(0, 32),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            Expanded(
+              flex: 4,
+              child: SizedBox(
+                height: 30,
+                child: OutlinedButton(
+                  onPressed: onDetails,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide(
+                      color: AppTheme.glassBorder.withValues(alpha: 0.9),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 9),
+                    minimumSize: const Size(0, 30),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                  textStyle: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                  child: const Text(
+                    'Details',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                child: const Text('Details'),
               ),
             ),
           ],
@@ -298,6 +348,13 @@ class _CardDetails extends StatelessWidget {
     final trimmed = value.trim();
     return trimmed.isEmpty ? fallback : trimmed;
   }
+}
+
+class _CardTagData {
+  const _CardTagData(this.label, {this.accent = false});
+
+  final String label;
+  final bool accent;
 }
 
 class _SaveButton extends StatelessWidget {
@@ -362,16 +419,26 @@ class _IconLine extends StatelessWidget {
 }
 
 class _Tag extends StatelessWidget {
-  const _Tag({required this.label, this.accent = false});
+  const _Tag({
+    required this.label,
+    this.accent = false,
+    this.maxWidth = 112,
+    this.compact = false,
+  });
 
   final String label;
   final bool accent;
+  final double maxWidth;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 112),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 7 : 8,
+        vertical: compact ? 3 : 4,
+      ),
       decoration: BoxDecoration(
         color: accent
             ? AppTheme.accentPink.withValues(alpha: 0.15)

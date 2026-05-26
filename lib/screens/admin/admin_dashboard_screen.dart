@@ -20,6 +20,7 @@ import '../../services/storage_service.dart';
 import '../../widgets/compact_ui.dart';
 import '../../widgets/event_card.dart';
 import '../../widgets/neon_scaffold.dart';
+import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/venue_location_picker.dart';
 
@@ -733,11 +734,7 @@ class _EventFormState extends State<_EventForm> {
                   OutlinedButton.icon(
                     onPressed: _uploading ? null : _pickPoster,
                     icon: _uploading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                        ? const PremiumLoader.compact(size: 16)
                         : const Icon(Icons.upload_file),
                     label: const Text('Upload'),
                   ),
@@ -747,11 +744,7 @@ class _EventFormState extends State<_EventForm> {
               ElevatedButton.icon(
                 onPressed: _saving ? null : _save,
                 icon: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                    ? const PremiumLoader.compact(size: 18)
                     : const Icon(Icons.save),
                 label: const Text('Save event'),
               ),

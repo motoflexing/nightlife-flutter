@@ -12,6 +12,7 @@ import '../../services/firestore_service.dart';
 import '../../widgets/compact_ui.dart';
 import '../../widgets/event_poster.dart';
 import '../../widgets/neon_scaffold.dart';
+import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 
 class PromoterDashboardScreen extends StatelessWidget {
@@ -172,7 +173,7 @@ class _PromoterContent extends StatelessWidget {
                 if (eventSnapshot.connectionState == ConnectionState.waiting)
                   const Padding(
                     padding: EdgeInsets.all(24),
-                    child: Center(child: CircularProgressIndicator()),
+                    child: PremiumLoader(message: 'Curating events...'),
                   )
                 else if (events.isEmpty)
                   const EmptyView(
@@ -200,7 +201,7 @@ class _PromoterContent extends StatelessWidget {
                 if (rsvpSnapshot.connectionState == ConnectionState.waiting)
                   const Padding(
                     padding: EdgeInsets.all(24),
-                    child: Center(child: CircularProgressIndicator()),
+                    child: PremiumLoader(message: 'Loading RSVP credits...'),
                   )
                 else if (rsvps.isNotEmpty) ...[
                   const SizedBox(height: 8),

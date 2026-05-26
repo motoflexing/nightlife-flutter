@@ -45,7 +45,7 @@ class _NightclubPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final violetGlow = Paint()
-      ..color = AppTheme.primaryViolet.withValues(alpha: 0.18)
+      ..color = AppTheme.primaryViolet.withValues(alpha: 0.12)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 42)
       ..strokeCap = StrokeCap.round
       ..strokeWidth = size.width * 0.34;
@@ -56,7 +56,7 @@ class _NightclubPainter extends CustomPainter {
     );
 
     final pinkGlow = Paint()
-      ..color = AppTheme.accentPink.withValues(alpha: 0.06)
+      ..color = AppTheme.accentPink.withValues(alpha: 0.035)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 56)
       ..strokeCap = StrokeCap.round
       ..strokeWidth = size.width * 0.22;
@@ -67,7 +67,7 @@ class _NightclubPainter extends CustomPainter {
     );
 
     final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.025)
+      ..color = Colors.white.withValues(alpha: 0.016)
       ..strokeWidth = 1;
     for (var y = 0.0; y < size.height; y += 48) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
@@ -76,7 +76,7 @@ class _NightclubPainter extends CustomPainter {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
     }
     final accentPaint = Paint()
-      ..color = AppTheme.neonViolet.withValues(alpha: 0.11)
+      ..color = AppTheme.neonViolet.withValues(alpha: 0.07)
       ..strokeWidth = 1.4;
     canvas.drawLine(
       Offset(size.width * 0.08, 0),

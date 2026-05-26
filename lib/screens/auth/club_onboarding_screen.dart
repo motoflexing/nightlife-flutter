@@ -10,6 +10,7 @@ import '../../services/firestore_service.dart';
 import '../../widgets/compact_ui.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/neon_scaffold.dart';
+import '../../widgets/premium_loader.dart';
 
 class ClubOnboardingScreen extends StatefulWidget {
   const ClubOnboardingScreen({super.key, required this.currentUser});
@@ -157,11 +158,7 @@ class _ClubOnboardingScreenState extends State<ClubOnboardingScreen> {
                     ElevatedButton.icon(
                       onPressed: _saving ? null : _submit,
                       icon: _saving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
+                          ? const PremiumLoader.compact(size: 18)
                           : const Icon(Icons.verified_outlined),
                       label: const Text('Submit for approval'),
                     ),

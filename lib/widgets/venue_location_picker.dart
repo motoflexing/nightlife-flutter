@@ -6,6 +6,7 @@ import '../core/theme/app_theme.dart';
 import '../models/event.dart';
 import '../services/location_service.dart';
 import '../services/maps_availability.dart';
+import 'premium_loader.dart';
 
 class VenueLocationPicker extends StatefulWidget {
   const VenueLocationPicker({
@@ -105,11 +106,7 @@ class _VenueLocationPickerState extends State<VenueLocationPicker> {
                 child: OutlinedButton.icon(
                   onPressed: _fetchingLocation ? null : _useCurrentLocation,
                   icon: _fetchingLocation
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                      ? const PremiumLoader.compact(size: 16)
                       : const Icon(Icons.gps_fixed),
                   label: const Text('Use Current Location'),
                 ),

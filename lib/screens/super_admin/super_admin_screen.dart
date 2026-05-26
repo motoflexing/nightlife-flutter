@@ -10,6 +10,7 @@ import '../../models/promoter.dart';
 import '../../models/rsvp.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../widgets/premium_loader.dart';
 
 class SuperAdminScreen extends StatefulWidget {
   const SuperAdminScreen({super.key, required this.currentUser});
@@ -1506,7 +1507,9 @@ Future<void> _showRecordDetailDialog({
                   return const SizedBox(
                     width: 420,
                     height: 120,
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(
+                      child: PremiumLoader(message: 'Loading details...'),
+                    ),
                   );
                 }
                 if (snapshot.hasError) {
@@ -1587,11 +1590,7 @@ Future<void> _showRecordDetailDialog({
                           'Review approved successfully.',
                         ),
                   icon: saving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                      ? const PremiumLoader.compact(size: 16)
                       : const Icon(Icons.check),
                   label: Text(saving ? 'Saving' : 'Approve'),
                 ),
@@ -1698,11 +1697,7 @@ Future<void> _showReviewDialog({
               ElevatedButton.icon(
                 onPressed: saving ? null : () => submitReview(approved: true),
                 icon: saving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                    ? const PremiumLoader.compact(size: 16)
                     : const Icon(Icons.check),
                 label: Text(saving ? 'Saving' : 'Approve'),
               ),

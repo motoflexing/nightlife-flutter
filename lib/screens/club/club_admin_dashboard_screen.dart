@@ -14,6 +14,7 @@ import '../../services/location_service.dart';
 import '../../widgets/compact_ui.dart';
 import '../../widgets/event_card.dart';
 import '../../widgets/neon_scaffold.dart';
+import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/venue_location_picker.dart';
 
@@ -107,58 +108,29 @@ class _ClubEvents extends StatelessWidget {
               LayoutBuilder(
                 builder: (context, constraints) {
                   final columns = constraints.maxWidth > 900 ? 2 : 1;
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: events.length,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: columns,
-                      mainAxisExtent: columns == 1 ? 204 : 214,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                    ),
-                    itemBuilder: (context, index) {
-                      final event = events[index];
-                      return Column(
-                        children: [
-                          Expanded(
-                            child: EventCard(
-                              event: event,
-                              onTap: () => _openEventForm(
-                                context,
-                                currentUser: currentUser,
-                                event: event,
-                              ),
-                            ),
+                  final spacing = columns == 1 ? 12.0 : 10.0;
+                  final tileWidth =
+                      (constraints.maxWidth - (spacing * (columns - 1))) /
+                      columns;
+
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    children: events.map((event) {
+                      return SizedBox(
+                        width: tileWidth,
+                        child: _ClubEventTile(
+                          event: event,
+                          onEdit: () => _openEventForm(
+                            context,
+                            currentUser: currentUser,
+                            event: event,
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () => _openEventForm(
-                                    context,
-                                    currentUser: currentUser,
-                                    event: event,
-                                  ),
-                                  icon: const Icon(Icons.edit),
-                                  label: const Text('Edit'),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () => FirestoreService.instance
-                                      .deactivateEvent(event.id),
-                                  icon: const Icon(Icons.delete_outline),
-                                  label: const Text('Delete'),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                          onDelete: () => FirestoreService.instance
+                              .deactivateEvent(event.id),
+                        ),
                       );
-                    },
+                    }).toList(),
                   );
                 },
               ),
@@ -179,6 +151,62 @@ class _ClubEvents extends StatelessWidget {
       useSafeArea: true,
       backgroundColor: AppTheme.surface,
       builder: (_) => _ClubEventForm(currentUser: currentUser, event: event),
+    );
+  }
+}
+
+class _ClubEventTile extends StatelessWidget {
+  const _ClubEventTile({
+    required this.event,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final NightlifeEvent event;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        EventCard(event: event, compact: true, onTap: onEdit),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 36,
+                child: OutlinedButton.icon(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit, size: 17),
+                  label: const Text(
+                    'Edit',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SizedBox(
+                height: 36,
+                child: OutlinedButton.icon(
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_outline, size: 17),
+                  label: const Text(
+                    'Delete',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -502,11 +530,7 @@ class _ClubEventFormState extends State<_ClubEventForm> {
               ElevatedButton.icon(
                 onPressed: _saving ? null : _save,
                 icon: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                    ? const PremiumLoader.compact(size: 18)
                     : const Icon(Icons.save),
                 label: const Text('Save event'),
               ),

@@ -13,6 +13,7 @@ import '../../services/referral_service.dart';
 import '../../widgets/compact_ui.dart';
 import '../../widgets/event_poster.dart';
 import '../../widgets/neon_scaffold.dart';
+import '../../widgets/premium_loader.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   const EventDetailsScreen({
@@ -375,13 +376,7 @@ class _RsvpConfirmationSheetState extends State<_RsvpConfirmationSheet> {
                       child: ElevatedButton.icon(
                         onPressed: _submitting ? null : _confirm,
                         icon: _submitting
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
+                            ? const PremiumLoader.compact(size: 18)
                             : const Icon(Icons.how_to_reg),
                         label: Text(
                           _submitting ? 'Confirming RSVP' : 'Confirm RSVP',
@@ -581,11 +576,7 @@ class _DetailsContent extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: submitting || rsvpCreated ? null : onRsvp,
                     icon: submitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                        ? const PremiumLoader.compact(size: 18)
                         : Icon(
                             rsvpCreated
                                 ? Icons.check_circle_outline
