@@ -28,6 +28,17 @@ enum _DiscoveryFilter {
   final String label;
 }
 
+enum _DateFilterOption {
+  allDates('All Dates'),
+  tomorrow('Tomorrow'),
+  thisWeekend('This Weekend'),
+  manualDate('Manual Date Selection');
+
+  const _DateFilterOption(this.label);
+
+  final String label;
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.currentUser});
 
@@ -44,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _city = 'All';
   DateTime? _selectedDate;
+  _DateFilterOption _dateFilter = _DateFilterOption.allDates;
   _DiscoveryFilter _filter = _DiscoveryFilter.all;
 
   bool _loading = true;
@@ -301,9 +313,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   bool _matchesDate(NightlifeEvent event) {
-    final selectedDate = _selectedDate;
-    if (selectedDate == null) return true;
-    return _sameDay(event.dateTime, selectedDate);
+    final now = DateTime.now();
+    return switch (_dateFilter) {
+      _DateFilterOption.allDates => true,
+      _DateFilterOption.tomorrow => _sameDay(
+        event.dateTime,
+        now.add(const Duration(days: 1)),
+      ),
+      _DateFilterOption.thisWeekend => _isInThisWeekend(event.dateTime, now),
+      _DateFilterOption.manualDate =>
+        _selectedDate == null ? true : _sameDay(event.dateTime, _selectedDate!),
+    };
   }
 
   bool _matchesDiscoveryFilter(NightlifeEvent event) {
@@ -335,6 +355,23 @@ class _HomeScreenState extends State<HomeScreen> {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
+  bool _isInThisWeekend(DateTime eventDate, DateTime now) {
+    final today = DateTime(now.year, now.month, now.day);
+    final eventDay = DateTime(eventDate.year, eventDate.month, eventDate.day);
+    final daysUntilSaturday = DateTime.saturday - today.weekday;
+
+    final start = today.weekday == DateTime.sunday
+        ? today
+        : today.add(
+            Duration(days: daysUntilSaturday < 0 ? 0 : daysUntilSaturday),
+          );
+    final end = today.weekday == DateTime.sunday
+        ? today
+        : start.add(const Duration(days: 1));
+
+    return !eventDay.isBefore(start) && !eventDay.isAfter(end);
+  }
+
   @override
   Widget build(BuildContext context) {
     final visibleEvents = _visibleEvents;
@@ -355,9 +392,9 @@ class _HomeScreenState extends State<HomeScreen> {
             child: _HomeTopBar(
               city: cityLabel,
               selectedCity: _city,
-              dateLabel: _dateLabel(_selectedDate),
+              dateLabel: _dateLabel(),
               onCityChanged: _changeCity,
-              onDateTap: _pickDate,
+              onDateSelected: _selectDateFilter,
             ),
           ),
           SliverToBoxAdapter(
@@ -411,6 +448,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _filter = filter;
       if (filter == _DiscoveryFilter.tonight) {
         _selectedDate = DateTime.now();
+        _dateFilter = _DateFilterOption.manualDate;
       }
     });
   }
@@ -418,7 +456,9 @@ class _HomeScreenState extends State<HomeScreen> {
   String _sectionTitle(int count) {
     if (_filter == _DiscoveryFilter.nearby) return 'Nearby Events';
     if (_filter == _DiscoveryFilter.tonight ||
-        (_selectedDate != null && _sameDay(_selectedDate!, DateTime.now()))) {
+        (_dateFilter == _DateFilterOption.manualDate &&
+            _selectedDate != null &&
+            _sameDay(_selectedDate!, DateTime.now()))) {
       return "Tonight's Events";
     }
     return 'Events Found';
@@ -440,6 +480,20 @@ class _HomeScreenState extends State<HomeScreen> {
         : '$count curated nights in $city';
   }
 
+  Future<void> _selectDateFilter(_DateFilterOption option) async {
+    if (option == _DateFilterOption.manualDate) {
+      await _pickDate();
+      return;
+    }
+
+    setState(() {
+      _dateFilter = option;
+      if (option == _DateFilterOption.allDates) {
+        _selectedDate = null;
+      }
+    });
+  }
+
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -452,11 +506,19 @@ class _HomeScreenState extends State<HomeScreen> {
       confirmText: 'Apply',
     );
     if (picked == null || !mounted) return;
-    setState(() => _selectedDate = picked);
+    setState(() {
+      _selectedDate = picked;
+      _dateFilter = _DateFilterOption.manualDate;
+    });
   }
 
-  String _dateLabel(DateTime? date) {
-    if (date == null) return 'All Dates';
+  String _dateLabel() {
+    if (_dateFilter == _DateFilterOption.allDates) return 'All Dates';
+    if (_dateFilter == _DateFilterOption.tomorrow) return 'Tomorrow';
+    if (_dateFilter == _DateFilterOption.thisWeekend) return 'This Weekend';
+
+    final date = _selectedDate;
+    if (date == null) return 'Manual Date';
     final now = DateTime.now();
     if (_sameDay(date, now)) return 'Today';
     if (_sameDay(date, now.add(const Duration(days: 1)))) return 'Tomorrow';
@@ -494,14 +556,14 @@ class _HomeTopBar extends StatelessWidget {
     required this.selectedCity,
     required this.dateLabel,
     required this.onCityChanged,
-    required this.onDateTap,
+    required this.onDateSelected,
   });
 
   final String city;
   final String selectedCity;
   final String dateLabel;
   final ValueChanged<String> onCityChanged;
-  final VoidCallback onDateTap;
+  final ValueChanged<_DateFilterOption> onDateSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -562,7 +624,7 @@ class _HomeTopBar extends StatelessWidget {
             tooltip: 'Select date',
             icon: Icons.calendar_today_outlined,
             label: dateLabel,
-            onTap: onDateTap,
+            onSelected: onDateSelected,
           ),
         ],
       ),
@@ -638,48 +700,60 @@ class _DatePickerButton extends StatelessWidget {
     required this.tooltip,
     required this.icon,
     required this.label,
-    required this.onTap,
+    required this.onSelected,
   });
 
   final String tooltip;
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final ValueChanged<_DateFilterOption> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: Container(
-          height: 32,
-          constraints: const BoxConstraints(maxWidth: 100),
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: AppTheme.glassSurface,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppTheme.glassBorder),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: AppTheme.accentPink),
-              const SizedBox(width: 5),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
+    return PopupMenuButton<_DateFilterOption>(
+      tooltip: tooltip,
+      onSelected: onSelected,
+      color: AppTheme.elevated,
+      itemBuilder: (context) => _DateFilterOption.values
+          .map(
+            (option) => PopupMenuItem<_DateFilterOption>(
+              value: option,
+              child: Text(option.label),
+            ),
+          )
+          .toList(),
+      child: Container(
+        height: 32,
+        constraints: const BoxConstraints(maxWidth: 132),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: AppTheme.glassSurface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppTheme.glassBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: AppTheme.accentPink),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 3),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              size: 15,
+              color: AppTheme.textMuted,
+            ),
+          ],
         ),
       ),
     );
