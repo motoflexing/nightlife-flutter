@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/app_user.dart';
 import '../../models/event.dart';
 import '../../services/app_preferences_service.dart';
+import '../../services/event_discovery_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/location_service.dart';
 import '../../widgets/event_card.dart';
@@ -238,15 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<NightlifeEvent> _uniqueEvents(Iterable<NightlifeEvent> events) {
-    final uniqueEvents = <String, NightlifeEvent>{};
-    for (final event in events) {
-      final id = event.id.trim();
-      final key = id.isEmpty
-          ? '${event.title}|${event.venueName}|${event.dateTime.toIso8601String()}'
-          : id;
-      uniqueEvents.putIfAbsent(key, () => event);
-    }
-    return uniqueEvents.values.toList();
+    return EventDiscoveryService.instance.uniqueEvents(events);
   }
 
   double? _distanceFor(NightlifeEvent event) {

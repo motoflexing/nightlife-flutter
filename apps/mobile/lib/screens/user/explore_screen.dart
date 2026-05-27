@@ -12,6 +12,17 @@ import '../../widgets/event_card.dart';
 import '../../widgets/state_views.dart';
 import 'event_details_screen.dart';
 
+enum _ExploreShortcut {
+  clubCollections('Club Collections', Icons.storefront_outlined),
+  guestlistDeals('Guestlist Deals', Icons.confirmation_number_outlined),
+  lateNight('Late Night', Icons.dark_mode_outlined);
+
+  const _ExploreShortcut(this.label, this.icon);
+
+  final String label;
+  final IconData icon;
+}
+
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key, required this.currentUser});
 
@@ -24,6 +35,7 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   String _city = 'All';
   String? _genre;
+  _ExploreShortcut? _shortcut;
 
   static const _genres = [
     'Techno',
@@ -62,10 +74,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
         final cityEvents = _city == 'All'
             ? allEvents
             : allEvents.where((event) => event.city == _city).toList();
-        final events = EventDiscoveryService.instance.filterEvents(
+        final filteredEvents = EventDiscoveryService.instance.filterEvents(
           events: cityEvents,
           category: _genre,
         );
+        final events = _filterByShortcut(filteredEvents);
 
         return ListView(
           physics: const BouncingScrollPhysics(),
@@ -105,7 +118,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
               }).toList(),
             ),
             const SizedBox(height: 12),
-            const _CollectionsStrip(),
+            _CollectionsStrip(
+              selectedShortcut: _shortcut,
+              onShortcutTap: _toggleShortcut,
+            ),
             const SizedBox(height: 14),
             Text(
               'All Events',
@@ -142,6 +158,50 @@ class _ExploreScreenState extends State<ExploreScreen> {
         );
       },
     );
+  }
+
+  void _toggleShortcut(_ExploreShortcut shortcut) {
+    debugPrint('${shortcut.label} tapped');
+    setState(() {
+      _shortcut = _shortcut == shortcut ? null : shortcut;
+    });
+  }
+
+  List<NightlifeEvent> _filterByShortcut(List<NightlifeEvent> events) {
+    final shortcut = _shortcut;
+    if (shortcut == null) return events;
+
+    return events.where((event) {
+      final searchable = [
+        event.title,
+        event.venueName,
+        event.address,
+        event.city,
+        event.musicType,
+        event.crowdType,
+        event.entryRules,
+        event.description,
+        event.priceText,
+      ].join(' ').toLowerCase();
+
+      return switch (shortcut) {
+        _ExploreShortcut.clubCollections =>
+          event.venueName.trim().isNotEmpty ||
+              searchable.contains('club') ||
+              searchable.contains('venue'),
+        _ExploreShortcut.guestlistDeals =>
+          searchable.contains('guestlist') ||
+              searchable.contains('guest list') ||
+              searchable.contains('guest') ||
+              searchable.contains('free') ||
+              searchable.contains('rsvp'),
+        _ExploreShortcut.lateNight =>
+          event.dateTime.hour >= 22 ||
+              event.dateTime.hour < 4 ||
+              searchable.contains('late night') ||
+              searchable.contains('after hours'),
+      };
+    }).toList();
   }
 }
 
@@ -195,41 +255,57 @@ class _ExploreHeader extends StatelessWidget {
 }
 
 class _CollectionsStrip extends StatelessWidget {
-  const _CollectionsStrip();
+  const _CollectionsStrip({
+    required this.selectedShortcut,
+    required this.onShortcutTap,
+  });
+
+  final _ExploreShortcut? selectedShortcut;
+  final ValueChanged<_ExploreShortcut> onShortcutTap;
 
   @override
   Widget build(BuildContext context) {
-    const collections = [
-      ('Club Collections', Icons.storefront_outlined),
-      ('Guestlist Deals', Icons.confirmation_number_outlined),
-      ('Late Night', Icons.dark_mode_outlined),
-    ];
     return SizedBox(
       height: 82,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: collections.length,
+        itemCount: _ExploreShortcut.values.length,
         separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
-          final item = collections[index];
-          return Container(
-            width: 140,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.elevated.withValues(alpha: 0.68),
+          final shortcut = _ExploreShortcut.values[index];
+          final selected = selectedShortcut == shortcut;
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.glassBorder),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(item.$2, color: AppTheme.accentPink),
-                const Spacer(),
-                Text(
-                  item.$1,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+              onTap: () => onShortcutTap(shortcut),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                width: 140,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? AppTheme.accentPink.withValues(alpha: 0.16)
+                      : AppTheme.elevated.withValues(alpha: 0.68),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: selected
+                        ? AppTheme.accentPink.withValues(alpha: 0.72)
+                        : AppTheme.glassBorder,
+                  ),
                 ),
-              ],
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(shortcut.icon, color: AppTheme.accentPink),
+                    const Spacer(),
+                    Text(
+                      shortcut.label,
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
         },
