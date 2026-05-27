@@ -1,0 +1,788 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:nightlife_shared/nightlife_shared.dart';
+
+import 'firebase_options.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  ReferralService.instance.captureFromUri(Uri.base);
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(const NightlifeWebsiteApp());
+}
+
+class NightlifeWebsiteApp extends StatelessWidget {
+  const NightlifeWebsiteApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Nightlife',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.dark(),
+      onGenerateRoute: _onGenerateRoute,
+    );
+  }
+
+  Route<dynamic> _onGenerateRoute(RouteSettings settings) {
+    final uri = Uri.tryParse(settings.name ?? '/') ?? Uri(path: '/');
+    ReferralService.instance.captureFromUri(uri);
+
+    if (uri.pathSegments.length == 2 && uri.pathSegments.first == 'event') {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => EventDetailsPage(
+          eventId: Uri.decodeComponent(uri.pathSegments.last),
+        ),
+      );
+    }
+
+    return MaterialPageRoute<void>(
+      settings: settings,
+      builder: (_) => const WebsiteHomePage(),
+    );
+  }
+}
+
+class WebsiteHomePage extends StatelessWidget {
+  const WebsiteHomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      body: CustomScrollView(
+        slivers: [
+          const SliverToBoxAdapter(child: _HeroSection()),
+          SliverToBoxAdapter(
+            child: _SectionBand(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const _SectionHeader(
+                    title: 'Tonight and upcoming',
+                    subtitle: 'Browse active nights, RSVP, and arrive ready.',
+                  ),
+                  const SizedBox(height: 20),
+                  StreamBuilder<List<NightlifeEvent>>(
+                    stream: FirestoreService.instance.activeEventsStream(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const _CenteredLoader();
+                      }
+                      if (snapshot.hasError) {
+                        return _InlineState(
+                          title: 'Events are unavailable',
+                          message: snapshot.error.toString(),
+                        );
+                      }
+
+                      final events = snapshot.data ?? const <NightlifeEvent>[];
+                      if (events.isEmpty) {
+                        return const _InlineState(
+                          title: 'No active events yet',
+                          message: 'Check back soon for the next guestlist.',
+                        );
+                      }
+
+                      return _EventsGrid(events: events);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: _VendorBand()),
+          const SliverToBoxAdapter(child: _FooterBand()),
+        ],
+      ),
+    );
+  }
+}
+
+class EventDetailsPage extends StatelessWidget {
+  const EventDetailsPage({super.key, required this.eventId});
+
+  final String eventId;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<NightlifeEvent?>(
+      stream: FirestoreService.instance.eventStream(eventId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: _CenteredLoader());
+        }
+        final event = snapshot.data;
+        if (event == null) {
+          return const Scaffold(
+            body: _InlineState(
+              title: 'Event not found',
+              message: 'This event may have ended or been removed.',
+            ),
+          );
+        }
+
+        final imageUrl = EventImageService.instance.imageUrlFor(event);
+        return Scaffold(
+          body: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                pinned: true,
+                expandedHeight: 420,
+                title: Text(event.title),
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const ColoredBox(
+                          color: AppTheme.elevated,
+                          child: Center(
+                            child: Icon(
+                              Icons.local_fire_department_outlined,
+                              color: AppTheme.accentPink,
+                              size: 56,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, AppTheme.background],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _SectionBand(child: _EventDetailContent(event: event)),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _HeroSection extends StatelessWidget {
+  const _HeroSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.sizeOf(context).height;
+    final heroHeight = height.clamp(620, 760).toDouble();
+    return SizedBox(
+      height: heroHeight,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1800&q=85',
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF11061B),
+                    Color(0xFF2A0718),
+                    AppTheme.background,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.28),
+                  AppTheme.background.withValues(alpha: 0.78),
+                  AppTheme.background,
+                ],
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 52),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1120),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _TopNav(),
+                      const Spacer(),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 760),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Nightlife',
+                              style: Theme.of(context).textTheme.displayLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                  ),
+                            ),
+                            const SizedBox(height: 18),
+                            const Text(
+                              'Find the next room, guestlist, and crowd before the city wakes up.',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                height: 1.35,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                            FilledButton.icon(
+                              onPressed: () {
+                                Scrollable.ensureVisible(
+                                  context,
+                                  duration: const Duration(milliseconds: 420),
+                                );
+                              },
+                              icon: const Icon(Icons.local_fire_department),
+                              label: const Text('Explore events'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 64),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopNav extends StatelessWidget {
+  const _TopNav();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(Icons.nightlife, color: Colors.white),
+        const SizedBox(width: 10),
+        const Text(
+          'Nightlife',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+        ),
+        const Spacer(),
+        TextButton(
+          onPressed: () => Navigator.of(context).pushNamed('/'),
+          child: const Text('Events'),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          onPressed: () => showDialog<void>(
+            context: context,
+            builder: (_) => const _AuthDialog(),
+          ),
+          icon: const Icon(Icons.login),
+          label: const Text('Sign in'),
+        ),
+      ],
+    );
+  }
+}
+
+class _EventsGrid extends StatelessWidget {
+  const _EventsGrid({required this.events});
+
+  final List<NightlifeEvent> events;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 980
+            ? 3
+            : constraints.maxWidth >= 640
+            ? 2
+            : 1;
+        return GridView.builder(
+          itemCount: events.length,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            mainAxisExtent: 430,
+          ),
+          itemBuilder: (context, index) => _EventTile(event: events[index]),
+        );
+      },
+    );
+  }
+}
+
+class _EventTile extends StatelessWidget {
+  const _EventTile({required this.event});
+
+  final NightlifeEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = EventImageService.instance.imageUrlFor(event);
+    return Material(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(8),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).pushNamed('/event/${event.id}'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const ColoredBox(
+                  color: AppTheme.elevated,
+                  child: Center(
+                    child: Icon(
+                      Icons.local_fire_department_outlined,
+                      color: AppTheme.accentPink,
+                      size: 40,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      event.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _MetaRow(icon: Icons.place_outlined, text: event.venueName),
+                    _MetaRow(
+                      icon: Icons.calendar_today_outlined,
+                      text: DateFormat(
+                        'EEE, MMM d - h:mm a',
+                      ).format(event.dateTime),
+                    ),
+                    _MetaRow(icon: Icons.location_city, text: event.city),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            event.priceText.isEmpty
+                                ? 'Guestlist available'
+                                : event.priceText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppTheme.textMuted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.of(
+                            context,
+                          ).pushNamed('/event/${event.id}'),
+                          child: const Text('Details'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EventDetailContent extends StatelessWidget {
+  const _EventDetailContent({required this.event});
+
+  final NightlifeEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 820;
+        final details = [
+          _MetaRow(icon: Icons.place_outlined, text: event.venueName),
+          _MetaRow(
+            icon: Icons.map_outlined,
+            text: event.fullAddress.isEmpty ? event.address : event.fullAddress,
+          ),
+          _MetaRow(
+            icon: Icons.calendar_today_outlined,
+            text: DateFormat('EEEE, MMMM d - h:mm a').format(event.dateTime),
+          ),
+          _MetaRow(icon: Icons.music_note_outlined, text: event.musicType),
+          _MetaRow(icon: Icons.groups_outlined, text: event.crowdType),
+          _MetaRow(icon: Icons.rule_outlined, text: event.entryRules),
+        ];
+
+        final summary = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              event.title,
+              style: Theme.of(
+                context,
+              ).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              event.description.isEmpty
+                  ? 'A curated nightlife event with RSVP entry.'
+                  : event.description,
+              style: const TextStyle(fontSize: 18, height: 1.45),
+            ),
+          ],
+        );
+
+        final actionPanel = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ...details,
+            const SizedBox(height: 22),
+            FilledButton.icon(
+              onPressed: () => _createRsvp(context, event),
+              icon: const Icon(Icons.how_to_reg),
+              label: const Text('RSVP'),
+            ),
+          ],
+        );
+
+        if (!wide) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [summary, const SizedBox(height: 28), actionPanel],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: 2, child: summary),
+            const SizedBox(width: 40),
+            Expanded(flex: 1, child: actionPanel),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _AuthDialog extends StatefulWidget {
+  const _AuthDialog();
+
+  @override
+  State<_AuthDialog> createState() => _AuthDialogState();
+}
+
+class _AuthDialogState extends State<_AuthDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _loading = true);
+    try {
+      await AuthService.instance.signIn(
+        email: _email.text.trim(),
+        password: _password.text,
+        requestedRole: 'user',
+      );
+      if (mounted) Navigator.of(context).pop();
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppTheme.surface,
+      title: const Text('Sign in to RSVP'),
+      content: Form(
+        key: _formKey,
+        child: SizedBox(
+          width: 360,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _email,
+                decoration: const InputDecoration(labelText: 'Email'),
+                validator: (value) {
+                  final email = value?.trim() ?? '';
+                  if (email.isEmpty) return 'Email is required';
+                  if (!email.contains('@')) return 'Enter valid email';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _password,
+                decoration: const InputDecoration(labelText: 'Password'),
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _loading ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _loading ? null : _submit,
+          child: Text(_loading ? 'Signing in...' : 'Sign in'),
+        ),
+      ],
+    );
+  }
+}
+
+Future<void> _createRsvp(BuildContext context, NightlifeEvent event) async {
+  var firebaseUser = AuthService.instance.currentFirebaseUser;
+  if (firebaseUser == null) {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => const _AuthDialog(),
+    );
+    firebaseUser = AuthService.instance.currentFirebaseUser;
+  }
+  if (firebaseUser == null || !context.mounted) return;
+
+  try {
+    final profile =
+        await AuthService.instance.getCurrentProfile() ??
+        await AuthService.instance.ensureSafeProfile(firebaseUser);
+    await FirestoreService.instance.createRsvp(
+      event: event,
+      user: profile,
+      promoterCode: ReferralService.instance.code,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('RSVP confirmed.')));
+  } catch (error) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(error.toString())));
+  }
+}
+
+class _VendorBand extends StatelessWidget {
+  const _VendorBand();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionBand(
+      child: const _SectionHeader(
+        title: 'For venues and promoters',
+        subtitle:
+            'Vendor dashboards, promoter tracking, approvals, and event publishing stay connected to the same live Firebase backend.',
+      ),
+    );
+  }
+}
+
+class _FooterBand extends StatelessWidget {
+  const _FooterBand();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
+      child: const Center(
+        child: Text(
+          'Nightlife Platform',
+          style: TextStyle(color: AppTheme.textMuted),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionBand extends StatelessWidget {
+  const _SectionBand({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: AppTheme.background,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 54),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1120),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          subtitle,
+          style: const TextStyle(color: AppTheme.textMuted, fontSize: 16),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetaRow extends StatelessWidget {
+  const _MetaRow({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    if (text.trim().isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.accentPink, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CenteredLoader extends StatelessWidget {
+  const _CenteredLoader();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(padding: EdgeInsets.all(48), child: PremiumLoader()),
+    );
+  }
+}
+
+class _InlineState extends StatelessWidget {
+  const _InlineState({required this.title, required this.message});
+
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppTheme.textMuted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
