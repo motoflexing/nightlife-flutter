@@ -1,0 +1,24 @@
+name: nightlife_shared
+description: Shared Firebase models and services for the Nightlife apps.
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cloud_firestore: ^6.4.0
+  firebase_auth: ^6.5.0
+  firebase_storage: ^13.4.0
+  geocoding: ^4.0.0
+  geolocator: ^14.0.2
+  google_maps_flutter: ^2.17.0
+  image_picker: ^1.2.1
+  intl: ^0.20.2
+  shared_preferences: ^2.5.3
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_lints: ^6.0.0

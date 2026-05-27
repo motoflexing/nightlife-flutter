@@ -1,88 +1,44 @@
-# 🌃 Nightlife Flutter
+# Nightlife Platform
 
-A premium nightlife discovery platform built using Flutter & Firebase.
+Flutter and Firebase workspace for the Nightlife mobile app, public website,
+and isolated Super Admin dashboard.
 
-Discover nearby events, RSVP instantly, track promoters, manage venues, and experience nightlife in a smarter way.
+## Applications
 
----
+- `apps/mobile` - mobile app for users, promoters, and venue admins.
+- `apps/website` - public responsive website with event listings, details, and RSVP sign-in flow.
+- `apps/admin` - separate web dashboard for Super Admin operations.
+- `packages/nightlife_shared` - shared Firebase models, services, theme, and reusable backend access.
 
-## ✨ Features
+All apps use the same Firebase project and existing Firestore/Storage schemas.
 
-### 👤 User Features
-- Phone Authentication
-- Nearby Event Discovery
-- City-based Event Feed
-- RSVP System
-- Real-time Event Updates
-- Premium UI/UX
-
-### 🎤 Promoter Features
-- Referral Tracking
-- Promoter Dashboard
-- Earnings Insights
-- Event Sharing
-
-### 🏢 Venue Features
-- Venue Dashboard
-- Event Creation & Management
-- Crowd Tracking
-- Analytics
-
-### 🛡️ Admin Features
-- ID Verification
-- Venue Approval System
-- User Moderation
-- Event Management
-
----
-
-## 🛠️ Tech Stack
-
-- Flutter
-- Firebase Authentication
-- Cloud Firestore
-- Firebase Storage
-- Google Maps
-- Geolocation
-- Provider / State Management
-
----
-
-## 📱 Screenshots
-
-> Coming Soon
-
----
-
-## 🚀 Future Roadmap
-
-- AI Event Recommendations
-- Table Booking
-- QR Event Entry
-- Real-time Crowd Density
-- In-app Chat
-- Ticketing System
-
----
-
-## ⚙️ Installation
+## Common Commands
 
 ```bash
-git clone https://github.com/motoflexing/nightlife-flutter.git
-cd nightlife-flutter
+cd apps/mobile
 flutter pub get
 flutter run
 ```
 
----
+```bash
+cd apps/website
+flutter pub get
+flutter run -d chrome
+```
 
-## 👨‍💻 Developer
+```bash
+cd apps/admin
+flutter pub get
+flutter run -d chrome
+```
 
-Built by Ankit Dubey  
-Founder of MotoFlexing
+## Firebase Rules
 
----
+Firestore and Storage rules stay at the workspace root:
 
-## ⭐ Project Vision
+- `firestore.rules`
+- `storage.rules`
 
-To build India's next-generation nightlife discovery and event engagement ecosystem powered by Flutter & Firebase.
+Active event documents and event poster images are publicly readable for the
+website. User data, RSVP writes, venue management, promoter data, and admin
+operations remain role protected.

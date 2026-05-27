@@ -5,11 +5,11 @@
         "default": {
           "projectId": "nightlife-platform-geek",
           "appId": "1:198792802421:android:208f8b5fd98f7cbeda883c",
-          "fileOutput": "android/app/google-services.json"
+          "fileOutput": "apps/mobile/android/app/google-services.json"
         }
       },
       "dart": {
-        "lib/firebase_options.dart": {
+        "apps/mobile/lib/firebase_options.dart": {
           "projectId": "nightlife-platform-geek",
           "configurations": {
             "android": "1:198792802421:android:208f8b5fd98f7cbeda883c",
