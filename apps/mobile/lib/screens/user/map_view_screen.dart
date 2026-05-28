@@ -11,6 +11,7 @@ import '../../services/location_service.dart';
 import '../../services/maps_availability.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_loader.dart';
+import '../../widgets/user_app_chrome.dart';
 import 'event_details_screen.dart';
 
 class MapViewScreen extends StatefulWidget {
@@ -63,7 +64,7 @@ class _MapViewScreenState extends State<MapViewScreen> {
     final initial = _initialCameraPosition();
     final mapsUnavailable = kIsWeb && !isGoogleMapsWebSdkReady;
     return NeonScaffold(
-      appBar: AppBar(title: const Text('Map View')),
+      appBar: const UserBackAppBar(title: 'Map View'),
       child: mapsUnavailable
           ? _UnavailableMapContent(
               events: widget.events,

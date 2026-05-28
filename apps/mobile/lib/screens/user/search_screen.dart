@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme.dart';
 import '../../models/app_user.dart';
 import '../../models/event.dart';
 import '../../services/event_discovery_service.dart';
@@ -85,68 +84,6 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                   )
                   .toList(),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.glassBorder),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.bolt, color: AppTheme.accentPink),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Boosted nights refresh daily. RSVP early for better entry odds.',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Boosted Brands',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 86,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: 5,
-                separatorBuilder: (_, _) => const SizedBox(width: 10),
-                itemBuilder: (context, index) => Container(
-                  width: 116,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.elevated,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.glassBorder),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const CircleAvatar(
-                        backgroundColor: AppTheme.accentPink,
-                        child: Icon(Icons.storefront, color: Colors.white),
-                      ),
-                      const Spacer(),
-                      Text(
-                        'Promoter ${index + 1}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w900),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ),
             const SizedBox(height: 14),
             Text(

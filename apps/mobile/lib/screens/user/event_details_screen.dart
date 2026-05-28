@@ -14,6 +14,7 @@ import '../../widgets/compact_ui.dart';
 import '../../widgets/event_poster.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_loader.dart';
+import '../../widgets/user_app_chrome.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   const EventDetailsScreen({
@@ -97,6 +98,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
     final user = widget.currentUser;
     final event = widget.event;
+    debugPrint(
+      'EventDetails RSVP submit: eventId=${event.id.trim()} '
+      'venueId=${event.venueId?.trim() ?? '<null>'} '
+      'title=${event.title.trim()}',
+    );
     setState(() => _submitting = true);
     try {
       await FirestoreService.instance.createRsvp(
@@ -146,7 +152,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     final event = widget.event;
 
     return NeonScaffold(
-      appBar: AppBar(title: const Text('Event details')),
+      appBar: const UserBackAppBar(title: 'Event Details'),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 860;

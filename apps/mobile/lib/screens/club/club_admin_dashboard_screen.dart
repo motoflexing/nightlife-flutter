@@ -293,9 +293,10 @@ class _ClubEventFormState extends State<_ClubEventForm> {
     super.initState();
     _event =
         widget.event ??
-        NightlifeEvent.empty(
-          createdBy: widget.currentUser.uid,
-        ).copyWith(clubId: widget.currentUser.clubId);
+        NightlifeEvent.empty(createdBy: widget.currentUser.uid).copyWith(
+          venueId: widget.currentUser.clubId,
+          clubId: widget.currentUser.clubId,
+        );
     _title = TextEditingController(text: _event.title);
     _venue = TextEditingController(text: _event.venueName);
     _address = TextEditingController(text: _event.address);
@@ -366,6 +367,7 @@ class _ClubEventFormState extends State<_ClubEventForm> {
       description: _description.text.trim(),
       posterUrl: _posterUrl.text.trim(),
       priceText: _price.text.trim(),
+      venueId: widget.currentUser.clubId,
       clubId: widget.currentUser.clubId,
       createdBy: _event.createdBy.isEmpty
           ? widget.currentUser.uid

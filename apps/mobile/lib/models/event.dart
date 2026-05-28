@@ -14,11 +14,13 @@ class NightlifeEvent {
     required this.description,
     required this.posterUrl,
     required this.priceText,
+    required this.artistText,
     required this.latitude,
     required this.longitude,
     required this.googleMapsLink,
     required this.fullAddress,
     required this.isActive,
+    required this.venueId,
     required this.clubId,
     required this.createdBy,
     required this.createdAt,
@@ -37,11 +39,13 @@ class NightlifeEvent {
   final String description;
   final String posterUrl;
   final String priceText;
+  final String artistText;
   final double? latitude;
   final double? longitude;
   final String googleMapsLink;
   final String fullAddress;
   final bool isActive;
+  final String? venueId;
   final String? clubId;
   final String createdBy;
   final DateTime createdAt;
@@ -63,11 +67,13 @@ class NightlifeEvent {
       description: '',
       posterUrl: '',
       priceText: '',
+      artistText: '',
       latitude: null,
       longitude: null,
       googleMapsLink: '',
       fullAddress: '',
       isActive: true,
+      venueId: null,
       clubId: null,
       createdBy: createdBy,
       createdAt: DateTime.now(),
@@ -91,11 +97,13 @@ class NightlifeEvent {
       description: data['description'] as String? ?? '',
       posterUrl: data['posterUrl'] as String? ?? '',
       priceText: data['priceText'] as String? ?? '',
+      artistText: _readArtistText(data),
       latitude: _readDouble(data['latitude']),
       longitude: _readDouble(data['longitude']),
       googleMapsLink: data['googleMapsLink'] as String? ?? '',
       fullAddress: data['fullAddress'] as String? ?? '',
       isActive: data['isActive'] as bool? ?? false,
+      venueId: _readOptionalString(data['venueId']),
       clubId: data['clubId'] as String?,
       createdBy: data['createdBy'] as String? ?? '',
       createdAt: _readDate(data['createdAt']),
@@ -121,6 +129,7 @@ class NightlifeEvent {
       'googleMapsLink': googleMapsLink,
       'fullAddress': fullAddress,
       'isActive': isActive,
+      'venueId': venueId,
       'clubId': clubId,
       'createdBy': createdBy,
       'createdAt': FieldValue.serverTimestamp(),
@@ -146,6 +155,7 @@ class NightlifeEvent {
       'googleMapsLink': googleMapsLink,
       'fullAddress': fullAddress,
       'isActive': isActive,
+      'venueId': venueId,
       'clubId': clubId,
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -164,11 +174,13 @@ class NightlifeEvent {
     String? description,
     String? posterUrl,
     String? priceText,
+    String? artistText,
     double? latitude,
     double? longitude,
     String? googleMapsLink,
     String? fullAddress,
     bool? isActive,
+    String? venueId,
     String? clubId,
     String? createdBy,
     DateTime? createdAt,
@@ -187,11 +199,13 @@ class NightlifeEvent {
       description: description ?? this.description,
       posterUrl: posterUrl ?? this.posterUrl,
       priceText: priceText ?? this.priceText,
+      artistText: artistText ?? this.artistText,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       googleMapsLink: googleMapsLink ?? this.googleMapsLink,
       fullAddress: fullAddress ?? this.fullAddress,
       isActive: isActive ?? this.isActive,
+      venueId: venueId ?? this.venueId,
       clubId: clubId ?? this.clubId,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
@@ -211,5 +225,30 @@ class NightlifeEvent {
     if (value is num) return value.toDouble();
     if (value is String) return double.tryParse(value.trim());
     return null;
+  }
+
+  static String? _readOptionalString(Object? value) {
+    if (value is! String) return null;
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  static String _readArtistText(Map<String, dynamic> data) {
+    final values = [
+      data['artistName'],
+      data['artist'],
+      data['artists'],
+      data['lineup'],
+      data['djName'],
+    ];
+
+    return values
+        .expand((value) {
+          if (value is Iterable) return value.map((item) => item.toString());
+          if (value is String && value.trim().isNotEmpty) return [value];
+          return const <String>[];
+        })
+        .join(' ')
+        .trim();
   }
 }

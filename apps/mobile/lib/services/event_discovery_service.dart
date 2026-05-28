@@ -10,17 +10,17 @@ class EventDiscoveryService {
     String query = '',
     String? category,
   }) {
-    final normalizedQuery = query.trim().toLowerCase();
-    final normalizedCategory = category?.trim().toLowerCase();
+    final queryTerms = _searchTerms(query);
+    final categoryTerms = _searchTerms(category ?? '');
 
     return uniqueEvents(events).where((event) {
       final searchable = _searchableText(event);
       final matchesQuery =
-          normalizedQuery.isEmpty || searchable.contains(normalizedQuery);
+          queryTerms.isEmpty ||
+          queryTerms.every((term) => searchable.contains(term));
       final matchesCategory =
-          normalizedCategory == null ||
-          normalizedCategory.isEmpty ||
-          searchable.contains(normalizedCategory);
+          categoryTerms.isEmpty ||
+          categoryTerms.every((term) => searchable.contains(term));
       return matchesQuery && matchesCategory;
     }).toList()..sort((a, b) => a.dateTime.compareTo(b.dateTime));
   }
@@ -56,7 +56,39 @@ class EventDiscoveryService {
       event.entryRules,
       event.description,
       event.priceText,
+      event.artistText,
+      event.fullAddress,
+      event.googleMapsLink,
+      ..._entryTypeTerms(event),
     ].join(' ').toLowerCase();
+  }
+
+  List<String> _entryTypeTerms(NightlifeEvent event) {
+    final price = event.priceText.trim().toLowerCase();
+    final entry = event.entryRules.trim().toLowerCase();
+    final combined = '$price $entry';
+    final free =
+        price.isEmpty ||
+        combined.contains('free') ||
+        combined.contains('guestlist') ||
+        combined.contains('guest list') ||
+        combined.contains('guest') ||
+        price == '0' ||
+        combined.contains('rs 0') ||
+        combined.contains('inr 0');
+
+    return [
+      free ? 'free guestlist guest list rsvp' : 'paid cover entry ticket',
+    ];
+  }
+
+  List<String> _searchTerms(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .split(RegExp(r'\s+'))
+        .where((term) => term.isNotEmpty)
+        .toList();
   }
 
   String _eventSignature(NightlifeEvent event) {

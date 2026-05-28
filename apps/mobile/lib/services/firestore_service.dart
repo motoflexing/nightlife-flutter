@@ -310,7 +310,8 @@ class FirestoreService {
 
     debugPrint(
       'RSVP debug: currentUser.uid=$currentUserId '
-      'firebaseAuth.uid=${authUserId ?? '<null>'} event.id=$eventId',
+      'firebaseAuth.uid=${authUserId ?? '<null>'} event.id=$eventId '
+      'event.venueId=${event.venueId ?? '<null>'}',
     );
 
     if (authUserId == null || authUserId.isEmpty) {
@@ -415,16 +416,28 @@ class FirestoreService {
 
       final rsvpId = '${userId}_$eventId';
       final rsvpRef = _db.collection(collectionPath).doc(rsvpId);
+      final selectedEventVenueId = event.venueId?.trim();
+      final firestoreVenueId = _stringValue(eventData['venueId']);
       final eventClubId = _stringValue(eventData['clubId']);
       final clubId = eventClubId?.trim().isNotEmpty == true
           ? eventClubId!.trim()
           : event.clubId?.trim();
-      final venueId = clubId?.trim().isNotEmpty == true
-          ? clubId!.trim()
-          : (eventData['createdBy'] as String?)?.trim() ?? event.createdBy;
+      final createdByVenueId =
+          (eventData['createdBy'] as String?)?.trim() ?? event.createdBy.trim();
+      final venueId = _firstNonEmpty([
+        selectedEventVenueId,
+        firestoreVenueId,
+        clubId,
+        createdByVenueId,
+        eventId,
+      ])!;
       final userName = profile.name.trim();
       final userPhone = profile.phone.trim();
-      final rsvpData = _cleanFirestorePayload({
+      debugPrint(
+        'RSVP debug: mapped eventId=$eventId venueId=$venueId '
+        'title=$eventTitle',
+      );
+      final rsvpClientData = _cleanFirestorePayload({
         'userId': userId,
         'userName': userName.isEmpty ? 'Guest' : userName,
         'userPhone': userPhone,
@@ -438,22 +451,26 @@ class FirestoreService {
         'paymentStatus': 'pending_at_venue',
         'rsvpStatus': 'confirmed',
         'status': 'confirmed',
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      if (!_isValidFirestorePayload(rsvpData)) {
+      if (!_isValidRsvpClientPayload(rsvpClientData)) {
         throw FirestoreAppException(
           'invalid-payload: RSVP details are incomplete.',
-          debugMessage: 'invalid-payload: $rsvpData',
+          debugMessage: 'invalid-payload: $rsvpClientData',
         );
       }
+
+      final rsvpWriteData = <String, dynamic>{
+        ...rsvpClientData,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
 
       debugPrint(
         'RSVP debug: collectionPath=$collectionPath documentId=$rsvpId '
         'documentPath=$collectionPath/$rsvpId',
       );
-      debugPrint('RSVP debug: COMPLETE RSVP payload=$rsvpData');
+      debugPrint('RSVP debug: VALID RSVP client payload=$rsvpClientData');
       debugPrint(
         'RSVP debug: duplicate-check read $collectionPath/$rsvpId before RSVP create',
       );
@@ -482,9 +499,9 @@ class FirestoreService {
       debugPrint(
         'RSVP debug: BEFORE Firestore write set($collectionPath/$rsvpId)',
       );
-      debugPrint('RSVP debug: WRITE PAYLOAD $rsvpData');
+      debugPrint('RSVP debug: WRITE PAYLOAD $rsvpWriteData');
 
-      await rsvpRef.set(rsvpData);
+      await rsvpRef.set(rsvpWriteData);
     } on FirestoreAppException {
       rethrow;
     } on FirebaseException catch (error, stackTrace) {
@@ -1186,7 +1203,7 @@ class FirestoreService {
     return clean;
   }
 
-  bool _isValidFirestorePayload(Map<String, dynamic> payload) {
+  bool _isValidRsvpClientPayload(Map<String, dynamic> payload) {
     return _stringValue(payload['userId'])?.isNotEmpty == true &&
         _stringValue(payload['userName'])?.isNotEmpty == true &&
         payload['userPhone'] is String &&
@@ -1197,8 +1214,6 @@ class FirestoreService {
         payload['paymentStatus'] == 'pending_at_venue' &&
         payload['rsvpStatus'] == 'confirmed' &&
         payload['status'] == 'confirmed' &&
-        payload['createdAt'] is FieldValue &&
-        payload['updatedAt'] is FieldValue &&
         payload.values.every(_isFirestoreSerializableValue);
   }
 
@@ -1210,9 +1225,7 @@ class FirestoreService {
         value is Timestamp) {
       return true;
     }
-    if (value is FieldValue ||
-        value is GeoPoint ||
-        value is DocumentReference) {
+    if (value is GeoPoint || value is DocumentReference) {
       return true;
     }
     if (value is Iterable) {
@@ -1227,6 +1240,14 @@ class FirestoreService {
 
   String? _stringValue(Object? value) {
     if (value is String) return value.trim();
+    return null;
+  }
+
+  String? _firstNonEmpty(Iterable<String?> values) {
+    for (final value in values) {
+      final trimmed = value?.trim();
+      if (trimmed != null && trimmed.isNotEmpty) return trimmed;
+    }
     return null;
   }
 
