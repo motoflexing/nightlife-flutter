@@ -96,8 +96,8 @@ class _FallbackPoster extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             Color(0xFF090A10),
-            AppTheme.deepPurple,
-            AppTheme.primaryViolet,
+            Color(0xFF16111F),
+            Color(0xFF31152A),
             Color(0xFF050509),
           ],
           stops: [0, 0.38, 0.72, 1],
@@ -124,8 +124,8 @@ class _FallbackPoster extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.accentPink.withValues(alpha: 0.28),
-                        blurRadius: 24,
+                        color: AppTheme.accentPink.withValues(alpha: 0.14),
+                        blurRadius: 18,
                       ),
                     ],
                   ),
@@ -141,7 +141,7 @@ class _FallbackPoster extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: AppTheme.neonLime,
+                    color: AppTheme.textMuted,
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0,
@@ -172,25 +172,18 @@ class _PosterGlowPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final pink = Paint()
-      ..color = AppTheme.accentPink.withValues(alpha: 0.18)
+      ..color = AppTheme.accentPink.withValues(alpha: 0.12)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 36);
     canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.18), 92, pink);
 
     final violet = Paint()
-      ..color = AppTheme.neonViolet.withValues(alpha: 0.16)
+      ..color = AppTheme.neonViolet.withValues(alpha: 0.1)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 42);
     canvas.drawCircle(
       Offset(size.width * 0.18, size.height * 0.78),
       118,
       violet,
     );
-
-    final line = Paint()
-      ..color = Colors.white.withValues(alpha: 0.08)
-      ..strokeWidth = 1;
-    for (var x = -size.height; x < size.width; x += 22) {
-      canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), line);
-    }
   }
 
   @override

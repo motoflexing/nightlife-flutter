@@ -83,19 +83,12 @@ class _PremiumLoaderState extends State<PremiumLoader>
         decoration: BoxDecoration(
           color: AppTheme.glassSurface.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: AppTheme.accentPink.withValues(alpha: 0.24),
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.accentPink.withValues(alpha: 0.12),
-              blurRadius: 28,
+              color: Colors.black.withValues(alpha: 0.24),
+              blurRadius: 22,
               offset: const Offset(0, 14),
-            ),
-            BoxShadow(
-              color: AppTheme.neonViolet.withValues(alpha: 0.1),
-              blurRadius: 34,
-              offset: const Offset(0, -6),
             ),
           ],
         ),
@@ -156,8 +149,8 @@ class _PremiumLoaderPainter extends CustomPainter {
         transform: GradientRotation(progress * math.pi * 2),
         colors: [
           AppTheme.accentPink.withValues(alpha: 0),
-          AppTheme.accentPink.withValues(alpha: 0.46),
-          AppTheme.neonViolet.withValues(alpha: 0.38),
+          AppTheme.accentPink.withValues(alpha: 0.36),
+          AppTheme.neonViolet.withValues(alpha: 0.28),
           AppTheme.accentPink.withValues(alpha: 0),
         ],
       ).createShader(ringRect);

@@ -10,6 +10,7 @@ import '../../services/event_discovery_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/location_service.dart';
 import '../../widgets/event_card.dart';
+import '../../widgets/event_poster.dart';
 import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 import 'event_details_screen.dart';
@@ -391,6 +392,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           SliverToBoxAdapter(
+            child: _HomeHeroSection(
+              city: cityLabel,
+              featuredEvent: visibleEvents.isEmpty ? null : visibleEvents.first,
+              onOpen: (event) => _openEvent(context, event),
+            ),
+          ),
+          SliverToBoxAdapter(
             child: _DiscoveryControls(
               title: _sectionTitle(visibleEvents.length),
               subtitle: _sectionSubtitle(visibleEvents.length),
@@ -568,17 +576,22 @@ class _HomeTopBar extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              gradient: AppTheme.premiumGradient,
+              color: AppTheme.elevated,
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.accentPink.withValues(alpha: 0.22),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
-            child: const Icon(Icons.nightlife, size: 19, color: Colors.white),
+            child: const Icon(
+              Icons.nightlife,
+              size: 19,
+              color: AppTheme.accentPink,
+            ),
           ),
           const SizedBox(width: 9),
           Expanded(
@@ -625,6 +638,265 @@ class _HomeTopBar extends StatelessWidget {
   }
 }
 
+class _HomeHeroSection extends StatelessWidget {
+  const _HomeHeroSection({
+    required this.city,
+    required this.featuredEvent,
+    required this.onOpen,
+  });
+
+  final String city;
+  final NightlifeEvent? featuredEvent;
+  final ValueChanged<NightlifeEvent> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final event = featuredEvent;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppTheme.surface.withValues(alpha: 0.82),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.accentPink.withValues(alpha: 0.06),
+              blurRadius: 24,
+              offset: const Offset(0, 14),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Discover nightlife near you',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontSize: 25,
+                  height: 1.05,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
+              ),
+              const SizedBox(height: 7),
+              Text(
+                'Curated events, guestlists & social nights',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 13,
+                  height: 1.35,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 13),
+              if (event == null)
+                _HeroFallback(city: city)
+              else
+                _FeaturedEventCard(event: event, onOpen: () => onOpen(event)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeaturedEventCard extends StatelessWidget {
+  const _FeaturedEventCard({required this.event, required this.onOpen});
+
+  final NightlifeEvent event;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final venue = event.venueName.trim().isEmpty ? event.city : event.venueName;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onOpen,
+      child: Container(
+        height: 132,
+        decoration: BoxDecoration(
+          color: AppTheme.elevated,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            EventPoster(event: event, borderRadius: 8),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.08),
+                    Colors.black.withValues(alpha: 0.78),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 12,
+              top: 12,
+              child: _SmallHeroBadge(label: _heroBadgeLabel(event)),
+            ),
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          event.title.trim().isEmpty
+                              ? 'Featured Night'
+                              : event.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            height: 1.05,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.place_outlined,
+                              size: 13,
+                              color: AppTheme.textMuted,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                venue,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppTheme.textMuted,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const _HeroArrow(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroFallback extends StatelessWidget {
+  const _HeroFallback({required this.city});
+
+  final String city;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: AppTheme.elevated,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.search, color: AppTheme.accentPink, size: 21),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              city == 'All'
+                  ? 'Choose a city or filter to find tonight\'s mood.'
+                  : 'Fresh nights in $city will appear here.',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppTheme.textMuted,
+                fontSize: 12.5,
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SmallHeroBadge extends StatelessWidget {
+  const _SmallHeroBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: AppTheme.premiumGradient,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroArrow extends StatelessWidget {
+  const _HeroArrow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: const Icon(Icons.arrow_forward, size: 18, color: Colors.white),
+    );
+  }
+}
+
 class _CompactSelector<T> extends StatelessWidget {
   const _CompactSelector({
     required this.tooltip,
@@ -661,14 +933,14 @@ class _CompactSelector<T> extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 100),
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: AppTheme.glassSurface,
+          color: AppTheme.surface.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.glassBorder),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: AppTheme.accentPink),
+            Icon(icon, size: 14, color: AppTheme.textMuted),
             const SizedBox(width: 5),
             Flexible(
               child: Text(
@@ -720,14 +992,14 @@ class _DatePickerButton extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 132),
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: AppTheme.glassSurface,
+          color: AppTheme.surface.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.glassBorder),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: AppTheme.accentPink),
+            Icon(icon, size: 14, color: AppTheme.textMuted),
             const SizedBox(width: 5),
             Flexible(
               child: Text(
@@ -771,7 +1043,7 @@ class _DiscoveryControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -815,27 +1087,33 @@ class _DiscoveryControls extends StatelessWidget {
                     )
                     .toList(),
                 child: Container(
-                  width: 36,
-                  height: 36,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
-                    color: AppTheme.glassSurface,
+                    color: AppTheme.surface.withValues(alpha: 0.94),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.glassBorder),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
                   ),
-                  child: const Icon(Icons.tune, size: 18),
+                  child: const Icon(
+                    Icons.tune,
+                    size: 18,
+                    color: AppTheme.textMuted,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
           SizedBox(
-            height: 32,
+            height: 31,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               clipBehavior: Clip.none,
               itemCount: _DiscoveryFilter.values.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 7),
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final filter = _DiscoveryFilter.values[index];
                 return _FilterChipButton(
@@ -873,17 +1151,17 @@ class _FilterChipButton extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 11),
+        height: 31,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
           color: selected
-              ? AppTheme.accentPink.withValues(alpha: 0.18)
-              : AppTheme.glassSurface,
+              ? AppTheme.accentPink
+              : AppTheme.surface.withValues(alpha: 0.88),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: selected
-                ? AppTheme.accentPink.withValues(alpha: 0.7)
-                : AppTheme.glassBorder,
+                ? AppTheme.accentPink
+                : Colors.white.withValues(alpha: 0.08),
           ),
         ),
         child: Row(
@@ -928,7 +1206,7 @@ class _EventsContent extends StatelessWidget {
     if (events.isEmpty) {
       return const _InlineEmptyFilterState(
         title: 'No events found',
-        message: 'Try another city, date, or filter.',
+        message: 'Try changing your filters or city.',
       );
     }
 
@@ -1064,8 +1342,85 @@ class _LoadingFeedSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.fromLTRB(16, 28, 16, 112),
-      child: PremiumLoader(message: 'Curating your night...'),
+      padding: EdgeInsets.fromLTRB(16, 6, 16, 112),
+      child: Column(
+        children: [
+          _SkeletonEventCard(),
+          SizedBox(height: 12),
+          _SkeletonEventCard(),
+          SizedBox(height: 18),
+          PremiumLoader(message: 'Curating your night...'),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonEventCard extends StatelessWidget {
+  const _SkeletonEventCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 164,
+      decoration: BoxDecoration(
+        color: AppTheme.surface.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 118,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SkeletonLine(width: double.infinity, height: 17),
+                  const SizedBox(height: 8),
+                  const _SkeletonLine(width: 160, height: 11),
+                  const SizedBox(height: 7),
+                  const _SkeletonLine(width: 130, height: 11),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      Expanded(child: _SkeletonLine(width: 90, height: 34)),
+                      SizedBox(width: 8),
+                      Expanded(child: _SkeletonLine(width: 76, height: 34)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonLine extends StatelessWidget {
+  const _SkeletonLine({required this.width, required this.height});
+
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(8),
+      ),
     );
   }
 }
@@ -1086,7 +1441,7 @@ class _InlineEmptyFilterState extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.glassSurface,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.glassBorder),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1109,4 +1464,24 @@ class _InlineEmptyFilterState extends StatelessWidget {
       ),
     );
   }
+}
+
+String _heroBadgeLabel(NightlifeEvent event) {
+  final now = DateTime.now();
+  final tonight =
+      event.dateTime.year == now.year &&
+      event.dateTime.month == now.month &&
+      event.dateTime.day == now.day;
+  if (tonight) return 'Tonight';
+
+  final price = event.priceText.trim().toLowerCase();
+  final free =
+      price.isEmpty ||
+      price.contains('free') ||
+      price.contains('guest') ||
+      price == '0' ||
+      price.contains('rs 0') ||
+      price.contains('inr 0');
+  if (free) return 'Guestlist';
+  return 'Trending';
 }

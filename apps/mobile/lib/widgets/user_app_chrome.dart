@@ -21,13 +21,13 @@ class UserShellTopBar extends StatelessWidget implements PreferredSizeWidget {
   final ValueChanged<UserNavTabConfig> onSelectTab;
 
   @override
-  Size get preferredSize => const Size.fromHeight(122);
+  Size get preferredSize => const Size.fromHeight(112);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
       automaticallyImplyLeading: false,
-      toolbarHeight: 64,
+      toolbarHeight: 58,
       titleSpacing: 0,
       elevation: 0,
       scrolledUnderElevation: 0,
@@ -35,7 +35,7 @@ class UserShellTopBar extends StatelessWidget implements PreferredSizeWidget {
       surfaceTintColor: Colors.transparent,
       flexibleSpace: const _ChromeBackdrop(),
       title: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
         child: Row(
           children: [
             Builder(
@@ -45,14 +45,14 @@ class UserShellTopBar extends StatelessWidget implements PreferredSizeWidget {
                 onPressed: () => Scaffold.of(context).openDrawer(),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Nightlife',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: 0,
                 ),
               ),
@@ -69,7 +69,7 @@ class UserShellTopBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(58),
+        preferredSize: const Size.fromHeight(54),
         child: _TopNavigationRail(
           tabs: tabs,
           selectedTabId: selectedTabId,
@@ -99,7 +99,7 @@ class UserBackAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       automaticallyImplyLeading: false,
-      toolbarHeight: 64,
+      toolbarHeight: 58,
       titleSpacing: 0,
       elevation: 0,
       scrolledUnderElevation: 0,
@@ -107,7 +107,7 @@ class UserBackAppBar extends StatelessWidget implements PreferredSizeWidget {
       surfaceTintColor: Colors.transparent,
       flexibleSpace: const _ChromeBackdrop(),
       title: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
         child: Row(
           children: [
             _ChromeIconButton(
@@ -115,14 +115,14 @@ class UserBackAppBar extends StatelessWidget implements PreferredSizeWidget {
               icon: Icons.arrow_back,
               onPressed: onBack ?? () => _goBackOrHome(context),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: 0,
                 ),
               ),
@@ -154,16 +154,14 @@ class _ChromeBackdrop extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: const Color(0xE60D111B),
+            color: const Color(0xE60B0B12),
             border: Border(
-              bottom: BorderSide(
-                color: AppTheme.glassBorder.withValues(alpha: 0.9),
-              ),
+              bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
             ),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.accentPink.withValues(alpha: 0.08),
-                blurRadius: 24,
+                color: Colors.black.withValues(alpha: 0.26),
+                blurRadius: 18,
                 offset: const Offset(0, 10),
               ),
             ],
@@ -196,7 +194,7 @@ class _TopNavigationRail extends StatelessWidget {
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxWidth),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Row(
                 children: [
                   for (final tab in tabs.where((tab) => tab.enabled))
@@ -255,14 +253,14 @@ class _TopNavigationItemState extends State<_TopNavigationItem> {
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
           color: selected
-              ? AppTheme.primaryViolet.withValues(alpha: 0.18)
+              ? Colors.white.withValues(alpha: 0.055)
               : _hovered
-              ? Colors.white.withValues(alpha: 0.05)
+              ? Colors.white.withValues(alpha: 0.035)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: selected
-                ? AppTheme.accentPink.withValues(alpha: 0.48)
+                ? Colors.white.withValues(alpha: 0.08)
                 : Colors.transparent,
           ),
         ),
@@ -279,7 +277,7 @@ class _TopNavigationItemState extends State<_TopNavigationItem> {
             widget.onTap();
           },
           child: SizedBox(
-            height: 46,
+            height: 42,
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -289,10 +287,10 @@ class _TopNavigationItemState extends State<_TopNavigationItem> {
                     Icon(
                       selected ? widget.tab.selectedIcon : widget.tab.icon,
                       color: color,
-                      size: 21,
+                      size: 20,
                     ),
                     if (widget.showLabel) ...[
-                      const SizedBox(width: 7),
+                      const SizedBox(width: 6),
                       Flexible(
                         child: Text(
                           widget.tab.label,
@@ -300,7 +298,7 @@ class _TopNavigationItemState extends State<_TopNavigationItem> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: selected ? Colors.white : color,
-                            fontSize: 12,
+                            fontSize: 11.5,
                             fontWeight: selected
                                 ? FontWeight.w900
                                 : FontWeight.w700,
@@ -313,10 +311,10 @@ class _TopNavigationItemState extends State<_TopNavigationItem> {
                 Positioned(
                   left: 12,
                   right: 12,
-                  bottom: 0,
+                  bottom: 1,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    height: 2,
+                    height: 2.5,
                     decoration: BoxDecoration(
                       color: selected
                           ? AppTheme.accentPink
@@ -328,7 +326,7 @@ class _TopNavigationItemState extends State<_TopNavigationItem> {
                                 color: AppTheme.accentPink.withValues(
                                   alpha: 0.44,
                                 ),
-                                blurRadius: 10,
+                                blurRadius: 8,
                               ),
                             ]
                           : null,
@@ -369,22 +367,22 @@ class _TopAvatar extends StatelessWidget {
         onTap: onPressed,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          width: 40,
-          height: 40,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: photoUrl.isEmpty ? AppTheme.premiumGradient : null,
             border: Border.all(
               color: selected
-                  ? AppTheme.neonLime
-                  : AppTheme.accentPink.withValues(alpha: 0.5),
-              width: selected ? 1.6 : 1,
+                  ? AppTheme.accentPink
+                  : Colors.white.withValues(alpha: 0.14),
+              width: selected ? 1.4 : 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.accentPink.withValues(alpha: 0.18),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
+                color: AppTheme.accentPink.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -435,10 +433,11 @@ class _ChromeIconButton extends StatelessWidget {
       tooltip: tooltip,
       onPressed: onPressed,
       style: IconButton.styleFrom(
-        backgroundColor: Colors.white.withValues(alpha: 0.035),
+        fixedSize: const Size(38, 38),
+        backgroundColor: Colors.white.withValues(alpha: 0.04),
         foregroundColor: Colors.white,
         hoverColor: Colors.white.withValues(alpha: 0.08),
-        highlightColor: AppTheme.accentPink.withValues(alpha: 0.14),
+        highlightColor: AppTheme.accentPink.withValues(alpha: 0.1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       icon: Icon(icon),

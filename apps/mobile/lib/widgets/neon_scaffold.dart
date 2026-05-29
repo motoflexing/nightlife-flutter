@@ -44,44 +44,39 @@ class NeonScaffold extends StatelessWidget {
 class _NightclubPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final violetGlow = Paint()
-      ..color = AppTheme.primaryViolet.withValues(alpha: 0.12)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 42)
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = size.width * 0.34;
-    canvas.drawLine(
-      Offset(size.width * 0.92, -size.height * 0.08),
-      Offset(size.width * 0.26, size.height * 0.92),
-      violetGlow,
+    final topRightRect = Rect.fromCircle(
+      center: Offset(size.width * 0.94, size.height * 0.02),
+      radius: size.width * 0.68,
+    );
+    final topRightGlow = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppTheme.accentPink.withValues(alpha: 0.14),
+          AppTheme.neonViolet.withValues(alpha: 0.055),
+          Colors.transparent,
+        ],
+      ).createShader(topRightRect);
+    canvas.drawCircle(
+      topRightRect.center,
+      topRightRect.width / 2,
+      topRightGlow,
     );
 
-    final pinkGlow = Paint()
-      ..color = AppTheme.accentPink.withValues(alpha: 0.035)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 56)
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = size.width * 0.22;
-    canvas.drawLine(
-      Offset(size.width * 0.04, size.height * 0.08),
-      Offset(size.width * 0.56, size.height * 0.62),
-      pinkGlow,
+    final lowerLeftRect = Rect.fromCircle(
+      center: Offset(size.width * 0.04, size.height * 0.58),
+      radius: size.width * 0.58,
     );
-
-    final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.016)
-      ..strokeWidth = 1;
-    for (var y = 0.0; y < size.height; y += 48) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
-    }
-    for (var x = 0.0; x < size.width; x += 48) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
-    }
-    final accentPaint = Paint()
-      ..color = AppTheme.neonViolet.withValues(alpha: 0.07)
-      ..strokeWidth = 1.4;
-    canvas.drawLine(
-      Offset(size.width * 0.08, 0),
-      Offset(size.width * 0.52, size.height),
-      accentPaint,
+    final lowerLeftGlow = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          AppTheme.neonViolet.withValues(alpha: 0.06),
+          Colors.transparent,
+        ],
+      ).createShader(lowerLeftRect);
+    canvas.drawCircle(
+      lowerLeftRect.center,
+      lowerLeftRect.width / 2,
+      lowerLeftGlow,
     );
   }
 

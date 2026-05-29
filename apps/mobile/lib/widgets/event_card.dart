@@ -63,8 +63,8 @@ class _EventCardState extends State<EventCard> {
 
   Widget _horizontalCard(BuildContext context, {required bool mobile}) {
     final event = widget.event;
-    final posterWidth = mobile ? 112.0 : (widget.compact ? 116.0 : 118.0);
-    final minPosterHeight = mobile ? 150.0 : 158.0;
+    final posterWidth = mobile ? 118.0 : (widget.compact ? 122.0 : 128.0);
+    final minPosterHeight = mobile ? 164.0 : 170.0;
 
     return _CardShell(
       onTap: widget.onTap,
@@ -78,11 +78,11 @@ class _EventCardState extends State<EventCard> {
                 maxWidth: posterWidth,
                 minHeight: minPosterHeight,
               ),
-              child: EventPoster(event: event, borderRadius: 8),
+              child: _PosterStack(event: event),
             ),
             Expanded(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(12, 10, 10, mobile ? 12 : 10),
+                padding: EdgeInsets.fromLTRB(12, 11, 11, mobile ? 12 : 11),
                 child: _CardDetails(
                   event: event,
                   distanceKm: widget.distanceKm,
@@ -111,10 +111,10 @@ class _EventCardState extends State<EventCard> {
         children: [
           AspectRatio(
             aspectRatio: 16 / 8.6,
-            child: EventPoster(event: event, borderRadius: 8),
+            child: _PosterStack(event: event),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
             child: _CardDetails(
               event: event,
               distanceKm: widget.distanceKm,
@@ -157,14 +157,14 @@ class _CardShell extends StatelessWidget {
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
-            color: AppTheme.glassSurface,
+            color: AppTheme.surface.withValues(alpha: 0.96),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppTheme.glassBorder),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.accentPink.withValues(alpha: 0.08),
+                color: Colors.black.withValues(alpha: 0.24),
                 blurRadius: 18,
-                offset: const Offset(0, 10),
+                offset: const Offset(0, 12),
               ),
             ],
           ),
@@ -237,14 +237,14 @@ class _CardDetails extends StatelessWidget {
             _SaveButton(saved: saved, onTap: onSave),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 7),
         _IconLine(icon: Icons.place_outlined, text: '$venue - $location'),
-        const SizedBox(height: 4),
+        const SizedBox(height: 5),
         _IconLine(
           icon: Icons.schedule,
           text: Formatters.eventDate(event.dateTime),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 9),
         Wrap(
           spacing: 6,
           runSpacing: 6,
@@ -263,69 +263,22 @@ class _CardDetails extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 11),
         Row(
           children: [
             Expanded(
               flex: 5,
-              child: SizedBox(
-                height: 30,
-                child: ElevatedButton(
-                  onPressed: onPrimary,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.accentPink.withValues(
-                      alpha: 0.86,
-                    ),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    minimumSize: const Size(0, 30),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  child: Text(
-                    primaryLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+              child: _GradientActionButton(
+                label: primaryLabel,
+                onPressed: onPrimary,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               flex: 4,
-              child: SizedBox(
-                height: 30,
-                child: OutlinedButton(
-                  onPressed: onDetails,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: BorderSide(
-                      color: AppTheme.glassBorder.withValues(alpha: 0.9),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 9),
-                    minimumSize: const Size(0, 30),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  child: const Text(
-                    'Details',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+              child: _SubtleActionButton(
+                label: 'Details',
+                onPressed: onDetails,
               ),
             ),
           ],
@@ -334,19 +287,60 @@ class _CardDetails extends StatelessWidget {
     );
   }
 
-  bool _isPaid(NightlifeEvent event) {
-    final value = event.priceText.trim().toLowerCase();
-    if (value.isEmpty) return false;
-    return !value.contains('free') &&
-        !value.contains('guest') &&
-        value != '0' &&
-        !value.contains('rs 0') &&
-        !value.contains('inr 0');
-  }
-
   String _safeLabel(String value, {required String fallback}) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? fallback : trimmed;
+  }
+}
+
+class _PosterStack extends StatelessWidget {
+  const _PosterStack({required this.event});
+
+  final NightlifeEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        EventPoster(event: event, borderRadius: 8),
+        Positioned(
+          left: 8,
+          top: 8,
+          child: _ProofBadge(label: _eventBadgeLabel(event)),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProofBadge extends StatelessWidget {
+  const _ProofBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.56),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -376,12 +370,12 @@ class _SaveButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.06),
             shape: BoxShape.circle,
-            border: Border.all(color: AppTheme.glassBorder),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           child: Icon(
             saved ? Icons.favorite : Icons.favorite_border,
             size: 16,
-            color: saved ? AppTheme.accentPink : Colors.white,
+            color: saved ? AppTheme.accentPink : AppTheme.textMuted,
           ),
         ),
       ),
@@ -441,13 +435,13 @@ class _Tag extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: accent
-            ? AppTheme.accentPink.withValues(alpha: 0.15)
+            ? AppTheme.accentPink.withValues(alpha: 0.13)
             : Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
           color: accent
-              ? AppTheme.accentPink.withValues(alpha: 0.42)
-              : AppTheme.glassBorder,
+              ? AppTheme.accentPink.withValues(alpha: 0.32)
+              : Colors.white.withValues(alpha: 0.08),
         ),
       ),
       child: Text(
@@ -462,4 +456,112 @@ class _Tag extends StatelessWidget {
       ),
     );
   }
+}
+
+class _GradientActionButton extends StatefulWidget {
+  const _GradientActionButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  State<_GradientActionButton> createState() => _GradientActionButtonState();
+}
+
+class _GradientActionButtonState extends State<_GradientActionButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: _pressed ? 0.97 : 1,
+      duration: const Duration(milliseconds: 110),
+      curve: Curves.easeOutCubic,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTapUp: (_) => setState(() => _pressed = false),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: AppTheme.premiumGradient,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.accentPink.withValues(alpha: 0.16),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: widget.onPressed,
+              child: SizedBox(
+                height: 36,
+                child: Center(
+                  child: Text(
+                    widget.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SubtleActionButton extends StatelessWidget {
+  const _SubtleActionButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        padding: const EdgeInsets.symmetric(horizontal: 9),
+        minimumSize: const Size(0, 36),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+      ),
+      child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+    );
+  }
+}
+
+bool _isPaid(NightlifeEvent event) {
+  final value = event.priceText.trim().toLowerCase();
+  if (value.isEmpty) return false;
+  return !value.contains('free') &&
+      !value.contains('guest') &&
+      value != '0' &&
+      !value.contains('rs 0') &&
+      !value.contains('inr 0');
+}
+
+bool _isSameDay(DateTime a, DateTime b) {
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+String _eventBadgeLabel(NightlifeEvent event) {
+  if (_isSameDay(event.dateTime, DateTime.now())) return 'Tonight';
+  if (!_isPaid(event)) return 'Guestlist';
+  if (event.musicType.trim().isNotEmpty) return 'Trending';
+  return 'Popular';
 }

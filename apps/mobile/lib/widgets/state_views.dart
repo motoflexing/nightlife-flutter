@@ -36,14 +36,14 @@ class EmptyView extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 420),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.glassSurface,
+            color: AppTheme.surface.withValues(alpha: 0.94),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppTheme.glassBorder),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 34, color: AppTheme.neonViolet),
+              Icon(icon, size: 34, color: AppTheme.accentPink),
               const SizedBox(height: 10),
               Text(
                 title,
@@ -82,10 +82,10 @@ class ErrorStateView extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 420),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.glassSurface,
+            color: AppTheme.surface.withValues(alpha: 0.94),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: AppTheme.accentPink.withValues(alpha: 0.28),
+              color: AppTheme.accentPink.withValues(alpha: 0.24),
             ),
           ),
           child: Column(

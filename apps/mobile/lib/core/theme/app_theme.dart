@@ -1,33 +1,35 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color background = Color(0xFF0B0D14);
-  static const Color surface = Color(0xFF181A20);
-  static const Color elevated = Color(0xFF20232B);
-  static const Color deepPurple = Color(0xFF1E1B4B);
-  static const Color primaryViolet = Color(0xFFFF2D55);
-  static const Color neonViolet = Color(0xFFA855F7);
-  static const Color accentPink = Color(0xFFFF3D8B);
-  static const Color textMuted = Color(0xFFB8B8D0);
+  static const Color background = Color(0xFF07070B);
+  static const Color surface = Color(0xFF12121A);
+  static const Color elevated = Color(0xFF171720);
+  static const Color deepPurple = Color(0xFF191328);
+  static const Color primaryViolet = Color(0xFFFF2D8D);
+  static const Color neonViolet = Color(0xFF8B5CF6);
+  static const Color accentPink = Color(0xFFFF2D8D);
+  static const Color textMuted = Color(0xFFB8B8C8);
+  static const Color success = Color(0xFF22C55E);
+  static const Color paidAccent = Color(0xFFF59E0B);
 
-  static const Color glassSurface = Color(0xCC111827);
-  static const Color glassBorder = Color(0x33BFA3FF);
+  static const Color glassSurface = Color(0xE612121A);
+  static const Color glassBorder = Color(0x14FFFFFF);
 
   static const Color neonPink = accentPink;
   static const Color neonCyan = neonViolet;
-  static const Color neonLime = Color(0xFFB8FF5C);
+  static const Color neonLime = success;
 
   static const LinearGradient premiumGradient = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [primaryViolet, accentPink, neonViolet],
+    colors: [primaryViolet, Color(0xFFC026D3)],
   );
 
   static const LinearGradient nightclubGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [background, Color(0xFF11131B), Color(0xFF050509)],
-    stops: [0, 0.54, 1],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF0B0B12), background, Color(0xFF050508)],
+    stops: [0, 0.5, 1],
   );
 
   static ThemeData dark() {
@@ -70,7 +72,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xB3171D2D),
+        fillColor: elevated,
         labelStyle: const TextStyle(color: textMuted),
         hintStyle: const TextStyle(color: Color(0x99B8B8D0)),
         prefixIconColor: textMuted,
@@ -83,15 +85,15 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0x332D2368)),
+          borderSide: const BorderSide(color: glassBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: neonViolet, width: 1.5),
+          borderSide: const BorderSide(color: primaryViolet, width: 1.5),
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0x262D2368)),
+          borderSide: const BorderSide(color: glassBorder),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -111,8 +113,8 @@ class AppTheme {
           backgroundColor: primaryViolet,
           foregroundColor: Colors.white,
           elevation: 0,
-          shadowColor: neonViolet.withValues(alpha: 0.45),
-          disabledBackgroundColor: const Color(0xFF26213D),
+          shadowColor: primaryViolet.withValues(alpha: 0.18),
+          disabledBackgroundColor: const Color(0xFF262632),
           disabledForegroundColor: textMuted,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           minimumSize: const Size(0, 40),
@@ -124,7 +126,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.white,
-          side: const BorderSide(color: Color(0x66FF3D8B)),
+          side: const BorderSide(color: glassBorder),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           minimumSize: const Size(0, 40),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -169,7 +171,7 @@ class AppTheme {
       ),
       datePickerTheme: DatePickerThemeData(
         backgroundColor: surface,
-        headerBackgroundColor: deepPurple,
+        headerBackgroundColor: elevated,
         headerForegroundColor: Colors.white,
         dayOverlayColor: WidgetStateProperty.all(
           neonViolet.withValues(alpha: 0.12),
@@ -180,7 +182,7 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         height: 64,
         backgroundColor: const Color(0xF20F1118),
-        indicatorColor: accentPink.withValues(alpha: 0.18),
+        indicatorColor: accentPink.withValues(alpha: 0.16),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (_) => const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
