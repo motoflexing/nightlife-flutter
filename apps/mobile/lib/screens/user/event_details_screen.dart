@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -10,7 +12,6 @@ import '../../services/firestore_service.dart';
 import '../../services/location_service.dart';
 import '../../services/maps_availability.dart';
 import '../../services/referral_service.dart';
-import '../../widgets/compact_ui.dart';
 import '../../widgets/event_poster.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_loader.dart';
@@ -150,60 +151,61 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final event = widget.event;
+    final insights = EventInsights.fallbackFor(event);
+    final canRsvp = widget.currentUser.isUser && widget.currentUser.isApproved;
 
     return NeonScaffold(
       appBar: const UserBackAppBar(title: 'Event Details'),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 860;
-          final content = wide
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 5,
-                      child: _HeroPoster(event: event, aspectRatio: 4 / 5),
-                    ),
-                    const SizedBox(width: 22),
-                    Expanded(
-                      flex: 4,
-                      child: _DetailsContent(
-                        event: event,
-                        currentUser: widget.currentUser,
-                        codeController: _codeController,
-                        submitting: _submitting,
-                        rsvpCreated: _rsvpCreated,
-                        distanceKm: _distanceKm,
-                        onRsvp: _openRsvpConfirmation,
-                      ),
-                    ),
-                  ],
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _HeroPoster(event: event, aspectRatio: 16 / 9.6),
-                    const SizedBox(height: 10),
-                    _DetailsContent(
-                      event: event,
-                      currentUser: widget.currentUser,
-                      codeController: _codeController,
-                      submitting: _submitting,
-                      rsvpCreated: _rsvpCreated,
-                      distanceKm: _distanceKm,
-                      onRsvp: _openRsvpConfirmation,
-                    ),
-                  ],
-                );
+          final horizontalPadding = wide ? 18.0 : 12.0;
+          final bottomPadding = wide ? 28.0 : 126.0;
 
-          return SingleChildScrollView(
-            padding: compactScreenPadding(context, bottom: 112),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1080),
-                child: content,
+          final content = _EventDetailsExperience(
+            event: event,
+            currentUser: widget.currentUser,
+            insights: insights,
+            codeController: _codeController,
+            submitting: _submitting,
+            rsvpCreated: _rsvpCreated,
+            distanceKm: _distanceKm,
+            onRsvp: _openRsvpConfirmation,
+            wide: wide,
+          );
+
+          return Stack(
+            children: [
+              const Positioned.fill(child: _AliveNightBackdrop()),
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  wide ? 16 : 10,
+                  horizontalPadding,
+                  bottomPadding,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1080),
+                    child: content,
+                  ),
+                ),
               ),
-            ),
+              if (!wide)
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  bottom: 12 + MediaQuery.paddingOf(context).bottom,
+                  child: _StickyBookingBar(
+                    event: event,
+                    canRsvp: canRsvp,
+                    submitting: _submitting,
+                    rsvpCreated: _rsvpCreated,
+                    onRsvp: _openRsvpConfirmation,
+                  ),
+                ),
+            ],
           );
         },
       ),
@@ -437,165 +439,1018 @@ class _ConfirmLine extends StatelessWidget {
   }
 }
 
-class _HeroPoster extends StatelessWidget {
-  const _HeroPoster({required this.event, required this.aspectRatio});
+class EventInsights {
+  const EventInsights({
+    required this.expectedAttendance,
+    required this.rsvpToday,
+    required this.crowdEnergy,
+    required this.trendingRank,
+    required this.crowdTypes,
+    required this.music,
+    required this.mood,
+    required this.bestFor,
+    required this.vibeMatch,
+  });
 
-  final NightlifeEvent event;
-  final double aspectRatio;
+  final String expectedAttendance;
+  final int rsvpToday;
+  final String crowdEnergy;
+  final String trendingRank;
+  final List<CrowdTypeInsight> crowdTypes;
+  final String music;
+  final String mood;
+  final List<String> bestFor;
+  final int vibeMatch;
 
-  @override
-  Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: aspectRatio,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.accentPink.withValues(alpha: 0.22),
-              blurRadius: 34,
-              spreadRadius: -12,
-              offset: const Offset(0, 18),
-            ),
-          ],
-        ),
-        child: EventPoster(event: event, borderRadius: 8, showTitle: true),
-      ),
+  factory EventInsights.fallbackFor(NightlifeEvent event) {
+    return EventInsights(
+      expectedAttendance: '450+',
+      rsvpToday: 47,
+      crowdEnergy: 'High',
+      trendingRank: event.city.trim().isEmpty
+          ? '#2 tonight'
+          : '#2 in ${event.city.trim()}',
+      crowdTypes: const [
+        CrowdTypeInsight(label: 'Students', value: 58),
+        CrowdTypeInsight(label: 'Professionals', value: 32),
+        CrowdTypeInsight(label: 'Creators', value: 10),
+      ],
+      music: event.musicType.trim().isEmpty
+          ? 'Bollywood x EDM'
+          : event.musicType.trim(),
+      mood: 'High Energy',
+      bestFor: const ['Dancing', 'Music', 'Meeting People'],
+      vibeMatch: 82,
     );
   }
 }
 
-class _DetailsContent extends StatelessWidget {
-  const _DetailsContent({
+class CrowdTypeInsight {
+  const CrowdTypeInsight({required this.label, required this.value});
+
+  final String label;
+  final int value;
+}
+
+class _EventDetailsExperience extends StatelessWidget {
+  const _EventDetailsExperience({
     required this.event,
     required this.currentUser,
+    required this.insights,
     required this.codeController,
     required this.submitting,
     required this.rsvpCreated,
     required this.distanceKm,
     required this.onRsvp,
+    required this.wide,
   });
 
   final NightlifeEvent event;
   final AppUser currentUser;
+  final EventInsights insights;
   final TextEditingController codeController;
   final bool submitting;
   final bool rsvpCreated;
   final double? distanceKm;
   final VoidCallback onRsvp;
+  final bool wide;
 
   @override
   Widget build(BuildContext context) {
     final canRsvp = currentUser.isUser && currentUser.isApproved;
+    final details = _DetailsStack(
+      event: event,
+      insights: insights,
+      codeController: codeController,
+      submitting: submitting,
+      rsvpCreated: rsvpCreated,
+      distanceKm: distanceKm,
+      onRsvp: onRsvp,
+      canRsvp: canRsvp,
+    );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    if (!wide) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _CinematicHero(event: event, insights: insights, aspectRatio: 0.86),
+          const SizedBox(height: 12),
+          _LiveStatusStrip(insights: insights),
+          const SizedBox(height: 12),
+          details,
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Panel(
+        Expanded(
+          flex: 5,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _Chip(label: event.city, icon: Icons.location_city_outlined),
-                  if (distanceKm != null)
-                    _Chip(
-                      label: LocationService.instance.formatDistance(
-                        distanceKm!,
-                      ),
-                      icon: Icons.near_me_outlined,
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                event.title.isEmpty ? 'Nightlife Event' : event.title,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                ),
+              _CinematicHero(
+                event: event,
+                insights: insights,
+                aspectRatio: 0.8,
               ),
               const SizedBox(height: 14),
-              _InfoLine(
-                icon: Icons.storefront_outlined,
-                title: event.venueName,
-                subtitle: event.address,
-              ),
-              _InfoLine(
-                icon: Icons.schedule,
-                title: Formatters.eventDate(event.dateTime),
-              ),
+              _LiveStatusStrip(insights: insights),
             ],
           ),
         ),
+        const SizedBox(width: 22),
+        Expanded(flex: 4, child: details),
+      ],
+    );
+  }
+}
+
+class _DetailsStack extends StatelessWidget {
+  const _DetailsStack({
+    required this.event,
+    required this.insights,
+    required this.codeController,
+    required this.submitting,
+    required this.rsvpCreated,
+    required this.distanceKm,
+    required this.onRsvp,
+    required this.canRsvp,
+  });
+
+  final NightlifeEvent event;
+  final EventInsights insights;
+  final TextEditingController codeController;
+  final bool submitting;
+  final bool rsvpCreated;
+  final double? distanceKm;
+  final VoidCallback onRsvp;
+  final bool canRsvp;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _EventSummaryCard(
+          event: event,
+          distanceKm: distanceKm,
+          canRsvp: canRsvp,
+        ),
         const SizedBox(height: 12),
-        _Panel(
-          child: Column(
-            children: [
-              _InfoLine(
-                icon: Icons.music_note_outlined,
-                title: event.musicType,
-              ),
-              _InfoLine(icon: Icons.groups_2_outlined, title: event.crowdType),
-              _InfoLine(icon: Icons.rule_outlined, title: event.entryRules),
-              _InfoLine(
-                icon: Icons.confirmation_number_outlined,
-                title: event.priceText.isEmpty
-                    ? 'Entry details available at venue'
-                    : event.priceText,
-              ),
-              if (event.description.trim().isNotEmpty) ...[
-                const Divider(height: 24),
-                Text(
-                  event.description,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    height: 1.45,
-                  ),
-                ),
-              ],
-            ],
-          ),
+        _CrowdIntelligenceCard(insights: insights),
+        const SizedBox(height: 12),
+        _VibeMusicCard(event: event, insights: insights),
+        const SizedBox(height: 12),
+        _VisualGallerySection(
+          title: 'Past Event Highlights',
+          subtitle: 'A glimpse of the kind of memories this night can create.',
+          images: _NightlifeGalleryData.pastEventHighlights,
+        ),
+        const SizedBox(height: 12),
+        _VisualGallerySection(
+          title: 'Venue Experience',
+          subtitle: 'Neon corners, photo spots, cocktails and after-dark energy.',
+          images: _NightlifeGalleryData.venueExperience,
         ),
         const SizedBox(height: 12),
         _LocationSection(event: event, distanceKm: distanceKm),
         if (canRsvp) ...[
           const SizedBox(height: 12),
-          _Panel(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextField(
-                  controller: codeController,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
-                    labelText: 'Promoter code',
-                    hintText: 'Optional referral code',
-                    prefixIcon: Icon(Icons.qr_code_2),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  height: 46,
-                  child: ElevatedButton.icon(
-                    onPressed: submitting || rsvpCreated ? null : onRsvp,
-                    icon: submitting
-                        ? const PremiumLoader.compact(size: 18)
-                        : Icon(
-                            rsvpCreated
-                                ? Icons.check_circle_outline
-                                : Icons.how_to_reg,
-                          ),
-                    label: Text(rsvpCreated ? 'RSVP confirmed' : 'Book spot'),
-                  ),
-                ),
-              ],
-            ),
+          _PromoterCodeCard(
+            codeController: codeController,
+            submitting: submitting,
+            rsvpCreated: rsvpCreated,
+            onRsvp: onRsvp,
           ),
         ],
       ],
+    );
+  }
+}
+
+class _CinematicHero extends StatelessWidget {
+  const _CinematicHero({
+    required this.event,
+    required this.insights,
+    required this.aspectRatio,
+  });
+
+  final NightlifeEvent event;
+  final EventInsights insights;
+  final double aspectRatio;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = event.title.trim().isEmpty ? 'Nightlife Event' : event.title;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.neonViolet.withValues(alpha: 0.28),
+            blurRadius: 38,
+            spreadRadius: -14,
+            offset: const Offset(0, 18),
+          ),
+          BoxShadow(
+            color: AppTheme.accentPink.withValues(alpha: 0.16),
+            blurRadius: 52,
+            spreadRadius: -22,
+          ),
+        ],
+      ),
+      child: AspectRatio(
+        aspectRatio: aspectRatio,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              EventPoster(event: event, borderRadius: 8),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.06),
+                      Colors.black.withValues(alpha: 0.18),
+                      Colors.black.withValues(alpha: 0.88),
+                    ],
+                    stops: const [0, 0.48, 1],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 14,
+                top: 14,
+                child: _TrendingBadge(label: 'TRENDING TONIGHT'),
+              ),
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _LivePulseBadge(label: 'LIVE PULSE'),
+                    const SizedBox(height: 10),
+                    Text(
+                      title,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        height: 1.02,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
+                        shadows: [
+                          Shadow(color: Colors.black87, blurRadius: 18),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${Formatters.eventDate(event.dateTime)} - ${event.venueName.trim().isEmpty ? event.city : event.venueName}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LiveStatusStrip extends StatelessWidget {
+  const _LiveStatusStrip({required this.insights});
+
+  final EventInsights insights;
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = [
+      (Icons.local_fire_department_outlined, 'Heating Up'),
+      (Icons.trending_up, '+${insights.rsvpToday} RSVPs today'),
+      (Icons.favorite_border, '${insights.vibeMatch}% vibe match'),
+      (Icons.bolt_outlined, 'Crowd building fast'),
+    ];
+
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemBuilder: (context, index) {
+          final chip = chips[index];
+          return _InsightChip(icon: chip.$1, label: chip.$2);
+        },
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemCount: chips.length,
+      ),
+    );
+  }
+}
+
+class _EventSummaryCard extends StatelessWidget {
+  const _EventSummaryCard({
+    required this.event,
+    required this.distanceKm,
+    required this.canRsvp,
+  });
+
+  final NightlifeEvent event;
+  final double? distanceKm;
+  final bool canRsvp;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = event.title.trim().isEmpty ? 'Nightlife Event' : event.title;
+    final area = [
+      event.venueName.trim(),
+      event.city.trim(),
+    ].where((value) => value.isNotEmpty).join(' - ');
+    final entry = event.priceText.trim().isEmpty
+        ? 'Entry details at venue'
+        : event.priceText.trim();
+
+    return _GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _InsightChip(
+                icon: Icons.location_city_outlined,
+                label: event.city.trim().isEmpty ? 'Tonight' : event.city,
+              ),
+              if (distanceKm != null)
+                _InsightChip(
+                  icon: Icons.near_me_outlined,
+                  label: LocationService.instance.formatDistance(distanceKm!),
+                ),
+              _InsightChip(
+                icon: canRsvp ? Icons.lock_open_outlined : Icons.lock_outline,
+                label: canRsvp ? 'Guestlist open' : 'Approval required',
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              height: 1.05,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _PremiumInfoLine(
+            icon: Icons.schedule,
+            title: Formatters.eventDate(event.dateTime),
+            subtitle: 'People are already locking their spots for tonight.',
+          ),
+          _PremiumInfoLine(
+            icon: Icons.storefront_outlined,
+            title: area.isEmpty ? 'Venue area available soon' : area,
+            subtitle: event.address,
+          ),
+          _PremiumInfoLine(
+            icon: Icons.confirmation_number_outlined,
+            title: entry,
+            subtitle: event.entryRules.trim().isEmpty
+                ? 'Final admission follows venue policy.'
+                : event.entryRules.trim(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CrowdIntelligenceCard extends StatelessWidget {
+  const _CrowdIntelligenceCard({required this.insights});
+
+  final EventInsights insights;
+
+  @override
+  Widget build(BuildContext context) {
+    return _GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const _PulseDot(),
+              const SizedBox(width: 9),
+              const Expanded(
+                child: Text(
+                  "Tonight's Crowd",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              _TrendingBadge(label: insights.trendingRank),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _CrowdMetric(
+                  icon: Icons.groups_2_outlined,
+                  label: 'Expected',
+                  value: insights.expectedAttendance,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _CrowdMetric(
+                  icon: Icons.trending_up,
+                  label: 'Momentum',
+                  value: '+${insights.rsvpToday}',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _CrowdMetric(
+                  icon: Icons.bolt_outlined,
+                  label: 'Energy',
+                  value: insights.crowdEnergy,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _AnimatedProgressLine(
+            label: 'Vibe match',
+            value: insights.vibeMatch,
+            color: AppTheme.neonViolet,
+          ),
+          const SizedBox(height: 12),
+          for (final type in insights.crowdTypes)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _AnimatedProgressLine(
+                label: type.label,
+                value: type.value,
+                color: type.label == 'Students'
+                    ? AppTheme.accentPink
+                    : type.label == 'Professionals'
+                    ? const Color(0xFF38BDF8)
+                    : AppTheme.neonLime,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VibeMusicCard extends StatelessWidget {
+  const _VibeMusicCard({required this.event, required this.insights});
+
+  final NightlifeEvent event;
+  final EventInsights insights;
+
+  @override
+  Widget build(BuildContext context) {
+    final dressCode = event.entryRules.trim().isEmpty
+        ? 'Venue rules apply'
+        : event.entryRules.trim();
+    return _GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Vibe Check',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _PremiumInfoLine(
+            icon: Icons.music_note_outlined,
+            title: insights.music,
+            subtitle: 'Music',
+          ),
+          _PremiumInfoLine(
+            icon: Icons.wb_twilight_outlined,
+            title: insights.mood,
+            subtitle: 'Mood',
+          ),
+          _PremiumInfoLine(
+            icon: Icons.style_outlined,
+            title: dressCode,
+            subtitle: 'Dress code',
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final item in insights.bestFor)
+                _InsightChip(icon: Icons.auto_awesome, label: item),
+            ],
+          ),
+          if (event.description.trim().isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text(
+              event.description,
+              style: const TextStyle(color: AppTheme.textMuted, height: 1.42),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+
+class GalleryVisual {
+  const GalleryVisual({
+    required this.title,
+    required this.subtitle,
+    required this.assetPath,
+    required this.tag,
+  });
+
+  final String title;
+  final String subtitle;
+  final String assetPath;
+  final String tag;
+}
+
+class _NightlifeGalleryData {
+  static const pastEventHighlights = [
+    GalleryVisual(
+      title: 'Crowd Moments',
+      subtitle: 'People, music and memories from the night.',
+      assetPath: 'assets/images/nightlife/girl.jpg.jpg',
+      tag: 'Social',
+    ),
+    GalleryVisual(
+      title: 'Cocktail Culture',
+      subtitle: 'Slow drinks, warm lights and premium energy.',
+      assetPath: 'assets/images/nightlife/vibe.jpg.jpg',
+      tag: 'Drinks',
+    ),
+    GalleryVisual(
+      title: 'Star Girl Energy',
+      subtitle: 'The kind of night people take photos for.',
+      assetPath: 'assets/images/nightlife/Stargirl.jpg.jpg',
+      tag: 'Mood',
+    ),
+  ];
+
+  static const venueExperience = [
+    GalleryVisual(
+      title: 'Neon Nights',
+      subtitle: 'Aesthetic corners built for after-dark memories.',
+      assetPath: 'assets/images/nightlife/lips.jpg.jpg',
+      tag: 'Venue',
+    ),
+    GalleryVisual(
+      title: 'After Hours',
+      subtitle: 'A bold, late-night vibe for adults only events.',
+      assetPath: 'assets/images/nightlife/adults.jpg.jpg',
+      tag: '18+',
+    ),
+    GalleryVisual(
+      title: 'Feeling Zone',
+      subtitle: 'Lights, colors and a mood that feels different.',
+      assetPath: 'assets/images/nightlife/feelings.jpg.jpg',
+      tag: 'Neon',
+    ),
+    GalleryVisual(
+      title: 'Special Corners',
+      subtitle: 'Photo-worthy details that make the venue memorable.',
+      assetPath: 'assets/images/nightlife/fspecial.jpg.jpg',
+      tag: 'Iconic',
+    ),
+  ];
+}
+
+class _VisualGallerySection extends StatelessWidget {
+  const _VisualGallerySection({
+    required this.title,
+    required this.subtitle,
+    required this.images,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<GalleryVisual> images;
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 640;
+    final cardWidth = mobile ? 214.0 : 236.0;
+    final cardHeight = mobile ? 270.0 : 292.0;
+
+    return _GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const _PulseDot(size: 9),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    height: 1.1,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              _TrendingBadge(label: 'VISUALS'),
+            ],
+          ),
+          const SizedBox(height: 7),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 12,
+              height: 1.35,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: cardHeight,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: images.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final visual = images[index];
+                return _GalleryImageCard(
+                  visual: visual,
+                  width: cardWidth,
+                  height: cardHeight,
+                  onTap: () => _openGalleryPreview(context, visual),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openGalleryPreview(BuildContext context, GalleryVisual visual) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.86),
+      builder: (context) => _GalleryPreviewDialog(visual: visual),
+    );
+  }
+}
+
+class _GalleryImageCard extends StatelessWidget {
+  const _GalleryImageCard({
+    required this.visual,
+    required this.width,
+    required this.height,
+    required this.onTap,
+  });
+
+  final GalleryVisual visual;
+  final double width;
+  final double height;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _PressScale(
+      onPressed: onTap,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.accentPink.withValues(alpha: 0.16),
+                blurRadius: 22,
+                spreadRadius: -8,
+                offset: const Offset(0, 14),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                visual.assetPath,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: AppTheme.elevated.withValues(alpha: 0.88),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.all(16),
+                    child: const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.broken_image_outlined,
+                          color: AppTheme.textMuted,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Image not found',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppTheme.textMuted,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.08),
+                      Colors.black.withValues(alpha: 0.12),
+                      Colors.black.withValues(alpha: 0.82),
+                    ],
+                    stops: const [0, 0.45, 1],
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 12,
+                left: 12,
+                child: _MiniVisualTag(label: visual.tag),
+              ),
+              Positioned(
+                left: 14,
+                right: 14,
+                bottom: 14,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      visual.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        height: 1.05,
+                        fontWeight: FontWeight.w900,
+                        shadows: [Shadow(color: Colors.black87, blurRadius: 12)],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      visual.subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 12,
+                        height: 1.3,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GalleryPreviewDialog extends StatelessWidget {
+  const _GalleryPreviewDialog({required this.visual});
+
+  final GalleryVisual visual;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+
+    return Dialog.fullscreen(
+      backgroundColor: Colors.transparent,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: InteractiveViewer(
+              minScale: 0.9,
+              maxScale: 3,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: size.width,
+                    maxHeight: size.height,
+                  ),
+                  child: Image.asset(
+                    visual.assetPath,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.40),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.66),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 12,
+            right: 12,
+            child: IconButton.filled(
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.black.withValues(alpha: 0.54),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close),
+            ),
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.paddingOf(context).bottom + 20,
+            child: _GlassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _MiniVisualTag(label: visual.tag),
+                  const SizedBox(height: 10),
+                  Text(
+                    visual.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      height: 1.05,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    visual.subtitle,
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      height: 1.35,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniVisualTag extends StatelessWidget {
+  const _MiniVisualTag({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.46),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppTheme.accentPink.withValues(alpha: 0.42)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.auto_awesome, size: 13, color: AppTheme.neonLime),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _PromoterCodeCard extends StatelessWidget {
+  const _PromoterCodeCard({
+    required this.codeController,
+    required this.submitting,
+    required this.rsvpCreated,
+    required this.onRsvp,
+  });
+
+  final TextEditingController codeController;
+  final bool submitting;
+  final bool rsvpCreated;
+  final VoidCallback onRsvp;
+
+  @override
+  Widget build(BuildContext context) {
+    return _GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Have a promoter code?',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Using a promoter code helps us track who invited you.',
+            style: TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: codeController,
+            textCapitalization: TextCapitalization.characters,
+            decoration: const InputDecoration(
+              labelText: 'Have a promoter code?',
+              hintText: 'Enter promoter code',
+              prefixIcon: Icon(Icons.qr_code_2),
+            ),
+          ),
+          const SizedBox(height: 14),
+          _BookSpotButton(
+            submitting: submitting,
+            rsvpCreated: rsvpCreated,
+            onPressed: submitting || rsvpCreated ? null : onRsvp,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -614,8 +1469,9 @@ class _LocationSection extends StatelessWidget {
     final address = event.fullAddress.trim().isEmpty
         ? event.address
         : event.fullAddress;
+    final mobile = MediaQuery.sizeOf(context).width < 640;
 
-    return _Panel(
+    return _GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -627,6 +1483,7 @@ class _LocationSection extends StatelessWidget {
                 child: Text(
                   'Venue location',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -656,7 +1513,7 @@ class _LocationSection extends StatelessWidget {
               const _MapUnavailable(message: 'Map preview unavailable')
             else
               ClipRRect(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(8),
                 child: SizedBox(
                   height: 180,
                   child: GoogleMap(
@@ -685,24 +1542,46 @@ class _LocationSection extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                _ActionButton(
-                  icon: Icons.map_outlined,
-                  label: 'Open Google Maps',
-                  onPressed: () => _openMap(context, latitude, longitude),
-                ),
-                _ActionButton(
-                  icon: Icons.directions,
-                  label: 'Get Directions',
-                  filled: true,
-                  onPressed: () =>
-                      _openDirections(context, latitude, longitude),
-                ),
-              ],
-            ),
+            if (mobile)
+              Column(
+                children: [
+                  _MapActionButton(
+                    icon: Icons.map_outlined,
+                    label: 'Open Google Maps',
+                    onPressed: () => _openMap(context, latitude, longitude),
+                  ),
+                  const SizedBox(height: 10),
+                  _MapActionButton(
+                    icon: Icons.directions,
+                    label: 'Get Directions',
+                    filled: true,
+                    onPressed: () =>
+                        _openDirections(context, latitude, longitude),
+                  ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: _MapActionButton(
+                      icon: Icons.map_outlined,
+                      label: 'Open Google Maps',
+                      onPressed: () => _openMap(context, latitude, longitude),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MapActionButton(
+                      icon: Icons.directions,
+                      label: 'Get Directions',
+                      filled: true,
+                      onPressed: () =>
+                          _openDirections(context, latitude, longitude),
+                    ),
+                  ),
+                ],
+              ),
           ],
         ],
       ),
@@ -748,36 +1627,201 @@ class _LocationSection extends StatelessWidget {
   }
 }
 
-class _Panel extends StatelessWidget {
-  const _Panel({required this.child});
+class _StickyBookingBar extends StatelessWidget {
+  const _StickyBookingBar({
+    required this.event,
+    required this.canRsvp,
+    required this.submitting,
+    required this.rsvpCreated,
+    required this.onRsvp,
+  });
+
+  final NightlifeEvent event;
+  final bool canRsvp;
+  final bool submitting;
+  final bool rsvpCreated;
+  final VoidCallback onRsvp;
+
+  @override
+  Widget build(BuildContext context) {
+    final entry = event.priceText.trim().isEmpty
+        ? 'Entry details at venue'
+        : event.priceText.trim();
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.accentPink.withValues(alpha: 0.25),
+                blurRadius: 30,
+                offset: const Offset(0, 14),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      canRsvp ? 'Limited spots tonight' : 'Approval required',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 132,
+                child: _BookSpotButton(
+                  compact: true,
+                  submitting: submitting,
+                  rsvpCreated: rsvpCreated,
+                  onPressed: !canRsvp || submitting || rsvpCreated
+                      ? null
+                      : onRsvp,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BookSpotButton extends StatelessWidget {
+  const _BookSpotButton({
+    required this.submitting,
+    required this.rsvpCreated,
+    required this.onPressed,
+    this.compact = false,
+  });
+
+  final bool submitting;
+  final bool rsvpCreated;
+  final VoidCallback? onPressed;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return _PressScale(
+      onPressed: onPressed,
+      child: SizedBox(
+        height: compact ? 46 : 50,
+        child: ElevatedButton.icon(
+          onPressed: onPressed,
+          icon: submitting
+              ? const PremiumLoader.compact(size: 18)
+              : Icon(
+                  rsvpCreated ? Icons.check_circle_outline : Icons.how_to_reg,
+                  size: 18,
+                ),
+          label: Text(
+            submitting
+                ? 'Booking'
+                : rsvpCreated
+                ? 'Confirmed'
+                : 'Book Spot',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.accentPink,
+            foregroundColor: Colors.white,
+            shadowColor: AppTheme.accentPink.withValues(alpha: 0.42),
+            elevation: 12,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassCard extends StatelessWidget {
+  const _GlassCard({required this.child});
 
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width < 640;
-    return Container(
-      padding: EdgeInsets.all(mobile ? 12 : 16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryViolet.withValues(alpha: 0.12),
-            blurRadius: mobile ? 16 : 24,
-            spreadRadius: -14,
-            offset: Offset(0, mobile ? 8 : 14),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: EdgeInsets.all(mobile ? 14 : 16),
+          decoration: BoxDecoration(
+            color: AppTheme.glassSurface.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.09)),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.neonViolet.withValues(alpha: 0.11),
+                blurRadius: mobile ? 20 : 28,
+                spreadRadius: -12,
+                offset: Offset(0, mobile ? 10 : 16),
+              ),
+            ],
           ),
-        ],
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 420),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, 10 * (1 - value)),
+                  child: child,
+                ),
+              );
+            },
+            child: child,
+          ),
+        ),
       ),
-      child: child,
     );
   }
 }
 
-class _InfoLine extends StatelessWidget {
-  const _InfoLine({required this.icon, required this.title, this.subtitle});
+class _PremiumInfoLine extends StatelessWidget {
+  const _PremiumInfoLine({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+  });
 
   final IconData icon;
   final String title;
@@ -794,7 +1838,18 @@ class _InfoLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppTheme.textMuted),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppTheme.neonViolet.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppTheme.neonViolet.withValues(alpha: 0.28),
+              ),
+            ),
+            child: Icon(icon, size: 18, color: AppTheme.neonViolet),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -807,19 +1862,21 @@ class _InfoLine extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w900,
                       height: 1.25,
                     ),
                   ),
                 if ((subtitle ?? '').trim().isNotEmpty) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     subtitle!,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: AppTheme.textMuted,
+                      fontSize: 12,
                       height: 1.35,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -827,6 +1884,411 @@ class _InfoLine extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CrowdMetric extends StatelessWidget {
+  const _CrowdMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 19, color: AppTheme.accentPink),
+          const SizedBox(height: 9),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AnimatedProgressLine extends StatelessWidget {
+  const _AnimatedProgressLine({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final int value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = (value / 100).clamp(0.0, 1.0);
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: AppTheme.textMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            Text(
+              '$value%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 7),
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: normalized),
+          duration: const Duration(milliseconds: 720),
+          curve: Curves.easeOutCubic,
+          builder: (context, progress, _) {
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 7,
+                backgroundColor: Colors.white.withValues(alpha: 0.07),
+                color: color,
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _InsightChip extends StatelessWidget {
+  const _InsightChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryViolet.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppTheme.accentPink.withValues(alpha: 0.32)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppTheme.neonLime),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LivePulseBadge extends StatelessWidget {
+  const _LivePulseBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.48),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.42)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const _PulseDot(size: 8),
+          const SizedBox(width: 7),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrendingBadge extends StatefulWidget {
+  const _TrendingBadge({required this.label});
+
+  final String label;
+
+  @override
+  State<_TrendingBadge> createState() => _TrendingBadgeState();
+}
+
+class _TrendingBadgeState extends State<_TrendingBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            gradient: AppTheme.premiumGradient,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.neonViolet.withValues(
+                  alpha: 0.22 + (_controller.value * 0.18),
+                ),
+                blurRadius: 18 + (_controller.value * 8),
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: Text(
+        widget.label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _PulseDot extends StatefulWidget {
+  const _PulseDot({this.size = 10});
+
+  final double size;
+
+  @override
+  State<_PulseDot> createState() => _PulseDotState();
+}
+
+class _PulseDotState extends State<_PulseDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return Container(
+          width: widget.size,
+          height: widget.size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.neonLime,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.neonLime.withValues(
+                  alpha: 0.28 + (_controller.value * 0.24),
+                ),
+                blurRadius: 8 + (_controller.value * 9),
+                spreadRadius: 1 + (_controller.value * 3),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PressScale extends StatefulWidget {
+  const _PressScale({required this.child, required this.onPressed});
+
+  final Widget child;
+  final VoidCallback? onPressed;
+
+  @override
+  State<_PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<_PressScale> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: widget.onPressed == null
+          ? null
+          : (_) => setState(() => _pressed = true),
+      onTapCancel: widget.onPressed == null
+          ? null
+          : () => setState(() => _pressed = false),
+      onTapUp: widget.onPressed == null
+          ? null
+          : (_) => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.97 : 1,
+        duration: const Duration(milliseconds: 110),
+        curve: Curves.easeOutCubic,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+class _MapActionButton extends StatelessWidget {
+  const _MapActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.filled = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
+      ],
+    );
+
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: filled
+          ? ElevatedButton(
+              onPressed: onPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentPink,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: child,
+            )
+          : OutlinedButton(
+              onPressed: onPressed,
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: child,
+            ),
+    );
+  }
+}
+
+class _AliveNightBackdrop extends StatelessWidget {
+  const _AliveNightBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x00050509), Color(0x1A6D123A), Color(0x220B0614)],
+          ),
+        ),
       ),
     );
   }
@@ -862,43 +2324,6 @@ class _Chip extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-    this.filled = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) {
-    final child = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-        ),
-      ],
-    );
-
-    return SizedBox(
-      width: MediaQuery.sizeOf(context).width < 430 ? double.infinity : 210,
-      height: 48,
-      child: filled
-          ? ElevatedButton(onPressed: onPressed, child: child)
-          : OutlinedButton(onPressed: onPressed, child: child),
     );
   }
 }

@@ -253,6 +253,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late final TextEditingController _phone;
   late String _city;
   late String _photoUrl;
+  Uint8List? _pendingPhotoBytes;
+  double? _photoUploadProgress;
   bool _saving = false;
   bool _uploadingPhoto = false;
 
@@ -308,7 +310,10 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         'name=${picked.name} path=${picked.path} mimeType=${picked.mimeType}',
       );
 
-      setState(() => _uploadingPhoto = true);
+      setState(() {
+        _uploadingPhoto = true;
+        _photoUploadProgress = null;
+      });
       final bytes = await picked.readAsBytes().timeout(
         const Duration(seconds: 15),
       );
@@ -338,6 +343,12 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         return;
       }
 
+      if (mounted) {
+        setState(() {
+          _pendingPhotoBytes = bytes;
+          _photoUploadProgress = 0;
+        });
+      }
       debugPrint('Profile image upload started: uid=${widget.user.uid}');
       final url = await StorageService.instance.uploadProfilePhoto(
         bytes: bytes,
@@ -345,6 +356,10 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         fileName: picked.name,
         contentType: contentType,
         filePath: picked.path,
+        onProgress: (progress) {
+          if (!mounted) return;
+          setState(() => _photoUploadProgress = progress);
+        },
       );
       debugPrint('Profile image download URL received: $url');
       if (!mounted) return;
@@ -360,13 +375,21 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       );
       debugPrint('Profile image local state refreshed: ${widget.user.uid}');
       if (!mounted) return;
-      setState(() => _photoUrl = url);
+      setState(() {
+        _photoUrl = url;
+        _pendingPhotoBytes = null;
+        _photoUploadProgress = null;
+      });
       _showSnack('Profile photo updated');
     } on TimeoutException catch (error, stackTrace) {
       debugPrint('Profile image upload timeout: $error');
       debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
-      setState(() => _photoUrl = previousPhotoUrl);
+      setState(() {
+        _photoUrl = previousPhotoUrl;
+        _pendingPhotoBytes = null;
+        _photoUploadProgress = null;
+      });
       _showSnack('Image upload timed out. Please try again.');
     } on FirebaseException catch (error, stackTrace) {
       debugPrint(
@@ -375,7 +398,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       );
       debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
-      setState(() => _photoUrl = previousPhotoUrl);
+      setState(() {
+        _photoUrl = previousPhotoUrl;
+        _pendingPhotoBytes = null;
+        _photoUploadProgress = null;
+      });
       _showSnack(_profileImageErrorMessage(error));
     } catch (error, stackTrace) {
       debugPrint('Profile image upload failed: $error');
@@ -384,10 +411,19 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       }
       debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
-      setState(() => _photoUrl = previousPhotoUrl);
+      setState(() {
+        _photoUrl = previousPhotoUrl;
+        _pendingPhotoBytes = null;
+        _photoUploadProgress = null;
+      });
       _showSnack(_profileImageErrorMessage(error));
     } finally {
-      if (mounted) setState(() => _uploadingPhoto = false);
+      if (mounted) {
+        setState(() {
+          _uploadingPhoto = false;
+          _photoUploadProgress = null;
+        });
+      }
     }
   }
 
@@ -462,6 +498,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   _SheetAvatar(
                     name: _name.text,
                     photoUrl: _photoUrl,
+                    previewBytes: _pendingPhotoBytes,
+                    uploadProgress: _photoUploadProgress,
                     uploading: _uploadingPhoto,
                   ),
                   const SizedBox(height: 10),
@@ -471,7 +509,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                         ? const PremiumLoader.compact(size: 16)
                         : const Icon(Icons.camera_alt_outlined, size: 18),
                     label: Text(
-                      _uploadingPhoto ? 'Uploading photo...' : 'Change photo',
+                      _uploadingPhoto
+                          ? _uploadProgressLabel(_photoUploadProgress)
+                          : 'Change photo',
                     ),
                   ),
                 ],
@@ -548,11 +588,15 @@ class _SheetAvatar extends StatelessWidget {
   const _SheetAvatar({
     required this.name,
     required this.photoUrl,
+    required this.previewBytes,
+    required this.uploadProgress,
     required this.uploading,
   });
 
   final String name;
   final String photoUrl;
+  final Uint8List? previewBytes;
+  final double? uploadProgress;
   final bool uploading;
 
   @override
@@ -560,8 +604,10 @@ class _SheetAvatar extends StatelessWidget {
     return _SafeInitialsAvatar(
       name: name,
       photoUrl: photoUrl,
+      previewBytes: previewBytes,
       radius: 42,
       uploading: uploading,
+      uploadProgress: uploadProgress,
     );
   }
 }
@@ -571,13 +617,17 @@ class _SafeInitialsAvatar extends StatelessWidget {
     required this.name,
     required this.photoUrl,
     required this.radius,
+    this.previewBytes,
     this.uploading = false,
+    this.uploadProgress,
   });
 
   final String name;
   final String photoUrl;
   final double radius;
+  final Uint8List? previewBytes;
   final bool uploading;
+  final double? uploadProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -596,7 +646,15 @@ class _SafeInitialsAvatar extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (cleanUrl.isNotEmpty)
+          if (previewBytes != null)
+            Image.memory(
+              previewBytes!,
+              key: ValueKey(previewBytes!.lengthInBytes),
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) =>
+                  _InitialsFallback(name: name, fontSize: radius * 0.72),
+            )
+          else if (cleanUrl.isNotEmpty)
             Image.network(
               cleanUrl,
               key: ValueKey(cleanUrl),
@@ -609,7 +667,18 @@ class _SafeInitialsAvatar extends StatelessWidget {
           if (uploading)
             ColoredBox(
               color: Colors.black.withValues(alpha: 0.42),
-              child: const Center(child: PremiumLoader.compact(size: 22)),
+              child: Center(
+                child: SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    value: uploadProgress,
+                    strokeWidth: 2.6,
+                    color: Colors.white,
+                    backgroundColor: Colors.white.withValues(alpha: 0.16),
+                  ),
+                ),
+              ),
             ),
         ],
       ),
@@ -935,6 +1004,12 @@ String _profileImageErrorMessage(Object error) {
     return 'Image upload is not allowed yet. Check Storage rules.';
   }
   return 'Failed to upload image. Your old avatar is unchanged.';
+}
+
+String _uploadProgressLabel(double? progress) {
+  if (progress == null || progress <= 0) return 'Uploading photo...';
+  final percent = (progress * 100).clamp(1, 100).round();
+  return 'Uploading $percent%';
 }
 
 void _showEditProfileSheet(BuildContext context, AppUser user) {
