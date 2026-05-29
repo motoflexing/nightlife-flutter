@@ -19,6 +19,16 @@ class EventImageService {
   static final instance = EventImageService._();
 
   static const _assetPrefix = 'assets/images/nightlife/';
+  static const fallbackPosters = [
+    'assets/images/posters/poster_1.jpg',
+    'assets/images/posters/poster_2.jpg',
+    'assets/images/posters/poster_3.jpg',
+    'assets/images/posters/poster_4.jpg',
+    'assets/images/posters/poster_5.jpg',
+    'assets/images/posters/poster_6.jpg',
+    'assets/images/posters/poster_7.jpg',
+    'assets/images/posters/poster_8.jpg',
+  ];
 
   EventImageSource imageSourceFor(NightlifeEvent event) {
     final poster = event.posterUrl.trim();
@@ -33,10 +43,15 @@ class EventImageService {
       );
     }
 
-    return const EventImageSource(
+    return EventImageSource(
       type: EventImageSourceType.fallback,
-      path: '',
+      path: fallbackPosterFor(event),
     );
+  }
+
+  String fallbackPosterFor(NightlifeEvent event) {
+    final index = event.id.hashCode.abs() % fallbackPosters.length;
+    return fallbackPosters[index];
   }
 
   bool _isValidNetworkUrl(String url) {

@@ -78,7 +78,12 @@ class _EventCardState extends State<EventCard> {
                 maxWidth: posterWidth,
                 minHeight: minPosterHeight,
               ),
-              child: _PosterStack(event: event),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(8),
+                ),
+                child: _PosterStack(event: event),
+              ),
             ),
             Expanded(
               child: Padding(
@@ -303,7 +308,7 @@ class _PosterStack extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        EventPoster(event: event, borderRadius: 8),
+        EventPoster(event: event, borderRadius: 0),
         Positioned(
           left: 8,
           top: 8,
@@ -348,7 +353,6 @@ class _ProofBadge extends StatelessWidget {
 Color _badgeColor(String label) {
   final value = label.toLowerCase();
   if (value.contains('featured')) return AppTheme.paidAccent;
-  if (value.contains('tonight')) return const Color(0xFFEF233C);
   if (value.contains('free')) return AppTheme.success;
   if (value.contains('popular')) return AppTheme.neonViolet;
   return AppTheme.accentPink;
@@ -570,10 +574,10 @@ bool _isSameDay(DateTime a, DateTime b) {
 }
 
 String _eventBadgeLabel(NightlifeEvent event) {
-  if (_isSameDay(event.dateTime, DateTime.now())) return 'Tonight';
+  if (event.artistText.trim().isNotEmpty) return 'Featured';
+  if (_isSameDay(event.dateTime, DateTime.now())) return 'Popular';
   final price = event.priceText.trim().toLowerCase();
   if (!_isPaid(event) && price.contains('free')) return 'Free Entry';
   if (!_isPaid(event)) return 'Guestlist';
-  if (event.artistText.trim().isNotEmpty) return 'Featured';
   return 'Popular';
 }

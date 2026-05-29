@@ -65,4 +65,5 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/images/posters/
     - assets/images/nightlife/
