@@ -33,26 +33,144 @@ class MyRsvpsScreen extends StatelessWidget {
           );
         }
 
-        final pending = rsvps.where((r) => r.status == 'pending').toList();
         final approved = rsvps.where((r) => r.status == 'approved').toList();
-        final past = rsvps.where((r) => r.status == 'attended').toList();
         final upcoming = rsvps
-            .where((r) => r.status != 'attended' && r.status != 'rejected')
+            .where(
+              (r) =>
+                  r.status != 'attended' &&
+                  r.status != 'rejected' &&
+                  r.status != 'cancelled',
+            )
+            .toList();
+        final past = rsvps.where((r) => r.status == 'attended').toList();
+        final cancelled = rsvps
+            .where((r) => r.status == 'rejected' || r.status == 'cancelled')
             .toList();
 
-        return ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: compactScreenPadding(context, bottom: 28),
-          children: [
-            _SummaryCard(total: rsvps.length, approved: approved.length),
-            const SizedBox(height: 12),
-            _RsvpSection(title: 'Upcoming', rsvps: upcoming),
-            _RsvpSection(title: 'Pending', rsvps: pending),
-            _RsvpSection(title: 'Approved', rsvps: approved, showQr: true),
-            _RsvpSection(title: 'Past', rsvps: past),
-          ],
+        return DefaultTabController(
+          length: 3,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: _SummaryCard(
+                  total: rsvps.length,
+                  approved: approved.length,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const _RsvpTabs(),
+              Expanded(
+                child: TabBarView(
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    _RsvpList(rsvps: upcoming, empty: 'No upcoming RSVPs yet'),
+                    _RsvpList(
+                      rsvps: past,
+                      empty: 'Past nights will appear here',
+                    ),
+                    _RsvpList(rsvps: cancelled, empty: 'No cancelled RSVPs'),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
+    );
+  }
+}
+
+class _RsvpTabs extends StatelessWidget {
+  const _RsvpTabs();
+
+  @override
+  Widget build(BuildContext context) {
+    return TabBar(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      indicatorColor: AppTheme.accentPink,
+      indicatorSize: TabBarIndicatorSize.label,
+      labelColor: AppTheme.accentPink,
+      unselectedLabelColor: AppTheme.textMuted,
+      dividerColor: Colors.white.withValues(alpha: 0.08),
+      labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+      unselectedLabelStyle: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+      ),
+      tabs: const [
+        Tab(text: 'Upcoming'),
+        Tab(text: 'Past'),
+        Tab(text: 'Cancelled'),
+      ],
+    );
+  }
+}
+
+class _RsvpList extends StatelessWidget {
+  const _RsvpList({required this.rsvps, required this.empty});
+
+  final List<Rsvp> rsvps;
+  final String empty;
+
+  @override
+  Widget build(BuildContext context) {
+    if (rsvps.isEmpty) {
+      return EmptyView(
+        title: empty,
+        message: 'Explore events and join a guestlist when you are ready.',
+        icon: Icons.confirmation_number_outlined,
+      );
+    }
+
+    return ListView.separated(
+      physics: const BouncingScrollPhysics(),
+      padding: compactScreenPadding(context, bottom: 112).copyWith(top: 14),
+      itemCount: rsvps.length + 1,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        if (index == rsvps.length) return const _RsvpPromoCard();
+        return _RsvpTile(rsvp: rsvps[index]);
+      },
+    );
+  }
+}
+
+class _RsvpPromoCard extends StatelessWidget {
+  const _RsvpPromoCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surface.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.accentPink.withValues(alpha: 0.18)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.workspace_premium, color: AppTheme.accentPink),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Want Faster Entry?',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Get Premium & skip the lines',
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: AppTheme.paidAccent),
+        ],
+      ),
     );
   }
 }
@@ -94,74 +212,38 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _RsvpSection extends StatelessWidget {
-  const _RsvpSection({
-    required this.title,
-    required this.rsvps,
-    this.showQr = false,
-  });
-
-  final String title;
-  final List<Rsvp> rsvps;
-  final bool showQr;
-
-  @override
-  Widget build(BuildContext context) {
-    if (rsvps.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 8),
-          ...rsvps.map(
-            (rsvp) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _RsvpTile(rsvp: rsvp, showQr: showQr),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _RsvpTile extends StatelessWidget {
-  const _RsvpTile({required this.rsvp, required this.showQr});
+  const _RsvpTile({required this.rsvp});
 
   final Rsvp rsvp;
-  final bool showQr;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.elevated.withValues(alpha: 0.68),
+        color: AppTheme.surface.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 74,
+            height: 74,
             decoration: BoxDecoration(
-              gradient: AppTheme.premiumGradient,
+              color: AppTheme.elevated,
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
-            child: Icon(
-              showQr ? Icons.qr_code_2 : Icons.local_activity_outlined,
+            child: const Icon(
+              Icons.confirmation_number,
+              color: AppTheme.accentPink,
+              size: 28,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,27 +255,38 @@ class _RsvpTile extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 5),
+                const SizedBox(height: 5),
                 Text(
-                  '${Formatters.eventDate(rsvp.createdAt)} - ${rsvp.promoterCode ?? 'Direct RSVP'}',
+                  Formatters.eventDate(rsvp.createdAt),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: AppTheme.textMuted,
                     fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (showQr) ...[
-                  const SizedBox(height: 8),
-                  const Text(
-                    'QR ticket placeholder ready at door approval.',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                  ),
-                ],
+                const SizedBox(height: 8),
+                _StatusChip(
+                  label: Formatters.titleCase(rsvp.status),
+                  status: rsvp.status,
+                ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          _StatusChip(
-            label: Formatters.titleCase(rsvp.status),
-            status: rsvp.status,
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppTheme.accentPink.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.local_activity,
+              color: AppTheme.accentPink,
+              size: 18,
+            ),
           ),
         ],
       ),
@@ -212,6 +305,7 @@ class _StatusChip extends StatelessWidget {
     final color = switch (status) {
       'approved' => AppTheme.neonLime,
       'rejected' => AppTheme.neonPink,
+      'cancelled' => AppTheme.neonPink,
       _ => AppTheme.neonCyan,
     };
     return Container(

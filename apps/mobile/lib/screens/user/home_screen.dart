@@ -14,6 +14,7 @@ import '../../widgets/event_poster.dart';
 import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 import 'event_details_screen.dart';
+import 'nightlife_pass_screen.dart';
 
 enum _DiscoveryFilter {
   all('All'),
@@ -21,7 +22,9 @@ enum _DiscoveryFilter {
   nearby('Nearby'),
   freeEntry('Free Entry'),
   paid('Paid'),
-  dj('DJ'),
+  guestlist('Guestlist'),
+  dj('DJ Night'),
+  featured('Featured'),
   techno('Techno'),
   house('House');
 
@@ -339,7 +342,12 @@ class _HomeScreenState extends State<HomeScreen> {
       _DiscoveryFilter.nearby => _nearbyEnabled && _distanceFor(event) != null,
       _DiscoveryFilter.freeEntry => free,
       _DiscoveryFilter.paid => !free,
+      _DiscoveryFilter.guestlist => price.contains('guest'),
       _DiscoveryFilter.dj => haystack.contains('dj'),
+      _DiscoveryFilter.featured =>
+        haystack.contains('featured') ||
+            haystack.contains('popular') ||
+            haystack.contains('trending'),
       _DiscoveryFilter.techno => haystack.contains('techno'),
       _DiscoveryFilter.house => haystack.contains('house'),
     };
@@ -392,11 +400,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           SliverToBoxAdapter(
-            child: _HomeHeroSection(
-              city: cityLabel,
-              featuredEvent: visibleEvents.isEmpty ? null : visibleEvents.first,
-              onOpen: (event) => _openEvent(context, event),
-            ),
+            child: _HomeHeroSection(onOpen: () => _openPremiumPass(context)),
           ),
           SliverToBoxAdapter(
             child: _DiscoveryControls(
@@ -455,14 +459,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _sectionTitle(int count) {
-    if (_filter == _DiscoveryFilter.nearby) return 'Nearby Events';
+    if (_filter == _DiscoveryFilter.nearby) return '$count Nearby Events';
     if (_filter == _DiscoveryFilter.tonight ||
         (_dateFilter == _DateFilterOption.manualDate &&
             _selectedDate != null &&
             _sameDay(_selectedDate!, DateTime.now()))) {
-      return "Tonight's Events";
+      return "$count Tonight's Events";
     }
-    return 'Events Found';
+    return '$count Events Found';
   }
 
   String _sectionSubtitle(int count) {
@@ -547,6 +551,12 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) =>
             EventDetailsScreen(event: event, currentUser: widget.currentUser),
       ),
+    );
+  }
+
+  void _openPremiumPass(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const NightlifePassScreen()),
     );
   }
 }
@@ -639,67 +649,95 @@ class _HomeTopBar extends StatelessWidget {
 }
 
 class _HomeHeroSection extends StatelessWidget {
-  const _HomeHeroSection({
-    required this.city,
-    required this.featuredEvent,
-    required this.onOpen,
-  });
+  const _HomeHeroSection({required this.onOpen});
 
-  final String city;
-  final NightlifeEvent? featuredEvent;
-  final ValueChanged<NightlifeEvent> onOpen;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
-    final event = featuredEvent;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppTheme.surface.withValues(alpha: 0.82),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.accentPink.withValues(alpha: 0.06),
-              blurRadius: 24,
-              offset: const Offset(0, 14),
-            ),
-          ],
-        ),
-        child: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onOpen,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 88),
           padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.accentPink.withValues(alpha: 0.16),
+                AppTheme.neonViolet.withValues(alpha: 0.08),
+                AppTheme.surface.withValues(alpha: 0.98),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.26),
+                blurRadius: 18,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Row(
             children: [
-              Text(
-                'Discover nightlife near you',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontSize: 25,
-                  height: 1.05,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0,
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppTheme.accentPink.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppTheme.accentPink.withValues(alpha: 0.22),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.workspace_premium,
+                  color: AppTheme.accentPink,
+                  size: 24,
                 ),
               ),
-              const SizedBox(height: 7),
-              Text(
-                'Curated events, guestlists & social nights',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppTheme.textMuted,
-                  fontSize: 13,
-                  height: 1.35,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Unlock Premium Parties Before Anyone Else',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        height: 1.15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      'Guestlists | VIP Access | Private Nights',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 13),
-              if (event == null)
-                _HeroFallback(city: city)
-              else
-                _FeaturedEventCard(event: event, onOpen: () => onOpen(event)),
+              const SizedBox(width: 10),
+              const Icon(
+                Icons.chevron_right,
+                color: AppTheme.accentPink,
+                size: 22,
+              ),
             ],
           ),
         ),
@@ -708,6 +746,7 @@ class _HomeHeroSection extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _FeaturedEventCard extends StatelessWidget {
   const _FeaturedEventCard({required this.event, required this.onOpen});
 
@@ -812,6 +851,7 @@ class _FeaturedEventCard extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _HeroFallback extends StatelessWidget {
   const _HeroFallback({required this.city});
 
@@ -1087,8 +1127,8 @@ class _DiscoveryControls extends StatelessWidget {
                     )
                     .toList(),
                 child: Container(
-                  width: 38,
                   height: 38,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
                     color: AppTheme.surface.withValues(alpha: 0.94),
                     borderRadius: BorderRadius.circular(8),
@@ -1096,10 +1136,20 @@ class _DiscoveryControls extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.08),
                     ),
                   ),
-                  child: const Icon(
-                    Icons.tune,
-                    size: 18,
-                    color: AppTheme.textMuted,
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.tune, size: 16, color: AppTheme.textMuted),
+                      SizedBox(width: 6),
+                      Text(
+                        'Filters',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

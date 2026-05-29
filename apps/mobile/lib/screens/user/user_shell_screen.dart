@@ -49,8 +49,8 @@ class _UserShellScreenState extends State<UserShellScreen> {
         final currentUser = snapshot.data ?? widget.currentUser;
         final panels = _buildPanelConfigs(currentUser);
         final selectedPanel = panels[_index];
-        final topTabs = panels
-            .where((panel) => panel.showInTopNav && panel.enabled)
+        final topPanels = _primaryPanelConfigs(panels);
+        final topTabs = topPanels
             .map((panel) => panel.navTab)
             .toList(growable: false);
         final topPanelIndex = _topPanelIndexForShellIndex(panels, _index);
@@ -58,6 +58,14 @@ class _UserShellScreenState extends State<UserShellScreen> {
         return NeonScaffold(
           appBar: UserShellTopBar(
             currentUser: currentUser,
+            tabs: topTabs,
+            selectedTabId: selectedPanel.showInTopNav ? selectedPanel.id : null,
+            onSelectTab: (tab) => _selectPage(
+              _shellIndexForTabId(panels, tab.id),
+              swipeAware: true,
+            ),
+          ),
+          bottomNavigationBar: PremiumBottomNav(
             tabs: topTabs,
             selectedTabId: selectedPanel.showInTopNav ? selectedPanel.id : null,
             onSelectTab: (tab) => _selectPage(
@@ -82,9 +90,7 @@ class _UserShellScreenState extends State<UserShellScreen> {
                 )
               : LayoutBuilder(
                   builder: (context, constraints) {
-                    final topPanels = panels
-                        .where((panel) => panel.showInTopNav && panel.enabled)
-                        .toList(growable: false);
+                    final topPanels = _primaryPanelConfigs(panels);
                     final swipeEnabled = constraints.maxWidth < 700;
                     _syncTopPanelController(topPanelIndex);
 
@@ -141,6 +147,7 @@ class _UserShellScreenState extends State<UserShellScreen> {
         icon: Icons.explore_outlined,
         selectedIcon: Icons.explore,
         enabled: true,
+        showInTopNav: true,
         builder: (_) => ExploreScreen(currentUser: currentUser),
       ),
       _ShellPanelConfig(
@@ -229,13 +236,20 @@ class _UserShellScreenState extends State<UserShellScreen> {
     return panels.firstWhere((panel) => panel.id == tabId).shellIndex;
   }
 
+  List<_ShellPanelConfig> _primaryPanelConfigs(List<_ShellPanelConfig> panels) {
+    const order = ['home', 'search', 'explore', 'rsvp', 'profile'];
+    return order
+        .map(
+          (id) => panels.firstWhere((panel) => panel.id == id && panel.enabled),
+        )
+        .toList(growable: false);
+  }
+
   int? _topPanelIndexForShellIndex(
     List<_ShellPanelConfig> panels,
     int shellIndex,
   ) {
-    final topPanels = panels
-        .where((panel) => panel.showInTopNav && panel.enabled)
-        .toList(growable: false);
+    final topPanels = _primaryPanelConfigs(panels);
     for (var i = 0; i < topPanels.length; i++) {
       if (topPanels[i].shellIndex == shellIndex) return i;
     }

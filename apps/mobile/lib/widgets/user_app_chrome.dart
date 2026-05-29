@@ -21,7 +21,7 @@ class UserShellTopBar extends StatelessWidget implements PreferredSizeWidget {
   final ValueChanged<UserNavTabConfig> onSelectTab;
 
   @override
-  Size get preferredSize => const Size.fromHeight(112);
+  Size get preferredSize => const Size.fromHeight(58);
 
   @override
   Widget build(BuildContext context) {
@@ -68,12 +68,157 @@ class UserShellTopBar extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
       ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(54),
-        child: _TopNavigationRail(
-          tabs: tabs,
-          selectedTabId: selectedTabId,
-          onSelectTab: onSelectTab,
+    );
+  }
+}
+
+class PremiumBottomNav extends StatelessWidget {
+  const PremiumBottomNav({
+    super.key,
+    required this.tabs,
+    required this.selectedTabId,
+    required this.onSelectTab,
+  });
+
+  final List<UserNavTabConfig> tabs;
+  final String? selectedTabId;
+  final ValueChanged<UserNavTabConfig> onSelectTab;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      decoration: BoxDecoration(
+        color: const Color(0xF2050509),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.34),
+            blurRadius: 18,
+            offset: const Offset(0, -8),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            for (final tab in tabs)
+              Expanded(
+                child: _BottomNavItem(
+                  tab: tab,
+                  selected: selectedTabId == tab.id,
+                  center: tab.id == 'explore',
+                  onTap: () => onSelectTab(tab),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomNavItem extends StatefulWidget {
+  const _BottomNavItem({
+    required this.tab,
+    required this.selected,
+    required this.center,
+    required this.onTap,
+  });
+
+  final UserNavTabConfig tab;
+  final bool selected;
+  final bool center;
+  final VoidCallback onTap;
+
+  @override
+  State<_BottomNavItem> createState() => _BottomNavItemState();
+}
+
+class _BottomNavItemState extends State<_BottomNavItem> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = widget.selected;
+    final center = widget.center;
+    final iconColor = selected ? Colors.white : AppTheme.textMuted;
+    final icon = selected ? widget.tab.selectedIcon : widget.tab.icon;
+
+    return Tooltip(
+      message: widget.tab.label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          widget.onTap();
+        },
+        child: AnimatedScale(
+          scale: _pressed ? 0.94 : 1,
+          duration: const Duration(milliseconds: 110),
+          curve: Curves.easeOutCubic,
+          child: SizedBox(
+            height: 48,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 170),
+                  width: center ? 46 : 42,
+                  height: center ? 46 : 42,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: center ? AppTheme.premiumGradient : null,
+                    color: center
+                        ? null
+                        : selected
+                        ? Colors.white.withValues(alpha: 0.07)
+                        : Colors.transparent,
+                    border: Border.all(
+                      color: center
+                          ? Colors.white.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                    ),
+                    boxShadow: center
+                        ? [
+                            BoxShadow(
+                              color: AppTheme.accentPink.withValues(
+                                alpha: 0.18,
+                              ),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: center ? 23 : 22,
+                    color: center ? Colors.white : iconColor,
+                  ),
+                ),
+                Positioned(
+                  bottom: 1,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 170),
+                    width: selected && !center ? 4 : 0,
+                    height: selected && !center ? 4 : 0,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.accentPink,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -172,6 +317,7 @@ class _ChromeBackdrop extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _TopNavigationRail extends StatelessWidget {
   const _TopNavigationRail({
     required this.tabs,

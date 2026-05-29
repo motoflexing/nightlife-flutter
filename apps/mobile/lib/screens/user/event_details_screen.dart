@@ -598,7 +598,7 @@ class _DetailsStack extends StatelessWidget {
           canRsvp: canRsvp,
         ),
         const SizedBox(height: 12),
-        _CrowdIntelligenceCard(insights: insights),
+        _EventFactsCard(event: event, canRsvp: canRsvp),
         const SizedBox(height: 12),
         _VibeMusicCard(event: event, insights: insights),
         const SizedBox(height: 12),
@@ -610,7 +610,8 @@ class _DetailsStack extends StatelessWidget {
         const SizedBox(height: 12),
         _VisualGallerySection(
           title: 'Venue Experience',
-          subtitle: 'Neon corners, photo spots, cocktails and after-dark energy.',
+          subtitle:
+              'Neon corners, photo spots, cocktails and after-dark energy.',
           images: _NightlifeGalleryData.venueExperience,
         ),
         const SizedBox(height: 12),
@@ -686,7 +687,7 @@ class _CinematicHero extends StatelessWidget {
               Positioned(
                 left: 14,
                 top: 14,
-                child: _TrendingBadge(label: 'TRENDING TONIGHT'),
+                child: _TrendingBadge(label: _detailBadgeLabel(event)),
               ),
               Positioned(
                 left: 16,
@@ -695,8 +696,6 @@ class _CinematicHero extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _LivePulseBadge(label: 'LIVE PULSE'),
-                    const SizedBox(height: 10),
                     Text(
                       title,
                       maxLines: 3,
@@ -844,6 +843,7 @@ class _EventSummaryCard extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _CrowdIntelligenceCard extends StatelessWidget {
   const _CrowdIntelligenceCard({required this.insights});
 
@@ -926,6 +926,122 @@ class _CrowdIntelligenceCard extends StatelessWidget {
   }
 }
 
+class _EventFactsCard extends StatelessWidget {
+  const _EventFactsCard({required this.event, required this.canRsvp});
+
+  final NightlifeEvent event;
+  final bool canRsvp;
+
+  @override
+  Widget build(BuildContext context) {
+    final entry = event.priceText.trim().isEmpty
+        ? 'At venue'
+        : event.priceText.trim();
+    final ageLimit = _ageLimitFromRules(event.entryRules);
+    final music = event.musicType.trim().isEmpty
+        ? 'Music TBA'
+        : event.musicType.trim();
+
+    return _GlassCard(
+      child: Row(
+        children: [
+          Expanded(
+            child: _FactItem(
+              icon: Icons.groups_2_outlined,
+              label: 'Entry',
+              value: canRsvp ? 'Guestlist' : 'Approval',
+            ),
+          ),
+          const _FactDivider(),
+          Expanded(
+            child: _FactItem(
+              icon: Icons.verified_user_outlined,
+              label: 'Age Limit',
+              value: ageLimit,
+            ),
+          ),
+          const _FactDivider(),
+          Expanded(
+            child: _FactItem(
+              icon: Icons.local_activity_outlined,
+              label: 'Type',
+              value: entry,
+            ),
+          ),
+          const _FactDivider(),
+          Expanded(
+            child: _FactItem(
+              icon: Icons.music_note_outlined,
+              label: 'Music',
+              value: music,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FactDivider extends StatelessWidget {
+  const _FactDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 48,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      color: Colors.white.withValues(alpha: 0.08),
+    );
+  }
+}
+
+class _FactItem extends StatelessWidget {
+  const _FactItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: AppTheme.accentPink),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: AppTheme.textMuted,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _VibeMusicCard extends StatelessWidget {
   const _VibeMusicCard({required this.event, required this.insights});
 
@@ -934,6 +1050,12 @@ class _VibeMusicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final music = event.musicType.trim().isEmpty
+        ? 'Music details coming soon'
+        : event.musicType.trim();
+    final mood = event.crowdType.trim().isEmpty
+        ? 'Crowd details coming soon'
+        : event.crowdType.trim();
     final dressCode = event.entryRules.trim().isEmpty
         ? 'Venue rules apply'
         : event.entryRules.trim();
@@ -952,12 +1074,12 @@ class _VibeMusicCard extends StatelessWidget {
           const SizedBox(height: 12),
           _PremiumInfoLine(
             icon: Icons.music_note_outlined,
-            title: insights.music,
+            title: music,
             subtitle: 'Music',
           ),
           _PremiumInfoLine(
             icon: Icons.wb_twilight_outlined,
-            title: insights.mood,
+            title: mood,
             subtitle: 'Mood',
           ),
           _PremiumInfoLine(
@@ -965,15 +1087,13 @@ class _VibeMusicCard extends StatelessWidget {
             title: dressCode,
             subtitle: 'Dress code',
           ),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final item in insights.bestFor)
-                _InsightChip(icon: Icons.auto_awesome, label: item),
-            ],
-          ),
+          if (event.artistText.trim().isNotEmpty) ...[
+            const SizedBox(height: 4),
+            _InsightChip(
+              icon: Icons.graphic_eq,
+              label: event.artistText.trim(),
+            ),
+          ],
           if (event.description.trim().isNotEmpty) ...[
             const SizedBox(height: 14),
             Text(
@@ -986,7 +1106,6 @@ class _VibeMusicCard extends StatelessWidget {
     );
   }
 }
-
 
 class GalleryVisual {
   const GalleryVisual({
@@ -1002,7 +1121,9 @@ class GalleryVisual {
   final String tag;
 }
 
+// ignore: unused_element
 class _NightlifeGalleryData {
+  // ignore: unused_field
   static const pastEventHighlights = [
     GalleryVisual(
       title: 'Crowd Moments',
@@ -1024,6 +1145,7 @@ class _NightlifeGalleryData {
     ),
   ];
 
+  // ignore: unused_field
   static const venueExperience = [
     GalleryVisual(
       title: 'Neon Nights',
@@ -1052,6 +1174,7 @@ class _NightlifeGalleryData {
   ];
 }
 
+// ignore: unused_element
 class _VisualGallerySection extends StatelessWidget {
   const _VisualGallerySection({
     required this.title,
@@ -1237,7 +1360,9 @@ class _GalleryImageCard extends StatelessWidget {
                         fontSize: 18,
                         height: 1.05,
                         fontWeight: FontWeight.w900,
-                        shadows: [Shadow(color: Colors.black87, blurRadius: 12)],
+                        shadows: [
+                          Shadow(color: Colors.black87, blurRadius: 12),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1286,10 +1411,7 @@ class _GalleryPreviewDialog extends StatelessWidget {
                     maxWidth: size.width,
                     maxHeight: size.height,
                   ),
-                  child: Image.asset(
-                    visual.assetPath,
-                    fit: BoxFit.contain,
-                  ),
+                  child: Image.asset(visual.assetPath, fit: BoxFit.contain),
                 ),
               ),
             ),
@@ -1394,7 +1516,6 @@ class _MiniVisualTag extends StatelessWidget {
     );
   }
 }
-
 
 class _PromoterCodeCard extends StatelessWidget {
   const _PromoterCodeCard({
@@ -1768,6 +1889,36 @@ class _BookSpotButton extends StatelessWidget {
   }
 }
 
+String _detailBadgeLabel(NightlifeEvent event) {
+  final now = DateTime.now();
+  final eventDate = event.dateTime;
+  final sameDay =
+      eventDate.year == now.year &&
+      eventDate.month == now.month &&
+      eventDate.day == now.day;
+  if (sameDay) return 'Tonight';
+
+  final price = event.priceText.trim().toLowerCase();
+  final free =
+      price.isEmpty ||
+      price.contains('free') ||
+      price.contains('guest') ||
+      price == '0' ||
+      price.contains('rs 0') ||
+      price.contains('inr 0');
+  if (free && price.contains('free')) return 'Free Entry';
+  if (free) return 'Guestlist';
+  return 'Featured';
+}
+
+String _ageLimitFromRules(String rules) {
+  final value = rules.toLowerCase();
+  if (value.contains('21+')) return '21+';
+  if (value.contains('18+')) return '18+';
+  if (value.contains('adult')) return '18+';
+  return 'Venue';
+}
+
 class _GlassCard extends StatelessWidget {
   const _GlassCard({required this.child});
 
@@ -2035,6 +2186,7 @@ class _InsightChip extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _LivePulseBadge extends StatelessWidget {
   const _LivePulseBadge({required this.label});
 

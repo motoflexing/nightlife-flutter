@@ -201,7 +201,7 @@ class _CardDetails extends StatelessWidget {
     final title = event.title.trim().isEmpty ? 'Untitled Night' : event.title;
     final venue = event.venueName.trim().isEmpty ? event.city : event.venueName;
     final location = event.address.trim().isEmpty ? event.city : event.address;
-    final primaryLabel = _isPaid(event) ? 'Book Spot' : 'RSVP';
+    final primaryLabel = _isPaid(event) ? 'Buy Tickets' : 'RSVP';
     final tags = <_CardTagData>[
       _CardTagData(_safeLabel(event.priceText, fallback: 'Guestlist')),
       if (event.musicType.trim().isNotEmpty)
@@ -321,11 +321,12 @@ class _ProofBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = _badgeColor(label);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.56),
+        color: color.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -342,6 +343,15 @@ class _ProofBadge extends StatelessWidget {
       ),
     );
   }
+}
+
+Color _badgeColor(String label) {
+  final value = label.toLowerCase();
+  if (value.contains('featured')) return AppTheme.paidAccent;
+  if (value.contains('tonight')) return const Color(0xFFEF233C);
+  if (value.contains('free')) return AppTheme.success;
+  if (value.contains('popular')) return AppTheme.neonViolet;
+  return AppTheme.accentPink;
 }
 
 class _CardTagData {
@@ -561,7 +571,9 @@ bool _isSameDay(DateTime a, DateTime b) {
 
 String _eventBadgeLabel(NightlifeEvent event) {
   if (_isSameDay(event.dateTime, DateTime.now())) return 'Tonight';
+  final price = event.priceText.trim().toLowerCase();
+  if (!_isPaid(event) && price.contains('free')) return 'Free Entry';
   if (!_isPaid(event)) return 'Guestlist';
-  if (event.musicType.trim().isNotEmpty) return 'Trending';
+  if (event.artistText.trim().isNotEmpty) return 'Featured';
   return 'Popular';
 }

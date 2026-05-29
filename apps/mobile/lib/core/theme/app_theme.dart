@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color background = Color(0xFF07070B);
+  static const Color background = Color(0xFF050509);
   static const Color surface = Color(0xFF12121A);
   static const Color elevated = Color(0xFF171720);
   static const Color deepPurple = Color(0xFF191328);
@@ -28,7 +28,7 @@ class AppTheme {
   static const LinearGradient nightclubGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF0B0B12), background, Color(0xFF050508)],
+    colors: [Color(0xFF0B0B12), Color(0xFF08080D), background],
     stops: [0, 0.5, 1],
   );
 
