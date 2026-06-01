@@ -1,6 +1,7 @@
 class AppConstants {
   static const appName = 'Nightlife Platform';
-  static const cities = ['All', 'Guwahati', 'Delhi'];
+  static const cities = ['All', 'Guwahati', 'Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Shillong'];
+  static const defaultCity = 'Guwahati';
   static const roles = ['user', 'promoter', 'clubAdmin', 'superAdmin'];
   static const requestableRoles = ['user', 'promoter', 'clubAdmin'];
   static const userStatuses = [
@@ -10,5 +11,5 @@ class AppConstants {
     'rejected',
   ];
   static const rsvpStatuses = ['confirmed', 'pending', 'approved', 'rejected'];
-  static const eventPageSize = 10;
+  static const eventPageSize = 50;
 }

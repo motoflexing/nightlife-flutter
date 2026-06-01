@@ -2,8 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
+import '../../services/analytics_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/storage_service.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_gradient_button.dart';
@@ -37,12 +40,13 @@ class _SignupScreenState extends State<SignupScreen> {
 
   String _selectedRole = 'user';
   String _selectedTitle = 'Mr';
-  String _businessCity = 'Guwahati';
+  String _businessCity = AppConstants.defaultCity;
 
   bool _loading = false;
   bool _uploadingId = false;
   bool _hidePassword = true;
   XFile? _validIdFile;
+  Uint8List? _validIdBytes;
   _ValidIdStatus _validIdStatus = _ValidIdStatus.notSelected;
 
   final List<Map<String, String>> _roles = const [
@@ -92,36 +96,38 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final isPromoter = _selectedRole == 'promoter';
-      debugPrint('Signup flow started.');
-      final user = await AuthService.instance.createAuthUser(
-        name: _name.text.trim(),
-        email: _email.text.trim(),
-        password: _password.text,
-      );
-
-      await AuthService.instance.saveCurrentUserProfile(
-        user: user,
+      String validIdUrl = '';
+      if (_validIdFile != null) {
+        final idBytes = _validIdBytes ?? await _validIdFile!.readAsBytes();
+        final ext = _validIdFile!.name.split('.').last.toLowerCase();
+        validIdUrl = await StorageService.instance.uploadValidId(
+          bytes: idBytes,
+          userId: _email.text.trim(),
+          fileName: _validIdFile!.name,
+          contentType: 'image/$ext',
+        );
+      }
+      await AuthService.instance.signUp(
         name: _name.text.trim(),
         email: _email.text.trim(),
         phone: _phone.text.trim(),
+        password: _password.text,
         requestedRole: _selectedRole,
         title: isPromoter ? '' : _selectedTitle,
         gender: isPromoter ? '' : _gender.text.trim(),
         dob: isPromoter ? '' : _dob.text.trim(),
         instagramId: isPromoter ? '' : _instagramId.text.trim(),
         snapchatId: isPromoter ? '' : _snapchatId.text.trim(),
-        validIdUrl: '',
+        validIdUrl: validIdUrl,
         businessName: _businessName.text.trim(),
         gstNumber: _gstNumber.text.trim(),
         businessPhone: _businessPhone.text.trim(),
         businessAddress: _businessAddress.text.trim(),
         businessCity: _businessCity,
         businessInstagram: _businessInstagram.text.trim(),
-        documentUploadStatus: _validIdFile == null
-            ? 'pending_upload'
-            : 'pending_upload',
+        documentUploadStatus: 'pending_upload',
       );
-      debugPrint('Signup flow completed.');
+      AnalyticsService.instance.logSignUp('email');
       if (mounted) {
         final isBusinessRole = _selectedRole == 'clubAdmin';
         ScaffoldMessenger.of(context).showSnackBar(
@@ -136,14 +142,12 @@ class _SignupScreenState extends State<SignupScreen> {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } on AuthException catch (error) {
-      debugPrint('Signup AuthException: ${error.message}');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(error.message)));
       }
     } catch (error, stackTrace) {
-      debugPrint('Signup failed: $error');
       debugPrintStack(stackTrace: stackTrace);
       if (mounted) {
         _showSnack(
@@ -173,14 +177,13 @@ class _SignupScreenState extends State<SignupScreen> {
         return;
       }
 
-      debugPrint('ID image picked: ${picked.name}');
       final bytes = await picked.readAsBytes();
-      debugPrint('ID image size: ${bytes.lengthInBytes}');
       final validationError = _validateValidIdFile(picked, bytes);
       if (validationError != null) {
         if (mounted) {
           setState(() {
             _validIdFile = null;
+            _validIdBytes = null;
             _validIdStatus = _ValidIdStatus.notSelected;
           });
           _showSnack(validationError);
@@ -191,6 +194,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
       setState(() {
         _validIdFile = picked;
+        _validIdBytes = bytes;
         _validIdStatus = _ValidIdStatus.selected;
       });
       _showSnack('ID image selected - pending upload.');
@@ -426,8 +430,10 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           validator: (value) {
                             if (!_isBusinessRole) return null;
-                            if (value == null || value.trim().isEmpty) {
-                              return 'GST number is required';
+                            if (value == null || value.trim().isEmpty) return 'GST number is required';
+                            final gstRegex = RegExp(r'^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}Z[A-Z\d]{1}$');
+                            if (!gstRegex.hasMatch(value.trim().toUpperCase())) {
+                              return 'Enter a valid GST number (e.g. 22AAAAA0000A1Z5)';
                             }
                             return null;
                           },
@@ -443,9 +449,10 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           validator: (value) {
                             if (!_isBusinessRole) return null;
-                            if (value == null || value.trim().length < 8) {
-                              return 'Enter a valid business phone';
-                            }
+                            if (value == null || value.trim().isEmpty) return 'Phone number is required';
+                            final digits = value.trim().replaceAll(RegExp(r'[\s\-\+\(\)]'), '');
+                            if (!RegExp(r'^\d+$').hasMatch(digits)) return 'Enter digits only';
+                            if (digits.length < 8 || digits.length > 15) return 'Enter a valid phone number';
                             return null;
                           },
                         ),
@@ -474,22 +481,15 @@ class _SignupScreenState extends State<SignupScreen> {
                             labelText: 'City',
                             prefixIcon: Icon(Icons.location_city_outlined),
                           ),
-                          items:
-                              const [
-                                    'Guwahati',
-                                    'Delhi',
-                                    'Mumbai',
-                                    'Bengaluru',
-                                    'Kolkata',
-                                    'Shillong',
-                                  ]
-                                  .map(
-                                    (city) => DropdownMenuItem(
-                                      value: city,
-                                      child: Text(city),
-                                    ),
-                                  )
-                                  .toList(),
+                          items: AppConstants.cities
+                              .where((city) => city != 'All')
+                              .map(
+                                (city) => DropdownMenuItem(
+                                  value: city,
+                                  child: Text(city),
+                                ),
+                              )
+                              .toList(),
                           onChanged: _loading
                               ? null
                               : (value) {
@@ -510,6 +510,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         _gap(),
                         _ValidIdUploader(
                           file: _validIdFile,
+                          previewBytes: _validIdBytes,
                           status: _validIdStatus,
                           uploading: _uploadingId,
                           onPick: _loading || _uploadingId
@@ -556,12 +557,10 @@ class _SignupScreenState extends State<SignupScreen> {
                           prefixIcon: Icon(Icons.mail_outline),
                         ),
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Email is required';
-                          }
-                          if (!value.contains('@')) {
-                            return 'Enter a valid email';
-                          }
+                          final email = value?.trim() ?? '';
+                          if (email.isEmpty) return 'Email is required';
+                          final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                          if (!emailRegex.hasMatch(email)) return 'Enter a valid email address';
                           return null;
                         },
                       ),
@@ -577,9 +576,10 @@ class _SignupScreenState extends State<SignupScreen> {
                           prefixIcon: Icon(Icons.call_outlined),
                         ),
                         validator: (value) {
-                          if (value == null || value.trim().length < 8) {
-                            return 'Enter a valid phone number';
-                          }
+                          if (value == null || value.trim().isEmpty) return 'Phone number is required';
+                          final digits = value.trim().replaceAll(RegExp(r'[\s\-\+\(\)]'), '');
+                          if (!RegExp(r'^\d+$').hasMatch(digits)) return 'Enter digits only';
+                          if (digits.length < 8 || digits.length > 15) return 'Enter a valid phone number';
                           return null;
                         },
                       ),
@@ -625,9 +625,10 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ),
                         validator: (value) {
-                          if (value == null || value.length < 6) {
-                            return 'Use at least 6 characters';
-                          }
+                          if (value == null || value.isEmpty) return 'Password is required';
+                          if (value.length < 8) return 'Password must be at least 8 characters';
+                          if (!RegExp(r'[A-Z]').hasMatch(value)) return 'Include at least one uppercase letter';
+                          if (!RegExp(r'[0-9]').hasMatch(value)) return 'Include at least one number';
                           return null;
                         },
                       ),
@@ -675,12 +676,14 @@ class _ValidIdUploader extends StatelessWidget {
     required this.status,
     required this.uploading,
     required this.onPick,
+    this.previewBytes,
   });
 
   final XFile? file;
   final _ValidIdStatus status;
   final bool uploading;
   final VoidCallback? onPick;
+  final Uint8List? previewBytes;
 
   @override
   Widget build(BuildContext context) {
@@ -738,26 +741,20 @@ class _ValidIdUploader extends StatelessWidget {
               style: TextStyle(color: statusColor, fontSize: 12),
             ),
             const SizedBox(height: 8),
-            FutureBuilder<Uint8List>(
-              future: file!.readAsBytes(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const SizedBox(
+            previewBytes != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.memory(
+                      previewBytes!,
+                      height: 126,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : const SizedBox(
                     height: 96,
-                    child: Center(child: PremiumLoader.compact(size: 22)),
-                  );
-                }
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.memory(
-                    snapshot.data!,
-                    height: 126,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
+                    child: Center(child: Icon(Icons.image_outlined)),
                   ),
-                );
-              },
-            ),
           ],
           const SizedBox(height: 10),
           OutlinedButton.icon(

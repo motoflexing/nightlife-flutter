@@ -161,7 +161,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   void _toggleShortcut(_ExploreShortcut shortcut) {
-    debugPrint('${shortcut.label} tapped');
     setState(() {
       _shortcut = _shortcut == shortcut ? null : shortcut;
     });

@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../core/constants/app_constants.dart';
+
 class NightlifeEvent {
   const NightlifeEvent({
     required this.id,
@@ -53,7 +55,7 @@ class NightlifeEvent {
     return NightlifeEvent(
       id: '',
       title: '',
-      city: 'Guwahati',
+      city: AppConstants.defaultCity,
       venueName: '',
       address: '',
       dateTime: now,

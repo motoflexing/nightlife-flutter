@@ -47,7 +47,9 @@ class AccessStateScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     OutlinedButton.icon(
-                      onPressed: AuthService.instance.signOut,
+                      onPressed: () async {
+                        await AuthService.instance.signOut();
+                      },
                       icon: const Icon(Icons.logout),
                       label: const Text('Logout'),
                     ),

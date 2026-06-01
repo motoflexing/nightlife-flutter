@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/app_user.dart';
+import 'referral_service.dart';
 
 class AuthService {
   AuthService._();
@@ -15,7 +16,6 @@ class AuthService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   String? _requestedRole;
-  bool _superAdminUnlockArmed = false;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
@@ -23,25 +23,25 @@ class AuthService {
 
   String? get requestedRole => _requestedRole;
 
-  bool get isSuperAdminUnlockArmed => _superAdminUnlockArmed;
-
-  void armSuperAdminUnlock() {
-    _superAdminUnlockArmed = true;
-    _requestedRole = 'superAdmin';
-  }
-
   Future<bool> verifyCurrentUserIsSuperAdmin() async {
     final user = _auth.currentUser;
     if (user == null) return false;
 
-    final doc = await _db.collection('users').doc(user.uid).get();
-    final role = doc.data()?['role'] as String?;
-    final normalizedRole = (role ?? '').trim().toLowerCase().replaceAll(
-      '_',
-      '',
-    );
-    return doc.exists &&
-        (normalizedRole == 'superadmin' || normalizedRole == 'super-admin');
+    try {
+      final doc = await _db.collection('users').doc(user.uid).get();
+      final role = doc.data()?['role'] as String?;
+      final normalizedRole = (role ?? '').trim().toLowerCase().replaceAll(
+        '_',
+        '',
+      );
+      return doc.exists &&
+          (normalizedRole == 'superadmin' || normalizedRole == 'super-admin');
+    } on FirebaseException catch (error) {
+      return false;
+    } catch (error, stackTrace) {
+      debugPrintStack(stackTrace: stackTrace);
+      return false;
+    }
   }
 
   Future<AppUser?> getCurrentProfile() async {
@@ -77,18 +77,11 @@ class AuthService {
             .timeout(const Duration(seconds: 10));
       }
       await user.reload().timeout(const Duration(seconds: 10));
-      debugPrint('Auth local user state refreshed: uid=${user.uid}');
     } on FirebaseAuthException catch (error, stackTrace) {
-      debugPrint(
-        'Auth local user state refresh failed: '
-        'code=${error.code} message=${error.message}',
-      );
       debugPrintStack(stackTrace: stackTrace);
     } on TimeoutException catch (error, stackTrace) {
-      debugPrint('Auth local user state refresh timed out: $error');
       debugPrintStack(stackTrace: stackTrace);
     } catch (error, stackTrace) {
-      debugPrint('Auth local user state refresh failed: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
   }
@@ -116,14 +109,15 @@ class AuthService {
   }) async {
     try {
       _requestedRole = requestedRole;
-      debugPrint('AuthService.signIn started. requestedRole=$requestedRole');
 
       final credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
         password: password,
       );
-      await _approvePromoterProfileIfNeeded(credential.user);
-      debugPrint('AuthService.signIn success. requestedRole=$requestedRole');
+      try {
+        await _approvePromoterProfileIfNeeded(credential.user);
+      } on FirebaseException catch (error) {
+      }
     } on FirebaseAuthException catch (error) {
       throw AuthException(_friendlyAuthError(error));
     }
@@ -171,6 +165,13 @@ class AuthService {
         instagramId: instagramId,
         snapchatId: snapchatId,
         validIdUrl: validIdUrl,
+        businessName: businessName,
+        gstNumber: gstNumber,
+        businessPhone: businessPhone,
+        businessAddress: businessAddress,
+        businessCity: businessCity,
+        businessInstagram: businessInstagram,
+        documentUploadStatus: documentUploadStatus,
       );
     } on FirebaseAuthException catch (error) {
       throw AuthException(_friendlyAuthError(error));
@@ -184,7 +185,6 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    debugPrint('Signup auth create started.');
     final credential = await _auth
         .createUserWithEmailAndPassword(email: email.trim(), password: password)
         .timeout(const Duration(seconds: 20));
@@ -195,7 +195,6 @@ class AuthService {
     await user
         .updateDisplayName(name.trim())
         .timeout(const Duration(seconds: 10));
-    debugPrint('Signup auth create completed: ${user.uid}');
     return user;
   }
 
@@ -219,7 +218,6 @@ class AuthService {
     String businessInstagram = '',
     String documentUploadStatus = 'pending_upload',
   }) async {
-    debugPrint('Firestore user profile save started.');
     final cleanName = name.trim();
     final cleanEmail = email.trim().toLowerCase();
     final cleanPhone = phone.trim();
@@ -330,7 +328,6 @@ class AuthService {
           }, SetOptions(merge: true))
           .timeout(const Duration(seconds: 20));
     }
-    debugPrint('Firestore user profile save completed.');
   }
 
   Future<AppUser> ensureSafeProfile(User user) async {
@@ -374,9 +371,9 @@ class AuthService {
     return AppUser.fromDoc(next);
   }
 
-  Future<void> signOut() {
+  Future<void> signOut() async {
     _requestedRole = null;
-    _superAdminUnlockArmed = false;
+    ReferralService.instance.clear();
     return _auth.signOut();
   }
 
@@ -422,7 +419,6 @@ class AuthService {
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true))
         .timeout(const Duration(seconds: 20));
-    debugPrint('Firestore updated with valid ID pending_review.');
   }
 
   String _safeRequestedRole(String role) {

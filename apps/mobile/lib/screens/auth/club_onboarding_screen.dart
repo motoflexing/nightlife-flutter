@@ -31,7 +31,7 @@ class _ClubOnboardingScreenState extends State<ClubOnboardingScreen> {
   final _instagram = TextEditingController();
   final _maps = TextEditingController();
   final _document = TextEditingController();
-  String _city = 'Guwahati';
+  String _city = AppConstants.defaultCity;
   bool _saving = false;
 
   @override
@@ -90,7 +90,9 @@ class _ClubOnboardingScreenState extends State<ClubOnboardingScreen> {
         actions: [
           IconButton(
             tooltip: 'Logout',
-            onPressed: AuthService.instance.signOut,
+            onPressed: () async {
+              await AuthService.instance.signOut();
+            },
             icon: const Icon(Icons.logout),
           ),
         ],

@@ -2177,7 +2177,9 @@ void _showPromoterProfile(
                   child: _GhostButton(
                     icon: Icons.logout_rounded,
                     label: 'Logout',
-                    onPressed: AuthService.instance.signOut,
+                    onPressed: () async {
+                      await AuthService.instance.signOut();
+                    },
                   ),
                 ),
               ],

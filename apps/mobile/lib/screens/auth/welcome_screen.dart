@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme.dart';
-import '../../widgets/neon_scaffold.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
 
@@ -10,44 +8,82 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final isPhone = width < 520;
-
-    return NeonScaffold(
-      child: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              isPhone ? 20 : 28,
-              28,
-              isPhone ? 20 : 28,
-              28,
-            ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 36),
-                  const _BrandHeader(),
-                  const SizedBox(height: 96),
-                  _WelcomeButton(
-                    label: 'Sign In',
-                    icon: Icons.login,
-                    filled: true,
-                    onPressed: () => _open(context, const LoginScreen()),
-                  ),
-                  const SizedBox(height: 14),
-                  _WelcomeButton(
-                    label: 'Sign Up',
-                    icon: Icons.person_add_alt,
-                    onPressed: () => _open(context, const SignupScreen()),
-                  ),
-                  const SizedBox(height: 36),
-                ],
+    return Scaffold(
+      backgroundColor: const Color(0xFF080809),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 5,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFF59E0B)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.nightlife,
+                        size: 24,
+                        color: Color(0xFFF59E0B),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    const Text(
+                      'The Night\nStarts Here',
+                      style: TextStyle(
+                        fontSize: 38,
+                        fontWeight: FontWeight.w300,
+                        color: Color(0xFFF5F5F0),
+                        letterSpacing: -0.5,
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Discover events. Get on the list.\nBe where it happens.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0x66FFFFFF),
+                        height: 1.6,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(height: 64),
+              _LuxuryButton(
+                label: 'Sign In',
+                onTap: () => _open(context, const LoginScreen()),
+                filled: true,
+              ),
+              const SizedBox(height: 12),
+              _LuxuryButton(
+                label: 'Create Account',
+                onTap: () => _open(context, const SignupScreen()),
+                filled: false,
+              ),
+              const SizedBox(height: 32),
+              const Center(
+                child: Text(
+                  'By continuing you agree to our Terms & Privacy Policy',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Color(0x33FFFFFF),
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -73,114 +109,46 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-class _BrandHeader extends StatelessWidget {
-  const _BrandHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: AppTheme.premiumGradient,
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.accentPink.withValues(alpha: 0.34),
-                blurRadius: 34,
-                spreadRadius: -8,
-              ),
-            ],
-          ),
-          child: const Icon(Icons.nightlife, color: Colors.white, size: 38),
-        ),
-        const SizedBox(height: 18),
-        Text(
-          'Nightlife',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            fontSize: 40,
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Discover the city after dark',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: AppTheme.textMuted,
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _WelcomeButton extends StatelessWidget {
-  const _WelcomeButton({
+class _LuxuryButton extends StatelessWidget {
+  const _LuxuryButton({
     required this.label,
-    required this.icon,
-    required this.onPressed,
-    this.filled = false,
+    required this.onTap,
+    required this.filled,
   });
 
   final String label;
-  final IconData icon;
-  final VoidCallback onPressed;
+  final VoidCallback onTap;
   final bool filled;
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(18);
-
     return SizedBox(
-      height: 58,
+      height: 54,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: radius,
-          gradient: filled ? AppTheme.premiumGradient : null,
-          color: filled ? null : AppTheme.surface.withValues(alpha: 0.82),
-          border: Border.all(
-            color: filled
-                ? Colors.white.withValues(alpha: 0.12)
-                : AppTheme.accentPink.withValues(alpha: 0.48),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.accentPink.withValues(
-                alpha: filled ? 0.26 : 0.12,
-              ),
-              blurRadius: 24,
-              spreadRadius: -10,
-              offset: const Offset(0, 12),
-            ),
-          ],
+          color: filled ? const Color(0xFFF59E0B) : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          border: filled ? null : Border.all(color: const Color(0x26FFFFFF)),
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: radius,
-            onTap: onPressed,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.white),
-                const SizedBox(width: 10),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                  ),
+            borderRadius: BorderRadius.circular(6),
+            splashColor: const Color(0x33F59E0B),
+            highlightColor: const Color(0x1AF59E0B),
+            onTap: onTap,
+            child: Center(
+              child: Text(
+                label.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: filled ? FontWeight.w500 : FontWeight.w400,
+                  letterSpacing: 0.8,
+                  color: filled
+                      ? const Color(0xFF080809)
+                      : const Color(0xB3FFFFFF),
                 ),
-              ],
+              ),
             ),
           ),
         ),

@@ -65,7 +65,7 @@ service cloud.firestore {
             && request.resource.data.status == 'approved'
             && request.resource.data.promoterCode == null)
           || (request.resource.data.role == 'promoter'
-            && request.resource.data.status == 'pending_review'
+            && request.resource.data.status in ['approved', 'pending_review']
             && request.resource.data.promoterCode is string
             && request.resource.data.promoterCode.size() > 0)
           || (request.resource.data.role == 'clubAdmin'
@@ -173,7 +173,7 @@ service cloud.firestore {
           )
           && (
             resource.data.role != 'clubAdmin'
-            || request.resource.data.status in ['pending', 'pending_review']
+            || request.resource.data.status == 'pending_review'
             || request.resource.data.status == resource.data.status
           )
         );
@@ -184,7 +184,7 @@ service cloud.firestore {
     match /clubs/{clubId} {
       allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid
-        && request.resource.data.verificationStatus == 'pending';
+        && request.resource.data.verificationStatus == 'pending_review';
 
       allow read: if isSuperAdmin()
         || (signedIn() && resource.data.ownerId == request.auth.uid);
@@ -194,7 +194,7 @@ service cloud.firestore {
           signedIn()
           && resource.data.ownerId == request.auth.uid
           && request.resource.data.ownerId == resource.data.ownerId
-          && request.resource.data.verificationStatus == 'pending'
+          && request.resource.data.verificationStatus == 'pending_review'
         );
 
       allow delete: if isSuperAdmin();
@@ -203,7 +203,6 @@ service cloud.firestore {
     match /events/{eventId} {
       allow read: if isSuperAdmin()
         || resource.data.isActive == true
-        || (signedIn() && resource.data.isActive == true)
         || (isClubAdmin() && (
           resource.data.createdBy == request.auth.uid
           || resource.data.clubId == currentClubId()
@@ -228,9 +227,6 @@ service cloud.firestore {
     }
 
     match /rsvps/{rsvpId} {
-      allow get: if signedIn()
-        && rsvpId.matches(request.auth.uid + '_.*');
-
       allow read: if isSuperAdmin()
         || (signedIn() && resource.data.userId == request.auth.uid)
         || (isPromoter() && resource.data.promoterCode == currentPromoterCode())

@@ -26,6 +26,8 @@ class ReferralService {
   }
 
   static String normalize(String value) {
-    return value.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
+    final trimmed = value.trim().toUpperCase();
+    final alphanumeric = trimmed.replaceAll(RegExp(r'[^A-Z0-9]'), '');
+    return alphanumeric.substring(0, alphanumeric.length.clamp(0, 20));
   }
 }

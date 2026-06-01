@@ -18,7 +18,6 @@ class StorageService {
     _storage.setMaxUploadRetryTime(const Duration(seconds: 15));
     _storage.setMaxOperationRetryTime(const Duration(seconds: 15));
     _storage.setMaxDownloadRetryTime(const Duration(seconds: 15));
-    debugPrint('Firebase Storage retry limits configured.');
   }
 
   Future<String> uploadEventPoster({
@@ -50,16 +49,13 @@ class StorageService {
     final safeUserId = userId.replaceAll(RegExp(r'[^a-zA-Z0-9_.-]'), '_');
     final path =
         'valid_ids/$safeUserId/${DateTime.now().millisecondsSinceEpoch}.$safeExtension';
-    debugPrint('ID upload started: $path');
     final ref = _storage.ref(path);
     final task = await ref
         .putData(bytes, SettableMetadata(contentType: contentType))
         .timeout(const Duration(seconds: 20));
-    debugPrint('ID upload completed: $path');
     final url = await task.ref.getDownloadURL().timeout(
       const Duration(seconds: 20),
     );
-    debugPrint('ID download URL received: $url');
     return url;
   }
 
@@ -82,10 +78,6 @@ class StorageService {
     }
     final normalizedContentType = _imageContentType(contentType, safeExtension);
     final path = 'profile_photos/$cleanUserId/avatar.jpg';
-    debugPrint(
-      'Profile photo upload started: path=$path uid=$cleanUserId '
-      'bytes=${bytes.lengthInBytes} kIsWeb=$kIsWeb contentType=$normalizedContentType',
-    );
     final ref = _storage.ref(path);
     final metadata = SettableMetadata(
       contentType: normalizedContentType,
@@ -102,24 +94,15 @@ class StorageService {
       final snapshot = await uploadTask.timeout(
         const Duration(seconds: 60),
         onTimeout: () {
-          debugPrint('Profile photo upload timeout: path=$path');
           unawaited(uploadTask.cancel());
           throw TimeoutException('Profile photo upload timed out.');
         },
       );
-      debugPrint(
-        'Profile photo upload success: path=$path state=${snapshot.state}',
-      );
       final url = await snapshot.ref.getDownloadURL().timeout(
         const Duration(seconds: 20),
       );
-      debugPrint('Profile photo download URL received: $url');
       return url;
     } on FirebaseException catch (error, stackTrace) {
-      debugPrint(
-        'Profile photo upload FirebaseException: '
-        'code=${error.code} message=${error.message}',
-      );
       debugPrintStack(stackTrace: stackTrace);
       rethrow;
     }

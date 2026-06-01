@@ -28,7 +28,7 @@ class _VerificationDetailsScreenState extends State<VerificationDetailsScreen> {
   final _businessPhone = TextEditingController();
   final _businessAddress = TextEditingController();
   final _instagramLink = TextEditingController();
-  String _city = 'Guwahati';
+  String _city = AppConstants.defaultCity;
   bool _saving = false;
 
   @override
@@ -92,7 +92,9 @@ class _VerificationDetailsScreenState extends State<VerificationDetailsScreen> {
         actions: [
           IconButton(
             tooltip: 'Logout',
-            onPressed: AuthService.instance.signOut,
+            onPressed: () async {
+              await AuthService.instance.signOut();
+            },
             icon: const Icon(Icons.logout),
           ),
         ],

@@ -18,7 +18,6 @@ class StorageService {
     _storage.setMaxUploadRetryTime(const Duration(minutes: 2));
     _storage.setMaxOperationRetryTime(const Duration(minutes: 1));
     _storage.setMaxDownloadRetryTime(const Duration(minutes: 1));
-    debugPrint('Firebase Storage retry limits configured.');
   }
 
   Future<String> uploadEventPoster({
@@ -50,16 +49,13 @@ class StorageService {
     final safeUserId = userId.replaceAll(RegExp(r'[^a-zA-Z0-9_.-]'), '_');
     final path =
         'valid_ids/$safeUserId/${DateTime.now().millisecondsSinceEpoch}.$safeExtension';
-    debugPrint('ID upload started: $path');
     final ref = _storage.ref(path);
     final task = await ref
         .putData(bytes, SettableMetadata(contentType: contentType))
         .timeout(const Duration(seconds: 20));
-    debugPrint('ID upload completed: $path');
     final url = await task.ref.getDownloadURL().timeout(
       const Duration(seconds: 20),
     );
-    debugPrint('ID download URL received: $url');
     return url;
   }
 
@@ -84,10 +80,6 @@ class StorageService {
     final normalizedContentType = _imageContentType(contentType, safeExtension);
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final path = 'profile_photos/$cleanUserId/avatar_$timestamp.$safeExtension';
-    debugPrint(
-      'Profile photo upload started: path=$path uid=$cleanUserId '
-      'bytes=${bytes.lengthInBytes} kIsWeb=$kIsWeb contentType=$normalizedContentType',
-    );
     final ref = _storage.ref(path);
     final metadata = SettableMetadata(
       contentType: normalizedContentType,
@@ -106,23 +98,14 @@ class StorageService {
         path: path,
         onProgress: onProgress,
       );
-      debugPrint(
-        'Profile photo upload success: path=$path state=${snapshot.state}',
-      );
       final url = await snapshot.ref.getDownloadURL().timeout(
         const Duration(seconds: 30),
       );
-      debugPrint('Profile photo download URL received: $url');
       return url;
     } on FirebaseException catch (error, stackTrace) {
-      debugPrint(
-        'Profile photo upload FirebaseException: '
-        'code=${error.code} message=${error.message}',
-      );
       debugPrintStack(stackTrace: stackTrace);
       rethrow;
     } on TimeoutException catch (error, stackTrace) {
-      debugPrint('Profile photo upload timeout: $error');
       debugPrintStack(stackTrace: stackTrace);
       rethrow;
     }
@@ -142,10 +125,6 @@ class StorageService {
         if (total > 0) {
           final progress = (snapshot.bytesTransferred / total).clamp(0.0, 1.0);
           onProgress?.call(progress);
-          debugPrint(
-            'Profile photo upload progress: path=$path '
-            '${(progress * 100).toStringAsFixed(0)}%',
-          );
         }
         if (snapshot.state == TaskState.success && !completer.isCompleted) {
           completer.complete(snapshot);
@@ -163,7 +142,6 @@ class StorageService {
       return await completer.future.timeout(
         const Duration(minutes: 3),
         onTimeout: () {
-          debugPrint('Profile photo upload timeout: path=$path');
           unawaited(uploadTask.cancel());
           throw TimeoutException('Profile photo upload timed out.');
         },

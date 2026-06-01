@@ -20,11 +20,15 @@ class EmptyView extends StatelessWidget {
     required this.title,
     required this.message,
     this.icon = Icons.nights_stay_outlined,
+    this.actionLabel,
+    this.onAction,
   });
 
   final String title;
   final String message;
   final IconData icon;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +51,9 @@ class EmptyView extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 6),
@@ -58,6 +62,13 @@ class EmptyView extends StatelessWidget {
                 style: const TextStyle(color: AppTheme.textMuted, height: 1.35),
                 textAlign: TextAlign.center,
               ),
+              if (actionLabel != null && onAction != null) ...[
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: onAction,
+                  child: Text(actionLabel!),
+                ),
+              ],
             ],
           ),
         ),
@@ -67,10 +78,38 @@ class EmptyView extends StatelessWidget {
 }
 
 class ErrorStateView extends StatelessWidget {
-  const ErrorStateView({super.key, required this.message, this.onRetry});
+  const ErrorStateView({
+    super.key,
+    required this.message,
+    this.title = 'Something went wrong',
+    this.onRetry,
+  });
 
   final String message;
+  final String title;
   final VoidCallback? onRetry;
+
+  static String sanitizeError(Object? error) {
+    if (error == null) return 'An unexpected error occurred.';
+    final raw = error.toString();
+    if (raw.contains('network') ||
+        raw.contains('socket') ||
+        raw.contains('SocketException')) {
+      return 'No internet connection. Please check your network.';
+    }
+    if (raw.contains('permission-denied') ||
+        raw.contains('PERMISSION_DENIED')) {
+      return 'You don\'t have permission to view this.';
+    }
+    if (raw.contains('not-found') || raw.contains('NOT_FOUND')) {
+      return 'This content could not be found.';
+    }
+    if (raw.contains('unauthenticated') ||
+        raw.contains('UNAUTHENTICATED')) {
+      return 'Please log in to continue.';
+    }
+    return 'Something went wrong. Please try again.';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +136,19 @@ class ErrorStateView extends StatelessWidget {
                 size: 34,
               ),
               const SizedBox(height: 10),
-              Text(message, textAlign: TextAlign.center),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                message,
+                style: const TextStyle(color: AppTheme.textMuted, height: 1.35),
+                textAlign: TextAlign.center,
+              ),
               if (onRetry != null) ...[
                 const SizedBox(height: 12),
                 OutlinedButton.icon(

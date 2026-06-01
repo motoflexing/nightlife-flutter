@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/app_user.dart';
 import '../../models/event.dart';
+import '../../services/analytics_service.dart';
 import '../../services/event_discovery_service.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/compact_ui.dart';
@@ -53,7 +54,13 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             TextField(
               controller: _controller,
-              onChanged: (value) => setState(() => _query = value.trim()),
+              onChanged: (value) {
+                final trimmed = value.trim();
+                setState(() => _query = trimmed);
+                if (trimmed.isNotEmpty) {
+                  AnalyticsService.instance.logSearch(trimmed);
+                }
+              },
               decoration: InputDecoration(
                 hintText: 'Search parties, clubs, artists',
                 prefixIcon: const Icon(Icons.search),

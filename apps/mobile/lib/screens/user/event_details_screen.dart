@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/app_user.dart';
 import '../../models/event.dart';
+import '../../services/analytics_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/location_service.dart';
 import '../../services/maps_availability.dart';
@@ -43,6 +44,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     _codeController = TextEditingController(
       text: ReferralService.instance.code ?? '',
     );
+    AnalyticsService.instance.logEventViewed(
+      eventId: widget.event.id,
+      eventName: widget.event.title,
+      city: widget.event.city,
+    );
   }
 
   @override
@@ -54,6 +60,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   Future<void> _openRsvpConfirmation() async {
     if (_submitting || _rsvpCreated) return;
     if (!_validateRsvpRequest()) return;
+
+    AnalyticsService.instance.logRsvpStarted(
+      eventId: widget.event.id,
+      eventName: widget.event.title,
+    );
 
     await showModalBottomSheet<void>(
       context: context,
@@ -99,11 +110,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
     final user = widget.currentUser;
     final event = widget.event;
-    debugPrint(
-      'EventDetails RSVP submit: eventId=${event.id.trim()} '
-      'venueId=${event.venueId?.trim() ?? '<null>'} '
-      'title=${event.title.trim()}',
-    );
     setState(() => _submitting = true);
     try {
       await FirestoreService.instance.createRsvp(
@@ -112,6 +118,11 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         promoterCode: _codeController.text,
       );
       ReferralService.instance.clear();
+      AnalyticsService.instance.logRsvpCompleted(
+        eventId: event.id,
+        eventName: event.title,
+        promoterId: _codeController.text,
+      );
       if (!mounted) return true;
       setState(() => _rsvpCreated = true);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -121,10 +132,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       );
       return true;
     } on FirestoreAppException catch (error) {
-      debugPrint(
-        'EventDetails RSVP failed: ${error.message} '
-        'debug=${error.debugMessage ?? ''}',
-      );
       final debugMessage = error.debugMessage?.trim();
       _showError(
         kDebugMode && debugMessage != null && debugMessage.isNotEmpty
@@ -133,7 +140,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       );
       return false;
     } catch (error) {
-      debugPrint('EventDetails RSVP unexpected error: $error');
       _showError('Unable to create RSVP right now. Please try again.');
       return false;
     } finally {

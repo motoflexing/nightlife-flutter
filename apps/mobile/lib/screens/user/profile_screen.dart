@@ -96,7 +96,9 @@ class ProfileScreen extends StatelessWidget {
                         icon: Icons.logout,
                         title: 'Logout',
                         destructive: true,
-                        onTap: AuthService.instance.signOut,
+                        onTap: () async {
+                          await AuthService.instance.signOut();
+                        },
                       ),
                     ],
                   ),
@@ -290,25 +292,17 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               'auth.uid=${authUser.uid} profile.uid=${widget.user.uid}',
         );
       }
-      debugPrint('Profile image auth verified: uid=${authUser.uid}');
       await authUser.getIdToken(true).timeout(const Duration(seconds: 10));
-      debugPrint('Profile image auth token refreshed: uid=${authUser.uid}');
 
-      debugPrint('Profile image picker opened: uid=${widget.user.uid}');
       final picked = await ImagePicker().pickImage(
         source: ImageSource.gallery,
         maxWidth: 900,
         imageQuality: 82,
       );
       if (picked == null) {
-        debugPrint('Profile image picker cancelled: uid=${widget.user.uid}');
         return;
       }
 
-      debugPrint(
-        'Profile image selected: uid=${widget.user.uid} '
-        'name=${picked.name} path=${picked.path} mimeType=${picked.mimeType}',
-      );
 
       setState(() {
         _uploadingPhoto = true;
@@ -317,29 +311,27 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       final bytes = await picked.readAsBytes().timeout(
         const Duration(seconds: 15),
       );
-      debugPrint(
-        'Profile image bytes read: uid=${widget.user.uid} '
-        'bytes=${bytes.lengthInBytes}',
-      );
       final contentType = _profileImageContentType(
         picked.mimeType,
         picked.name,
         bytes,
       );
       if (contentType == null) {
-        debugPrint(
-          'Profile image validation failed: unsupported file '
-          'name=${picked.name} mimeType=${picked.mimeType}',
-        );
         _showSnack('Choose a JPG, PNG, or WebP image.');
         return;
       }
-      if (bytes.lengthInBytes > _maxProfilePhotoBytes) {
-        debugPrint(
-          'Profile image validation failed: file too large '
-          'bytes=${bytes.lengthInBytes}',
-        );
-        _showSnack('Choose an image under 5MB.');
+      const maxBytes = 5 * 1024 * 1024; // 5MB
+      if (bytes.lengthInBytes > maxBytes) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Photo must be under 5MB. Please choose a smaller image.',
+              ),
+            ),
+          );
+          setState(() => _uploadingPhoto = false);
+        }
         return;
       }
 
@@ -349,7 +341,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           _photoUploadProgress = 0;
         });
       }
-      debugPrint('Profile image upload started: uid=${widget.user.uid}');
       final url = await StorageService.instance.uploadProfilePhoto(
         bytes: bytes,
         userId: widget.user.uid,
@@ -361,19 +352,16 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           setState(() => _photoUploadProgress = progress);
         },
       );
-      debugPrint('Profile image download URL received: $url');
       if (!mounted) return;
       await NetworkImage(url).evict();
       await FirestoreService.instance.updateUserProfilePhoto(
         userId: widget.user.uid,
         profilePhotoUrl: url,
       );
-      debugPrint('Profile image Firestore/profile updated: ${widget.user.uid}');
       await AuthService.instance.refreshCurrentUserProfileState(
         displayName: _name.text,
         photoUrl: url,
       );
-      debugPrint('Profile image local state refreshed: ${widget.user.uid}');
       if (!mounted) return;
       setState(() {
         _photoUrl = url;
@@ -382,7 +370,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       });
       _showSnack('Profile photo updated');
     } on TimeoutException catch (error, stackTrace) {
-      debugPrint('Profile image upload timeout: $error');
       debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
       setState(() {
@@ -392,10 +379,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       });
       _showSnack('Image upload timed out. Please try again.');
     } on FirebaseException catch (error, stackTrace) {
-      debugPrint(
-        'Profile image FirebaseException: '
-        'plugin=${error.plugin} code=${error.code} message=${error.message}',
-      );
       debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
       setState(() {
@@ -405,9 +388,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       });
       _showSnack(_profileImageErrorMessage(error));
     } catch (error, stackTrace) {
-      debugPrint('Profile image upload failed: $error');
       if (error is FirestoreAppException && error.debugMessage != null) {
-        debugPrint('Profile image upload debug: ${error.debugMessage}');
       }
       debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
@@ -914,8 +895,6 @@ String _roleLabel(String role) {
     _ => 'Member',
   };
 }
-
-const int _maxProfilePhotoBytes = 5 * 1024 * 1024;
 
 String? _profileImageContentType(
   String? mimeType,

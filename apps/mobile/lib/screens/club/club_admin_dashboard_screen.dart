@@ -43,7 +43,9 @@ class _ClubAdminDashboardScreenState extends State<ClubAdminDashboardScreen> {
         actions: [
           IconButton(
             tooltip: 'Logout',
-            onPressed: AuthService.instance.signOut,
+            onPressed: () async {
+              await AuthService.instance.signOut();
+            },
             icon: const Icon(Icons.logout),
           ),
         ],
@@ -126,8 +128,6 @@ class _ClubEvents extends StatelessWidget {
                             currentUser: currentUser,
                             event: event,
                           ),
-                          onDelete: () => FirestoreService.instance
-                              .deactivateEvent(event.id),
                         ),
                       );
                     }).toList(),
@@ -155,23 +155,28 @@ class _ClubEvents extends StatelessWidget {
   }
 }
 
-class _ClubEventTile extends StatelessWidget {
+class _ClubEventTile extends StatefulWidget {
   const _ClubEventTile({
     required this.event,
     required this.onEdit,
-    required this.onDelete,
   });
 
   final NightlifeEvent event;
   final VoidCallback onEdit;
-  final VoidCallback onDelete;
+
+  @override
+  State<_ClubEventTile> createState() => _ClubEventTileState();
+}
+
+class _ClubEventTileState extends State<_ClubEventTile> {
+  bool _deleting = false;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        EventCard(event: event, compact: true, onTap: onEdit),
+        EventCard(event: widget.event, compact: true, onTap: widget.onEdit),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -179,7 +184,7 @@ class _ClubEventTile extends StatelessWidget {
               child: SizedBox(
                 height: 36,
                 child: OutlinedButton.icon(
-                  onPressed: onEdit,
+                  onPressed: widget.onEdit,
                   icon: const Icon(Icons.edit, size: 17),
                   label: const Text(
                     'Edit',
@@ -194,13 +199,53 @@ class _ClubEventTile extends StatelessWidget {
               child: SizedBox(
                 height: 36,
                 child: OutlinedButton.icon(
-                  onPressed: onDelete,
+                  onPressed: _deleting
+                      ? null
+                      : () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Delete Event'),
+                              content: const Text(
+                                'Are you sure you want to delete this event? '
+                                'This cannot be undone.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: const Text(
+                                    'Delete',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm != true) return;
+                          setState(() => _deleting = true);
+                          try {
+                            await FirestoreService.instance
+                                .deactivateEvent(widget.event.id);
+                          } finally {
+                            if (mounted) setState(() => _deleting = false);
+                          }
+                        },
                   icon: const Icon(Icons.delete_outline, size: 17),
-                  label: const Text(
-                    'Delete',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  label: _deleting
+                      ? const SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Delete',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                 ),
               ),
             ),

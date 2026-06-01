@@ -125,7 +125,6 @@ class AppUser {
   }
 
   static String _normalizeRole(String? role) {
-    if (role == 'admin') return 'superAdmin';
     return role ?? 'user';
   }
 

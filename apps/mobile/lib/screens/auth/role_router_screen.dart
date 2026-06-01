@@ -20,11 +20,6 @@ class RoleRouterScreen extends StatelessWidget {
     return (role ?? '').trim().toLowerCase().replaceAll('_', '');
   }
 
-  bool _isSuperAdminRole(String? role) {
-    final normalized = _normalizeRole(role);
-    return normalized == 'superadmin' || normalized == 'super-admin';
-  }
-
   bool _isClubAdminRole(String? role) {
     return _normalizeRole(role) == 'clubadmin';
   }
@@ -42,7 +37,6 @@ class RoleRouterScreen extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: AuthService.instance.authStateChanges,
       builder: (context, authSnapshot) {
-        debugPrint('RoleRouter entered.');
         if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const NeonScaffold(child: LoadingView());
         }
@@ -97,18 +91,6 @@ class RoleRouterScreen extends StatelessWidget {
             }
 
             final requestedRole = AuthService.instance.requestedRole;
-            debugPrint(
-              'RoleRouter profile loaded. requestedRole=$requestedRole profileRole=${profile.role}',
-            );
-
-            if (_isSuperAdminRole(profile.role)) {
-              return const AccessStateScreen(
-                title: 'Use the web operations dashboard',
-                message:
-                    'This account is restricted to a separate web console.',
-                icon: Icons.lock_outline,
-              );
-            }
 
             if (requestedRole != null &&
                 !_isSameRole(requestedRole, profile.role)) {

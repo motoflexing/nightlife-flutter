@@ -37,12 +37,17 @@ class FirestoreService {
       query = query.where('isActive', isEqualTo: true);
     }
 
+    if (city != 'All' && city.isNotEmpty) {
+      query = query.where('city', isEqualTo: city);
+    }
+
+    query = query.limit(50);
+
     final snapshot = await query.get();
 
     final events =
         snapshot.docs
             .map(NightlifeEvent.fromDoc)
-            .where((event) => city == 'All' || event.city == city)
             .toList()
           ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
@@ -63,6 +68,7 @@ class FirestoreService {
   Stream<List<AppUser>> usersStream() {
     return _db
         .collection('users')
+        .limit(100)
         .snapshots()
         .map(
           (snap) =>
@@ -74,7 +80,8 @@ class FirestoreService {
   Stream<List<AppUser>> pendingApprovalsStream() {
     return _db
         .collection('users')
-        .where('status', isEqualTo: 'pending')
+        .where('status', isEqualTo: 'pending_review')
+        .limit(100)
         .snapshots()
         .map(
           (snap) =>
@@ -89,6 +96,7 @@ class FirestoreService {
   Stream<List<Club>> clubsStream() {
     return _db
         .collection('clubs')
+        .limit(100)
         .snapshots()
         .map(
           (snap) =>
@@ -111,6 +119,7 @@ class FirestoreService {
   Stream<List<Promoter>> promotersStream() {
     return _db
         .collection('promoters')
+        .limit(100)
         .snapshots()
         .map(
           (snap) =>
@@ -122,6 +131,7 @@ class FirestoreService {
   Stream<List<Rsvp>> allRsvpsStream() {
     return _db
         .collection('rsvps')
+        .limit(100)
         .snapshots()
         .map(
           (snap) =>
@@ -158,6 +168,7 @@ class FirestoreService {
     return _db
         .collection('events')
         .where('isActive', isEqualTo: true)
+        .limit(50)
         .snapshots()
         .map(
           (snap) =>
@@ -227,11 +238,20 @@ class FirestoreService {
   }
 
   Future<void> createOrUpdateEvent(NightlifeEvent event) async {
-    if (event.id.isEmpty) {
-      await _db.collection('events').add(event.toCreateMap());
+    final isNew = event.id.isEmpty;
+    String logId = event.id;
+    if (isNew) {
+      final ref = await _db.collection('events').add(event.toCreateMap());
+      logId = ref.id;
     } else {
       await _db.collection('events').doc(event.id).update(event.toUpdateMap());
     }
+    await _logAudit(
+      action: isNew ? 'event_created' : 'event_updated',
+      targetId: logId,
+      targetType: 'event',
+      metadata: {'title': event.title, 'venueName': event.venueName},
+    );
   }
 
   Future<void> deactivateEvent(String eventId) async {
@@ -272,6 +292,12 @@ class FirestoreService {
 
       if (writes > 0) await batch.commit();
     });
+    await _logAudit(
+      action: 'event_deleted',
+      targetId: cleanEventId,
+      targetType: 'event',
+      metadata: {},
+    );
   }
 
   Future<void> setEventFeatured(String eventId, bool isFeatured) async {
@@ -308,20 +334,11 @@ class FirestoreService {
     final eventId = event.id.trim();
     final eventTitle = event.title.trim();
 
-    debugPrint(
-      'RSVP debug: currentUser.uid=$currentUserId '
-      'firebaseAuth.uid=${authUserId ?? '<null>'} event.id=$eventId '
-      'event.venueId=${event.venueId ?? '<null>'}',
-    );
 
     if (authUserId == null || authUserId.isEmpty) {
       throw const FirestoreAppException('Please sign in again to RSVP.');
     }
     if (currentUserId.isNotEmpty && currentUserId != authUserId) {
-      debugPrint(
-        'RSVP debug: UID mismatch. currentUser.uid=$currentUserId '
-        'firebaseAuth.uid=$authUserId. Using Firebase Auth UID for lookup.',
-      );
     }
     if (!user.isUser || !user.isApproved) {
       throw const FirestoreAppException('Only approved users can RSVP.');
@@ -338,13 +355,7 @@ class FirestoreService {
     }
 
     try {
-      debugPrint('RSVP debug: reading users/$userId before RSVP create');
       final userDoc = await _db.collection('users').doc(userId).get();
-      final profileData = userDoc.data();
-      debugPrint(
-        'RSVP debug: user profile exists=${userDoc.exists} '
-        'doc.id=${userDoc.id} data=${profileData ?? <String, dynamic>{}}',
-      );
       if (!userDoc.exists) {
         throw const FirestoreAppException(
           'Your profile could not be found. Please sign in again.',
@@ -352,10 +363,6 @@ class FirestoreService {
       }
       final profile = AppUser.fromDoc(userDoc);
       if (profile.uid.trim() != authUserId) {
-        debugPrint(
-          'RSVP debug: profile UID mismatch. profile.uid=${profile.uid} '
-          'firebaseAuth.uid=$authUserId doc.id=${userDoc.id}',
-        );
         throw const FirestoreAppException(
           'Your session profile does not match. Please sign in again.',
         );
@@ -364,13 +371,8 @@ class FirestoreService {
         throw const FirestoreAppException('Only approved users can RSVP.');
       }
 
-      debugPrint('RSVP debug: reading events/$eventId before RSVP create');
       final eventDoc = await _db.collection('events').doc(eventId).get();
       final eventData = eventDoc.data();
-      debugPrint(
-        'RSVP debug: event exists=${eventDoc.exists} '
-        'doc.id=${eventDoc.id} data=${eventData ?? <String, dynamic>{}}',
-      );
       if (!eventDoc.exists || eventData == null) {
         throw FirestoreAppException(
           'missing-event-id: This event could not be found.',
@@ -391,9 +393,6 @@ class FirestoreService {
       String? resolvedCode;
 
       if (code != null) {
-        debugPrint(
-          'RSVP debug: reading referralCodes/$code before RSVP create',
-        );
         final referralDoc = await _db
             .collection('referralCodes')
             .doc(code)
@@ -433,10 +432,6 @@ class FirestoreService {
       ])!;
       final userName = profile.name.trim();
       final userPhone = profile.phone.trim();
-      debugPrint(
-        'RSVP debug: mapped eventId=$eventId venueId=$venueId '
-        'title=$eventTitle',
-      );
       final rsvpClientData = _cleanFirestorePayload({
         'userId': userId,
         'userName': userName.isEmpty ? 'Guest' : userName,
@@ -466,14 +461,6 @@ class FirestoreService {
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
-      debugPrint(
-        'RSVP debug: collectionPath=$collectionPath documentId=$rsvpId '
-        'documentPath=$collectionPath/$rsvpId',
-      );
-      debugPrint('RSVP debug: VALID RSVP client payload=$rsvpClientData');
-      debugPrint(
-        'RSVP debug: duplicate-check read $collectionPath/$rsvpId before RSVP create',
-      );
       try {
         final existingRsvp = await rsvpRef.get();
         if (existingRsvp.exists) {
@@ -485,30 +472,14 @@ class FirestoreService {
       } on FirestoreAppException {
         rethrow;
       } on FirebaseException catch (error, stackTrace) {
-        debugPrint(
-          'RSVP debug: duplicate-check FirebaseException '
-          'code=${error.code} message=${error.message} plugin=${error.plugin}',
-        );
         debugPrintStack(stackTrace: stackTrace);
-        debugPrint(
-          'RSVP debug: continuing to RSVP create because duplicate pre-read '
-          'may be blocked by Firestore rules for missing documents.',
-        );
       }
 
-      debugPrint(
-        'RSVP debug: BEFORE Firestore write set($collectionPath/$rsvpId)',
-      );
-      debugPrint('RSVP debug: WRITE PAYLOAD $rsvpWriteData');
 
       await rsvpRef.set(rsvpWriteData);
     } on FirestoreAppException {
       rethrow;
     } on FirebaseException catch (error, stackTrace) {
-      debugPrint(
-        'FirestoreService.createRsvp FirebaseException '
-        'code=${error.code} message=${error.message} plugin=${error.plugin}',
-      );
       debugPrintStack(stackTrace: stackTrace);
       throw FirestoreAppException(
         _friendlyFirestoreError(error),
@@ -516,14 +487,12 @@ class FirestoreService {
             'FirebaseException code=${error.code} message=${error.message}',
       );
     } on Exception catch (error, stackTrace) {
-      debugPrint('FirestoreService.createRsvp Exception: $error');
       debugPrintStack(stackTrace: stackTrace);
       throw FirestoreAppException(
         'Unable to create RSVP right now. Please try again.',
         debugMessage: error.toString(),
       );
     } catch (error, stackTrace) {
-      debugPrint('FirestoreService.createRsvp non-Exception error: $error');
       debugPrintStack(stackTrace: stackTrace);
       throw FirestoreAppException(
         'Unable to create RSVP right now. Please try again.',
@@ -608,7 +577,6 @@ class FirestoreService {
       updates['photoUrl'] = cleanPhotoUrl;
     }
 
-    debugPrint('Firestore profile update started: users/$cleanUserId');
     await _runFirestoreWrite(() async {
       await _db
           .collection('users')
@@ -616,7 +584,6 @@ class FirestoreService {
           .set(updates, SetOptions(merge: true))
           .timeout(const Duration(seconds: 20));
     });
-    debugPrint('Firestore profile updated: users/$cleanUserId');
   }
 
   Future<void> updateUserProfilePhoto({
@@ -632,7 +599,6 @@ class FirestoreService {
       throw const FirestoreAppException('Profile photo URL is required.');
     }
 
-    debugPrint('Firestore profile photo update started: users/$cleanUserId');
     await _runFirestoreWrite(() async {
       await _db
           .collection('users')
@@ -645,7 +611,6 @@ class FirestoreService {
           }, SetOptions(merge: true))
           .timeout(const Duration(seconds: 20));
     });
-    debugPrint('Firestore profile photo updated: users/$cleanUserId');
   }
 
   Future<void> setPromoterActive(Promoter promoter, bool isActive) async {
@@ -680,6 +645,12 @@ class FirestoreService {
         isActive: isActive,
       );
     });
+    await _logAudit(
+      action: isActive ? 'promoter_activated' : 'promoter_deactivated',
+      targetId: promoter.id,
+      targetType: 'promoter',
+      metadata: {'name': promoter.name},
+    );
   }
 
   Future<void> approveUser(AppUser user) async {
@@ -711,14 +682,28 @@ class FirestoreService {
     }
 
     await _db.collection('users').doc(user.uid).update(updates);
+    await _logAudit(
+      action: 'user_approved',
+      targetId: user.uid,
+      targetType: 'user',
+      metadata: {'role': user.role, 'name': user.name},
+    );
   }
 
   Future<void> rejectUser(AppUser user) async {
     await _db.collection('users').doc(user.uid).update({
       'status': 'rejected',
+      'verificationStatus': 'rejected',
       'isActive': false,
+      'rejectionReason': 'Rejected by admin',
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    await _logAudit(
+      action: 'user_rejected',
+      targetId: user.uid,
+      targetType: 'user',
+      metadata: {'role': user.role, 'name': user.name},
+    );
 
     if (user.isClubAdmin && user.clubId != null) {
       await _db.collection('clubs').doc(user.clubId).update({
@@ -758,6 +743,12 @@ class FirestoreService {
         await _deactivateReferralCode(user.promoterCode);
       }
     });
+    await _logAudit(
+      action: 'user_rejected',
+      targetId: user.uid,
+      targetType: 'user',
+      metadata: {'role': user.role, 'name': user.name, 'reason': rejectionReason ?? ''},
+    );
   }
 
   Future<void> approveClubReview(Club club) async {
@@ -788,6 +779,12 @@ class FirestoreService {
 
       await batch.commit();
     });
+    await _logAudit(
+      action: 'club_approved',
+      targetId: club.id,
+      targetType: 'club',
+      metadata: {'clubName': club.clubName},
+    );
   }
 
   Future<void> rejectClubReview(Club club, {String? rejectionReason}) async {
@@ -818,6 +815,12 @@ class FirestoreService {
 
       await batch.commit();
     });
+    await _logAudit(
+      action: 'club_rejected',
+      targetId: club.id,
+      targetType: 'club',
+      metadata: {'clubName': club.clubName, 'reason': rejectionReason ?? ''},
+    );
   }
 
   Future<void> submitClubOnboarding({
@@ -847,13 +850,13 @@ class FirestoreService {
       'instagram': instagram.trim(),
       'googleMapsLink': googleMapsLink.trim(),
       'documentUrl': documentUrl.trim(),
-      'verificationStatus': 'pending',
+      'verificationStatus': 'pending_review',
       'createdAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
     await _db.collection('users').doc(user.uid).update({
       'role': 'clubAdmin',
-      'status': 'pending',
+      'status': 'pending_review',
       'clubId': clubRef.id,
       'updatedAt': FieldValue.serverTimestamp(),
     });
@@ -960,7 +963,7 @@ class FirestoreService {
     });
   }
 
-  Future<void> setMaintenanceModePlaceholder(bool enabled) async {
+  Future<void> setMaintenanceMode(bool enabled) async {
     await _runFirestoreWrite(() async {
       await _db.collection('platform').doc('settings').set({
         'maintenanceMode': enabled,
@@ -1089,6 +1092,27 @@ class FirestoreService {
     }
 
     await batch.commit();
+  }
+
+  Future<void> _logAudit({
+    required String action,
+    required String targetId,
+    String? targetType,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      await _db.collection('audit_logs').add({
+        'action': action,
+        'targetId': targetId,
+        'targetType': targetType ?? '',
+        'performedBy': _auth.currentUser?.uid ?? 'system',
+        'performedByEmail': _auth.currentUser?.email ?? 'system',
+        'metadata': metadata ?? {},
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      // Audit log failure must never crash the app
+    }
   }
 
   Future<void> _ensurePromoter(
@@ -1266,10 +1290,6 @@ class FirestoreService {
     try {
       await action();
     } on FirebaseException catch (error) {
-      debugPrint(
-        'FirestoreService write FirebaseException: '
-        '${error.code} ${error.message}',
-      );
       throw FirestoreAppException(
         error.message ?? 'Unable to update Firestore right now.',
       );
