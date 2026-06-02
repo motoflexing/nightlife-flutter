@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
 import '../core/utils/formatters.dart';
 import '../models/event.dart';
 import '../services/location_service.dart';
@@ -80,7 +79,7 @@ class _EventCardState extends State<EventCard> {
               ),
               child: ClipRRect(
                 borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(8),
+                  left: Radius.circular(12),
                 ),
                 child: _PosterStack(event: event),
               ),
@@ -147,6 +146,8 @@ class _EventCardState extends State<EventCard> {
   }
 }
 
+// ─── Shell ────────────────────────────────────────────────────────────────────
+
 class _CardShell extends StatelessWidget {
   const _CardShell({required this.child, required this.onTap});
 
@@ -158,20 +159,15 @@ class _CardShell extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
-            color: AppTheme.surface.withValues(alpha: 0.96),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.24),
-                blurRadius: 18,
-                offset: const Offset(0, 12),
-              ),
-            ],
+            color: const Color(0xFF1C1C22),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x12FFFFFF), width: 0.5),
           ),
           child: child,
         ),
@@ -179,6 +175,8 @@ class _CardShell extends StatelessWidget {
     );
   }
 }
+
+// ─── Card details ─────────────────────────────────────────────────────────────
 
 class _CardDetails extends StatelessWidget {
   const _CardDetails({
@@ -229,12 +227,14 @@ class _CardDetails extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                maxLines: dense ? (mobile ? 2 : 1) : 1,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontSize: dense ? 15 : 16,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFFF5F5F0),
+                  letterSpacing: -0.2,
                   height: 1.08,
-                  fontWeight: FontWeight.w900,
                 ),
               ),
             ),
@@ -298,6 +298,8 @@ class _CardDetails extends StatelessWidget {
   }
 }
 
+// ─── Poster + badge ───────────────────────────────────────────────────────────
+
 class _PosterStack extends StatelessWidget {
   const _PosterStack({required this.event});
 
@@ -326,23 +328,23 @@ class _ProofBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _badgeColor(label);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        color: const Color(0xFF1C1C22),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: const Color(0xFFF59E0B), width: 0.5),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Text(
-          label,
+          label.toUpperCase(),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10,
-            fontWeight: FontWeight.w900,
+            color: Color(0xFFF59E0B),
+            fontSize: 9,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.8,
           ),
         ),
       ),
@@ -350,13 +352,7 @@ class _ProofBadge extends StatelessWidget {
   }
 }
 
-Color _badgeColor(String label) {
-  final value = label.toLowerCase();
-  if (value.contains('featured')) return AppTheme.paidAccent;
-  if (value.contains('free')) return AppTheme.success;
-  if (value.contains('popular')) return AppTheme.neonViolet;
-  return AppTheme.accentPink;
-}
+// ─── Tag data ─────────────────────────────────────────────────────────────────
 
 class _CardTagData {
   const _CardTagData(this.label, {this.accent = false});
@@ -364,6 +360,8 @@ class _CardTagData {
   final String label;
   final bool accent;
 }
+
+// ─── Save button ──────────────────────────────────────────────────────────────
 
 class _SaveButton extends StatelessWidget {
   const _SaveButton({required this.saved, required this.onTap});
@@ -377,25 +375,25 @@ class _SaveButton extends StatelessWidget {
       message: saved ? 'Saved' : 'Save event',
       child: InkWell(
         borderRadius: BorderRadius.circular(999),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
         onTap: onTap,
-        child: Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          ),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
           child: Icon(
             saved ? Icons.favorite : Icons.favorite_border,
-            size: 16,
-            color: saved ? AppTheme.accentPink : AppTheme.textMuted,
+            size: 18,
+            color: saved
+                ? const Color(0xFFF59E0B)
+                : const Color(0x4DFFFFFF),
           ),
         ),
       ),
     );
   }
 }
+
+// ─── Icon line ────────────────────────────────────────────────────────────────
 
 class _IconLine extends StatelessWidget {
   const _IconLine({required this.icon, required this.text});
@@ -407,7 +405,7 @@ class _IconLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 13, color: AppTheme.textMuted),
+        Icon(icon, size: 11, color: const Color(0x4DFFFFFF)),
         const SizedBox(width: 5),
         Expanded(
           child: Text(
@@ -415,9 +413,9 @@ class _IconLine extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
+              color: Color(0x66FFFFFF),
+              fontSize: 11,
+              letterSpacing: 0.1,
             ),
           ),
         ),
@@ -425,6 +423,8 @@ class _IconLine extends StatelessWidget {
     );
   }
 }
+
+// ─── Tag pill ─────────────────────────────────────────────────────────────────
 
 class _Tag extends StatelessWidget {
   const _Tag({
@@ -449,13 +449,14 @@ class _Tag extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: accent
-            ? AppTheme.accentPink.withValues(alpha: 0.13)
-            : Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(999),
+            ? const Color(0x1AF59E0B)
+            : const Color(0x0DFFFFFF),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(
           color: accent
-              ? AppTheme.accentPink.withValues(alpha: 0.32)
-              : Colors.white.withValues(alpha: 0.08),
+              ? const Color(0x4DF59E0B)
+              : const Color(0x1AFFFFFF),
+          width: 0.5,
         ),
       ),
       child: Text(
@@ -463,14 +464,18 @@ class _Tag extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          color: accent ? Colors.white : AppTheme.textMuted,
-          fontSize: 10.5,
-          fontWeight: FontWeight.w800,
+          color: accent
+              ? const Color(0xFFF59E0B)
+              : const Color(0x73FFFFFF),
+          fontSize: 10,
+          letterSpacing: 0.3,
         ),
       ),
     );
   }
 }
+
+// ─── Primary action button (solid gold) ───────────────────────────────────────
 
 class _GradientActionButton extends StatefulWidget {
   const _GradientActionButton({required this.label, required this.onPressed});
@@ -497,32 +502,28 @@ class _GradientActionButtonState extends State<_GradientActionButton> {
         onTapUp: (_) => setState(() => _pressed = false),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: AppTheme.premiumGradient,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.accentPink.withValues(alpha: 0.16),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
+            color: const Color(0xFFF59E0B),
+            borderRadius: BorderRadius.circular(4),
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(4),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
               onTap: widget.onPressed,
               child: SizedBox(
-                height: 36,
+                height: 32,
                 child: Center(
                   child: Text(
-                    widget.label,
+                    widget.label.toUpperCase(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF080809),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.8,
                     ),
                   ),
                 ),
@@ -535,6 +536,8 @@ class _GradientActionButtonState extends State<_GradientActionButton> {
   }
 }
 
+// ─── Secondary action button (subtle outline) ─────────────────────────────────
+
 class _SubtleActionButton extends StatelessWidget {
   const _SubtleActionButton({required this.label, required this.onPressed});
 
@@ -546,18 +549,27 @@ class _SubtleActionButton extends StatelessWidget {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        foregroundColor: const Color(0x80FFFFFF),
+        side: const BorderSide(color: Color(0x26FFFFFF), width: 0.5),
         padding: const EdgeInsets.symmetric(horizontal: 9),
-        minimumSize: const Size(0, 36),
+        minimumSize: const Size(0, 32),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        textStyle: const TextStyle(
+          fontSize: 11,
+          letterSpacing: 0.8,
+        ),
       ),
-      child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      child: Text(
+        label.toUpperCase(),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 }
+
+// ─── Helpers (logic unchanged) ────────────────────────────────────────────────
 
 bool _isPaid(NightlifeEvent event) {
   final value = event.priceText.trim().toLowerCase();

@@ -586,21 +586,14 @@ class _HomeTopBar extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppTheme.elevated,
+              color: AppTheme.goldSubtle,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+              border: Border.all(color: AppTheme.goldBorder, width: 0.5),
             ),
             child: const Icon(
               Icons.nightlife,
               size: 19,
-              color: AppTheme.accentPink,
+              color: AppTheme.gold,
             ),
           ),
           const SizedBox(width: 9),
@@ -612,16 +605,21 @@ class _HomeTopBar extends StatelessWidget {
                   'Nightlife',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.3,
+                    color: AppTheme.textHigh,
+                  ),
                 ),
                 Text(
                   city,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: AppTheme.textMuted,
+                    color: AppTheme.textLow,
                     fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],
@@ -959,7 +957,7 @@ class _CompactSelector<T> extends StatelessWidget {
     return PopupMenuButton<T>(
       tooltip: tooltip,
       onSelected: onSelected,
-      color: AppTheme.elevated,
+      color: AppTheme.card,
       itemBuilder: (context) {
         return values
             .map(
@@ -973,14 +971,14 @@ class _CompactSelector<T> extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 100),
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: AppTheme.surface.withValues(alpha: 0.92),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          color: AppTheme.elevated,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: AppTheme.textMuted),
+            Icon(icon, size: 13, color: AppTheme.textLow),
             const SizedBox(width: 5),
             Flexible(
               child: Text(
@@ -988,8 +986,9 @@ class _CompactSelector<T> extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  color: AppTheme.textMid,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
@@ -1018,7 +1017,7 @@ class _DatePickerButton extends StatelessWidget {
     return PopupMenuButton<_DateFilterOption>(
       tooltip: tooltip,
       onSelected: onSelected,
-      color: AppTheme.elevated,
+      color: AppTheme.card,
       itemBuilder: (context) => _DateFilterOption.values
           .map(
             (option) => PopupMenuItem<_DateFilterOption>(
@@ -1032,14 +1031,14 @@ class _DatePickerButton extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 132),
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: AppTheme.surface.withValues(alpha: 0.92),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          color: AppTheme.elevated,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: AppTheme.textMuted),
+            Icon(icon, size: 13, color: AppTheme.textLow),
             const SizedBox(width: 5),
             Flexible(
               child: Text(
@@ -1047,16 +1046,17 @@ class _DatePickerButton extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  color: AppTheme.textMid,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
             const SizedBox(width: 3),
             const Icon(
               Icons.keyboard_arrow_down,
-              size: 15,
-              color: AppTheme.textMuted,
+              size: 13,
+              color: AppTheme.textLow,
             ),
           ],
         ),
@@ -1096,8 +1096,11 @@ class _DiscoveryControls extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w400,
+                        color: AppTheme.textHigh,
+                        letterSpacing: -0.3,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1106,8 +1109,9 @@ class _DiscoveryControls extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: AppTheme.textMuted,
+                        color: AppTheme.textLow,
                         fontSize: 12,
+                        letterSpacing: 0.1,
                       ),
                     ),
                   ],
@@ -1117,7 +1121,7 @@ class _DiscoveryControls extends StatelessWidget {
               PopupMenuButton<_DiscoveryFilter>(
                 tooltip: 'Filter events',
                 onSelected: onFilterSelected,
-                color: AppTheme.elevated,
+                color: AppTheme.card,
                 itemBuilder: (context) => _DiscoveryFilter.values
                     .map(
                       (filter) => PopupMenuItem<_DiscoveryFilter>(
@@ -1127,26 +1131,27 @@ class _DiscoveryControls extends StatelessWidget {
                     )
                     .toList(),
                 child: Container(
-                  height: 38,
+                  height: 36,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: AppTheme.surface.withValues(alpha: 0.94),
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppTheme.elevated,
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: AppTheme.borderSubtle,
+                      width: 0.5,
                     ),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.tune, size: 16, color: AppTheme.textMuted),
+                      Icon(Icons.tune, size: 14, color: AppTheme.textLow),
                       SizedBox(width: 6),
                       Text(
                         'Filters',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.textMid,
                           fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                     ],
@@ -1197,21 +1202,18 @@ class _FilterChipButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(6),
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         height: 31,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: selected
-              ? AppTheme.accentPink
-              : AppTheme.surface.withValues(alpha: 0.88),
-          borderRadius: BorderRadius.circular(999),
+          color: selected ? AppTheme.goldSubtle : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: selected
-                ? AppTheme.accentPink
-                : Colors.white.withValues(alpha: 0.08),
+            color: selected ? AppTheme.gold : AppTheme.borderSubtle,
+            width: 0.5,
           ),
         ),
         child: Row(
@@ -1224,9 +1226,9 @@ class _FilterChipButton extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: selected ? Colors.white : AppTheme.textMuted,
-                fontSize: 11.5,
-                fontWeight: FontWeight.w800,
+                color: selected ? AppTheme.gold : AppTheme.textLow,
+                fontSize: 11,
+                fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
               ),
             ),
           ],
@@ -1414,16 +1416,16 @@ class _SkeletonEventCard extends StatelessWidget {
     return Container(
       height: 164,
       decoration: BoxDecoration(
-        color: AppTheme.surface.withValues(alpha: 0.9),
+        color: AppTheme.elevated,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
       ),
       child: Row(
         children: [
           Container(
             width: 118,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.06),
+              color: AppTheme.card,
               borderRadius: BorderRadius.circular(8),
             ),
           ),
@@ -1468,7 +1470,7 @@ class _SkeletonLine extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.07),
+        color: const Color(0x0DFFFFFF),
         borderRadius: BorderRadius.circular(8),
       ),
     );
@@ -1489,25 +1491,31 @@ class _InlineEmptyFilterState extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: AppTheme.glassSurface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          color: AppTheme.elevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.search_off_outlined, color: AppTheme.accentPink),
+            const Icon(Icons.search_off_outlined, color: AppTheme.gold, size: 28),
             const SizedBox(height: 10),
             Text(
               title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.textHigh,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               message,
-              style: const TextStyle(color: AppTheme.textMuted, height: 1.35),
+              style: const TextStyle(
+                color: AppTheme.textLow,
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
           ],
         ),

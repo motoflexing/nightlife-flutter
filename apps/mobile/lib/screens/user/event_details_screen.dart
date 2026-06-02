@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -652,19 +650,13 @@ class _CinematicHero extends StatelessWidget {
     final title = event.title.trim().isEmpty ? 'Nightlife Event' : event.title;
 
     return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(8)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.neonViolet.withValues(alpha: 0.28),
-            blurRadius: 38,
-            spreadRadius: -14,
-            offset: const Offset(0, 18),
-          ),
-          BoxShadow(
-            color: AppTheme.accentPink.withValues(alpha: 0.16),
-            blurRadius: 52,
-            spreadRadius: -22,
+            color: Color(0x33000000),
+            blurRadius: 24,
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -707,14 +699,11 @@ class _CinematicHero extends StatelessWidget {
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
+                        color: Color(0xFFF5F5F0),
+                        fontSize: 26,
                         height: 1.02,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0,
-                        shadows: [
-                          Shadow(color: Colors.black87, blurRadius: 18),
-                        ],
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -723,9 +712,9 @@ class _CinematicHero extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: AppTheme.textMuted,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
+                        color: Color(0x66FFFFFF),
+                        fontSize: 12,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ],
@@ -994,10 +983,10 @@ class _FactDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 1,
+      width: 0.5,
       height: 48,
       margin: const EdgeInsets.symmetric(horizontal: 6),
-      color: Colors.white.withValues(alpha: 0.08),
+      color: const Color(0x12FFFFFF),
     );
   }
 }
@@ -1026,21 +1015,21 @@ class _FactItem extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
+            color: Color(0xFFF5F5F0),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 3),
         Text(
-          label,
+          label.toUpperCase(),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: AppTheme.textMuted,
-            fontSize: 10.5,
-            fontWeight: FontWeight.w700,
+            color: Color(0x40FFFFFF),
+            fontSize: 10,
+            letterSpacing: 0.5,
           ),
         ),
       ],
@@ -1545,18 +1534,18 @@ class _PromoterCodeCard extends StatelessWidget {
           const Text(
             'Have a promoter code?',
             style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
+              color: Color(0xFFF5F5F0),
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              letterSpacing: -0.1,
             ),
           ),
           const SizedBox(height: 6),
           const Text(
             'Using a promoter code helps us track who invited you.',
             style: TextStyle(
-              color: AppTheme.textMuted,
+              color: Color(0x66FFFFFF),
               fontSize: 12,
-              fontWeight: FontWeight.w700,
               height: 1.35,
             ),
           ),
@@ -1564,10 +1553,26 @@ class _PromoterCodeCard extends StatelessWidget {
           TextField(
             controller: codeController,
             textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Have a promoter code?',
               hintText: 'Enter promoter code',
-              prefixIcon: Icon(Icons.qr_code_2),
+              labelStyle: const TextStyle(color: Color(0x66FFFFFF)),
+              hintStyle: const TextStyle(color: Color(0x66FFFFFF)),
+              prefixIcon: const Icon(Icons.qr_code_2, color: Color(0x66F59E0B)),
+              filled: true,
+              fillColor: const Color(0xFF141418),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: const BorderSide(color: Color(0x12FFFFFF), width: 0.5),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: const BorderSide(color: Color(0x12FFFFFF), width: 0.5),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: const BorderSide(color: Color(0xFFF59E0B)),
+              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -1775,70 +1780,57 @@ class _StickyBookingBar extends StatelessWidget {
         ? 'Entry details at venue'
         : event.priceText.trim();
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.72),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.accentPink.withValues(alpha: 0.25),
-                blurRadius: 30,
-                offset: const Offset(0, 14),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      entry,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      canRsvp ? 'Limited spots tonight' : 'Approval required',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppTheme.textMuted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+      decoration: BoxDecoration(
+        color: const Color(0xF0141418),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0x12FFFFFF), width: 0.5),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFF5F5F0),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              SizedBox(
-                width: 132,
-                child: _BookSpotButton(
-                  compact: true,
-                  submitting: submitting,
-                  rsvpCreated: rsvpCreated,
-                  onPressed: !canRsvp || submitting || rsvpCreated
-                      ? null
-                      : onRsvp,
+                const SizedBox(height: 3),
+                Text(
+                  canRsvp ? 'Limited spots tonight' : 'Approval required',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0x40FFFFFF),
+                    fontSize: 11,
+                    letterSpacing: 0.1,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 132,
+            child: _BookSpotButton(
+              compact: true,
+              submitting: submitting,
+              rsvpCreated: rsvpCreated,
+              onPressed: !canRsvp || submitting || rsvpCreated
+                  ? null
+                  : onRsvp,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1866,27 +1858,43 @@ class _BookSpotButton extends StatelessWidget {
         child: ElevatedButton.icon(
           onPressed: onPressed,
           icon: submitting
-              ? const PremiumLoader.compact(size: 18)
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF080809),
+                    strokeWidth: 2,
+                  ),
+                )
               : Icon(
                   rsvpCreated ? Icons.check_circle_outline : Icons.how_to_reg,
                   size: 18,
                 ),
           label: Text(
             submitting
-                ? 'Booking'
+                ? 'BOOKING...'
                 : rsvpCreated
-                ? 'Confirmed'
-                : 'Book Spot',
+                ? 'CONFIRMED'
+                : 'BOOK SPOT',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.accentPink,
-            foregroundColor: Colors.white,
-            shadowColor: AppTheme.accentPink.withValues(alpha: 0.42),
-            elevation: 12,
+            backgroundColor: rsvpCreated
+                ? const Color(0x1A22C55E)
+                : const Color(0xFFF59E0B),
+            foregroundColor: rsvpCreated
+                ? const Color(0xFF22C55E)
+                : const Color(0xFF080809),
+            shadowColor: Colors.transparent,
+            elevation: 0,
+            textStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.8,
+            ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
             ),
           ),
         ),
@@ -1933,41 +1941,27 @@ class _GlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width < 640;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: EdgeInsets.all(mobile ? 14 : 16),
-          decoration: BoxDecoration(
-            color: AppTheme.glassSurface.withValues(alpha: 0.72),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.09)),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.neonViolet.withValues(alpha: 0.11),
-                blurRadius: mobile ? 20 : 28,
-                spreadRadius: -12,
-                offset: Offset(0, mobile ? 10 : 16),
-              ),
-            ],
-          ),
-          child: TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 420),
-            curve: Curves.easeOutCubic,
-            builder: (context, value, child) {
-              return Opacity(
-                opacity: value,
-                child: Transform.translate(
-                  offset: Offset(0, 10 * (1 - value)),
-                  child: child,
-                ),
-              );
-            },
-            child: child,
-          ),
-        ),
+    return Container(
+      padding: EdgeInsets.all(mobile ? 14 : 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C22),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0x12FFFFFF), width: 0.5),
+      ),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return Opacity(
+            opacity: value,
+            child: Transform.translate(
+              offset: Offset(0, 10 * (1 - value)),
+              child: child,
+            ),
+          );
+        },
+        child: child,
       ),
     );
   }
@@ -1999,13 +1993,11 @@ class _PremiumInfoLine extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppTheme.neonViolet.withValues(alpha: 0.12),
+              color: const Color(0x0DF59E0B),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppTheme.neonViolet.withValues(alpha: 0.28),
-              ),
+              border: Border.all(color: const Color(0x33F59E0B), width: 0.5),
             ),
-            child: Icon(icon, size: 18, color: AppTheme.neonViolet),
+            child: Icon(icon, size: 18, color: const Color(0xFFF59E0B)),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -2226,62 +2218,27 @@ class _LivePulseBadge extends StatelessWidget {
   }
 }
 
-class _TrendingBadge extends StatefulWidget {
+class _TrendingBadge extends StatelessWidget {
   const _TrendingBadge({required this.label});
 
   final String label;
 
   @override
-  State<_TrendingBadge> createState() => _TrendingBadgeState();
-}
-
-class _TrendingBadgeState extends State<_TrendingBadge>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1600),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          decoration: BoxDecoration(
-            gradient: AppTheme.premiumGradient,
-            borderRadius: BorderRadius.circular(999),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.neonViolet.withValues(
-                  alpha: 0.22 + (_controller.value * 0.18),
-                ),
-                blurRadius: 18 + (_controller.value * 8),
-              ),
-            ],
-          ),
-          child: child,
-        );
-      },
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0x1AF59E0B),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: const Color(0x4DF59E0B), width: 0.5),
+      ),
       child: Text(
-        widget.label,
+        label.toUpperCase(),
         style: const TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
+          color: Color(0xFFF59E0B),
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.8,
         ),
       ),
     );
@@ -2438,16 +2395,8 @@ class _AliveNightBackdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0x00050509), Color(0x1A6D123A), Color(0x220B0614)],
-          ),
-        ),
-      ),
+    return const IgnorePointer(
+      child: ColoredBox(color: Color(0xFF080809)),
     );
   }
 }

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -46,14 +44,16 @@ class UserShellTopBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
             const SizedBox(width: 10),
-            Expanded(
+            const Expanded(
               child: Text(
                 'Nightlife',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                style: TextStyle(
+                  fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 0,
+                  letterSpacing: 0.5,
+                  color: Color(0xFFF5F5F0),
                 ),
               ),
             ),
@@ -87,19 +87,12 @@ class PremiumBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      decoration: BoxDecoration(
-        color: const Color(0xF2050509),
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+      decoration: const BoxDecoration(
+        color: Color(0xF5080809),
         border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+          top: BorderSide(color: Color(0x12FFFFFF), width: 0.5),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.34),
-            blurRadius: 18,
-            offset: const Offset(0, -8),
-          ),
-        ],
       ),
       child: SafeArea(
         top: false,
@@ -146,7 +139,7 @@ class _BottomNavItemState extends State<_BottomNavItem> {
   Widget build(BuildContext context) {
     final selected = widget.selected;
     final center = widget.center;
-    final iconColor = selected ? Colors.white : AppTheme.textMuted;
+    final iconColor = selected ? const Color(0xFFF59E0B) : const Color(0x40FFFFFF);
     final icon = selected ? widget.tab.selectedIcon : widget.tab.icon;
 
     return Tooltip(
@@ -175,43 +168,26 @@ class _BottomNavItemState extends State<_BottomNavItem> {
                   height: center ? 46 : 42,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: center ? AppTheme.premiumGradient : null,
                     color: center
-                        ? null
+                        ? const Color(0xFFF59E0B)
                         : selected
-                        ? Colors.white.withValues(alpha: 0.07)
+                        ? const Color(0x1AF59E0B)
                         : Colors.transparent,
-                    border: Border.all(
-                      color: center
-                          ? Colors.white.withValues(alpha: 0.12)
-                          : Colors.transparent,
-                    ),
-                    boxShadow: center
-                        ? [
-                            BoxShadow(
-                              color: AppTheme.accentPink.withValues(
-                                alpha: 0.18,
-                              ),
-                              blurRadius: 16,
-                              offset: const Offset(0, 8),
-                            ),
-                          ]
-                        : null,
                   ),
                   child: Icon(
                     icon,
                     size: center ? 23 : 22,
-                    color: center ? Colors.white : iconColor,
+                    color: center ? const Color(0xFF080809) : iconColor,
                   ),
                 ),
                 Positioned(
                   bottom: 1,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 170),
-                    width: selected && !center ? 4 : 0,
-                    height: selected && !center ? 4 : 0,
+                    width: selected && !center ? 3 : 0,
+                    height: selected && !center ? 3 : 0,
                     decoration: const BoxDecoration(
-                      color: AppTheme.accentPink,
+                      color: Color(0xFFF59E0B),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -294,23 +270,11 @@ class _ChromeBackdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: const Color(0xE60B0B12),
-            border: Border(
-              bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.26),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        color: Color(0xF0080809),
+        border: Border(
+          bottom: BorderSide(color: Color(0x12FFFFFF), width: 0.5),
         ),
       ),
     );
@@ -509,7 +473,7 @@ class _TopAvatar extends StatelessWidget {
         customBorder: const CircleBorder(),
         mouseCursor: SystemMouseCursors.click,
         hoverColor: Colors.white.withValues(alpha: 0.06),
-        splashColor: AppTheme.accentPink.withValues(alpha: 0.14),
+        splashColor: const Color(0x1AF59E0B),
         onTap: onPressed,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
@@ -520,17 +484,10 @@ class _TopAvatar extends StatelessWidget {
             gradient: photoUrl.isEmpty ? AppTheme.premiumGradient : null,
             border: Border.all(
               color: selected
-                  ? AppTheme.accentPink
-                  : Colors.white.withValues(alpha: 0.14),
+                  ? const Color(0xFFF59E0B)
+                  : const Color(0x26FFFFFF),
               width: selected ? 1.4 : 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.accentPink.withValues(alpha: 0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
           ),
           clipBehavior: Clip.antiAlias,
           child: photoUrl.isNotEmpty
@@ -580,10 +537,10 @@ class _ChromeIconButton extends StatelessWidget {
       onPressed: onPressed,
       style: IconButton.styleFrom(
         fixedSize: const Size(38, 38),
-        backgroundColor: Colors.white.withValues(alpha: 0.04),
+        backgroundColor: const Color(0x0DFFFFFF),
         foregroundColor: Colors.white,
-        hoverColor: Colors.white.withValues(alpha: 0.08),
-        highlightColor: AppTheme.accentPink.withValues(alpha: 0.1),
+        hoverColor: const Color(0x1AF59E0B),
+        highlightColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       icon: Icon(icon),
