@@ -123,11 +123,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
               onShortcutTap: _toggleShortcut,
             ),
             const SizedBox(height: 14),
-            Text(
-              'All Events',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+            const Text(
+              'ALL EVENTS',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.textLow,
+                letterSpacing: 1.2,
+              ),
             ),
             const SizedBox(height: 10),
             if (events.isEmpty)
@@ -212,11 +215,11 @@ class _ExploreHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.glassSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
       ),
       child: Row(
         children: [
@@ -224,10 +227,11 @@ class _ExploreHeader extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              gradient: AppTheme.premiumGradient,
+              color: AppTheme.goldSubtle,
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppTheme.goldBorder, width: 1),
             ),
-            child: const Icon(Icons.explore_outlined),
+            child: const Icon(Icons.explore_outlined, color: AppTheme.gold),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -235,14 +239,22 @@ class _ExploreHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Explore Events',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                  '$count',
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w300,
+                    color: AppTheme.textHigh,
+                    letterSpacing: -0.5,
+                  ),
                 ),
-                Text(
-                  '$count nights matching your filters',
-                  style: const TextStyle(color: AppTheme.textMuted),
+                const Text(
+                  'NIGHTS MATCHING YOUR FILTERS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textLow,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -283,24 +295,29 @@ class _CollectionsStrip extends StatelessWidget {
                 width: 140,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: selected
-                      ? AppTheme.accentPink.withValues(alpha: 0.16)
-                      : AppTheme.elevated.withValues(alpha: 0.68),
-                  borderRadius: BorderRadius.circular(8),
+                  color: selected ? AppTheme.goldSubtle : AppTheme.card,
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: selected
-                        ? AppTheme.accentPink.withValues(alpha: 0.72)
-                        : AppTheme.glassBorder,
+                    color: selected ? AppTheme.gold : AppTheme.borderSubtle,
+                    width: 0.5,
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(shortcut.icon, color: AppTheme.accentPink),
+                    Icon(
+                      shortcut.icon,
+                      color: selected ? AppTheme.gold : AppTheme.textMid,
+                    ),
                     const Spacer(),
                     Text(
                       shortcut.label,
-                      style: const TextStyle(fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: selected ? AppTheme.gold : AppTheme.textHigh,
+                        letterSpacing: 0.2,
+                      ),
                     ),
                   ],
                 ),

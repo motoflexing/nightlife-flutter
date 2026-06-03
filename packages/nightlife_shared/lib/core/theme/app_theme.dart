@@ -1,198 +1,237 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color background = Color(0xFF0B0D14);
-  static const Color surface = Color(0xFF181A20);
-  static const Color elevated = Color(0xFF20232B);
-  static const Color deepPurple = Color(0xFF1E1B4B);
-  static const Color primaryViolet = Color(0xFFFF2D55);
-  static const Color neonViolet = Color(0xFFA855F7);
-  static const Color accentPink = Color(0xFFFF3D8B);
-  static const Color textMuted = Color(0xFFB8B8D0);
+  AppTheme._();
 
-  static const Color glassSurface = Color(0xCC111827);
-  static const Color glassBorder = Color(0x33BFA3FF);
+  // --- Base backgrounds ---
+  static const Color background     = Color(0xFF080809);
+  static const Color surface        = Color(0xFF0D0D0F);
+  static const Color elevated       = Color(0xFF141418);
+  static const Color card           = Color(0xFF1C1C22);
 
-  static const Color neonPink = accentPink;
-  static const Color neonCyan = neonViolet;
-  static const Color neonLime = Color(0xFFB8FF5C);
+  // --- Gold accent ---
+  static const Color gold           = Color(0xFFF59E0B);
+  static const Color goldDark       = Color(0xFFD97706);
+  static const Color goldSubtle     = Color(0x1AF59E0B);
+  static const Color goldBorder     = Color(0x4DF59E0B);
 
+  // --- Text ---
+  static const Color textHigh       = Color(0xFFF5F5F0);
+  static const Color textMid        = Color(0x80FFFFFF);
+  static const Color textLow        = Color(0x40FFFFFF);
+  static const Color textMuted      = Color(0x66FFFFFF);
+
+  // --- Borders ---
+  static const Color borderSubtle   = Color(0x12FFFFFF);
+  static const Color borderMid      = Color(0x1FFFFFFF);
+
+  // --- Semantic ---
+  static const Color success        = Color(0xFF22C55E);
+  static const Color error          = Color(0xFFEF4444);
+  static const Color warning        = Color(0xFFF59E0B);
+
+  // --- Legacy aliases (keep for compatibility) ---
+  static const Color primaryViolet  = gold;
+  static const Color accentPink     = gold;
+  static const Color neonViolet     = gold;
+  static const Color paidAccent     = gold;
+  static const Color glassSurface   = elevated;
+  static const Color glassBorder    = borderSubtle;
+  static const Color deepPurple     = surface;
+  static const Color neonPink       = gold;
+  static const Color neonCyan       = gold;
+  static const Color neonLime       = success;
+
+  // --- Gradients ---
+  // Kept for any remaining references — neutral dark fade
   static const LinearGradient premiumGradient = LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-    colors: [primaryViolet, accentPink, neonViolet],
+    colors: [Color(0xFF1C1C22), Color(0xFF141418)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
   );
 
   static const LinearGradient nightclubGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [background, Color(0xFF11131B), Color(0xFF050509)],
-    stops: [0, 0.54, 1],
+    colors: [Color(0xFF080809), Color(0xFF0D0D0F)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
   );
 
-  static ThemeData dark() {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: primaryViolet,
-      brightness: Brightness.dark,
-      primary: primaryViolet,
-      secondary: accentPink,
-      surface: surface,
-      onSurface: Colors.white,
-    );
+  static const LinearGradient goldGradient = LinearGradient(
+    colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
+  // --- ThemeData ---
+  static ThemeData dark() {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: background,
-      colorScheme: scheme,
       fontFamily: 'Roboto',
+
+      colorScheme: const ColorScheme.dark(
+        primary: gold,
+        secondary: gold,
+        surface: surface,
+        error: error,
+        onPrimary: background,
+        onSecondary: background,
+        onSurface: textHigh,
+        onError: textHigh,
+      ),
+
+      // AppBar
       appBarTheme: const AppBarTheme(
-        centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.white,
-        toolbarHeight: 48,
+        scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(color: textHigh),
         titleTextStyle: TextStyle(
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.w900,
+          color: textHigh,
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.3,
         ),
       ),
-      cardTheme: CardThemeData(
-        color: glassSurface,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: glassBorder),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xB3171D2D),
-        labelStyle: const TextStyle(color: textMuted),
-        hintStyle: const TextStyle(color: Color(0x99B8B8D0)),
-        prefixIconColor: textMuted,
-        suffixIconColor: textMuted,
-        prefixIconConstraints: const BoxConstraints(minWidth: 42),
-        suffixIconConstraints: const BoxConstraints(minWidth: 42),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0x332D2368)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: neonViolet, width: 1.5),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0x262D2368)),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: accentPink),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: accentPink, width: 1.5),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
-      ),
+
+      // ElevatedButton
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryViolet,
-          foregroundColor: Colors.white,
+          backgroundColor: gold,
+          foregroundColor: background,
           elevation: 0,
-          shadowColor: neonViolet.withValues(alpha: 0.45),
-          disabledBackgroundColor: const Color(0xFF26213D),
-          disabledForegroundColor: textMuted,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          minimumSize: const Size(0, 40),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.8,
+          ),
         ),
       ),
+
+      // OutlinedButton
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.white,
-          side: const BorderSide(color: Color(0x66FF3D8B)),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          minimumSize: const Size(0, 40),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          foregroundColor: textHigh,
+          side: const BorderSide(color: borderMid, width: 0.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
+
+      // TextButton
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: accentPink,
-          textStyle: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-      ),
-      segmentedButtonTheme: SegmentedButtonThemeData(
-        style: ButtonStyle(
-          backgroundColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return primaryViolet.withValues(alpha: 0.26);
-            }
-            return Colors.transparent;
-          }),
-          foregroundColor: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) return Colors.white;
-            return textMuted;
-          }),
-          side: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return const BorderSide(color: accentPink);
-            }
-            return const BorderSide(color: Color(0x33FF3D8B));
-          }),
-          shape: WidgetStateProperty.all(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          textStyle: WidgetStateProperty.all(
-            const TextStyle(fontWeight: FontWeight.w700),
+          foregroundColor: gold,
+          textStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
-      dropdownMenuTheme: const DropdownMenuThemeData(
-        textStyle: TextStyle(color: Colors.white),
-      ),
-      datePickerTheme: DatePickerThemeData(
-        backgroundColor: surface,
-        headerBackgroundColor: deepPurple,
-        headerForegroundColor: Colors.white,
-        dayOverlayColor: WidgetStateProperty.all(
-          neonViolet.withValues(alpha: 0.12),
+
+      // InputDecoration
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: card,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: borderSubtle, width: 0.5),
         ),
-        todayBorder: const BorderSide(color: neonViolet),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        height: 64,
-        backgroundColor: const Color(0xF20F1118),
-        indicatorColor: accentPink.withValues(alpha: 0.18),
-        labelTextStyle: WidgetStateProperty.resolveWith(
-          (_) => const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: borderSubtle, width: 0.5),
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: gold, width: 1),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: error, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: error, width: 1),
+        ),
+        labelStyle: const TextStyle(color: textMuted, fontSize: 13),
+        hintStyle: const TextStyle(
+          color: textLow, fontSize: 14),
+        errorStyle: const TextStyle(color: error, fontSize: 12),
       ),
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: elevated,
-        contentTextStyle: const TextStyle(color: Colors.white),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        behavior: SnackBarBehavior.floating,
-      ),
+
+      // ProgressIndicator
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: neonViolet,
+        color: gold,
+      ),
+
+      // BottomSheet
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: elevated,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+      ),
+
+      // Divider
+      dividerTheme: const DividerThemeData(
+        color: borderSubtle,
+        thickness: 0.5,
+        space: 0,
+      ),
+
+      // Card
+      cardTheme: const CardThemeData(
+        color: card,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+          side: BorderSide(color: borderSubtle, width: 0.5),
+        ),
+      ),
+
+      // Chip
+      chipTheme: ChipThemeData(
+        backgroundColor: card,
+        selectedColor: goldSubtle,
+        side: const BorderSide(color: borderSubtle, width: 0.5),
+        labelStyle: const TextStyle(
+          color: textMid, fontSize: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
+
+      // Dialog
+      dialogTheme: DialogThemeData(
+        backgroundColor: elevated,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+
+      // SnackBar
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: card,
+        contentTextStyle: const TextStyle(color: textHigh, fontSize: 13),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

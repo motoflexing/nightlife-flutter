@@ -64,6 +64,7 @@ class _UserShellScreenState extends State<UserShellScreen> {
               _shellIndexForTabId(panels, tab.id),
               swipeAware: true,
             ),
+            onSearchTap: () => _selectPage(2),
           ),
           bottomNavigationBar: PremiumBottomNav(
             tabs: topTabs,
@@ -158,7 +159,7 @@ class _UserShellScreenState extends State<UserShellScreen> {
         icon: Icons.search,
         selectedIcon: Icons.search,
         enabled: true,
-        showInTopNav: true,
+        showInTopNav: false,
         builder: (_) => SearchScreen(currentUser: currentUser),
       ),
       _ShellPanelConfig(
@@ -237,7 +238,7 @@ class _UserShellScreenState extends State<UserShellScreen> {
   }
 
   List<_ShellPanelConfig> _primaryPanelConfigs(List<_ShellPanelConfig> panels) {
-    const order = ['home', 'search', 'explore', 'rsvp', 'profile'];
+    const order = ['home', 'explore', 'rsvp', 'profile'];
     return order
         .map(
           (id) => panels.firstWhere((panel) => panel.id == id && panel.enabled),

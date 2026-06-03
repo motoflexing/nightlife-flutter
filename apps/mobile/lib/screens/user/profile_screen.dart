@@ -7,14 +7,12 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/formatters.dart';
 import '../../models/app_user.dart';
 import '../../models/rsvp.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/compact_ui.dart';
-import '../../widgets/premium_loader.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, required this.currentUser});
@@ -134,18 +132,11 @@ class _ProfileHero extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.glassSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.accentPink.withValues(alpha: 0.12),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,8 +155,11 @@ class _ProfileHero extends StatelessWidget {
                           : currentUser.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textHigh,
+                        letterSpacing: -0.2,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -196,7 +190,9 @@ class _ProfileHero extends StatelessWidget {
           Row(
             children: [
               _Stat(label: 'Upcoming', value: upcoming.toString()),
+              Container(width: 0.5, height: 30, color: AppTheme.borderSubtle),
               const _Stat(label: 'Saved', value: '0'),
+              Container(width: 0.5, height: 30, color: AppTheme.borderSubtle),
               _Stat(label: 'Attended', value: attended.toString()),
             ],
           ),
@@ -206,15 +202,42 @@ class _ProfileHero extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(
+                      color: AppTheme.borderMid,
+                      width: 0.5,
+                    ),
+                    foregroundColor: AppTheme.textHigh,
+                    textStyle: const TextStyle(
+                      fontSize: 12,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  icon: const Icon(Icons.edit_outlined, size: 16),
                   label: const Text('Edit profile'),
                 ),
               ),
               const SizedBox(width: 10),
-              IconButton.filledTonal(
-                tooltip: 'Settings',
-                onPressed: onSettings,
-                icon: const Icon(Icons.settings_outlined),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppTheme.elevated,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: AppTheme.borderSubtle,
+                    width: 0.5,
+                  ),
+                ),
+                child: IconButton(
+                  tooltip: 'Settings',
+                  onPressed: onSettings,
+                  icon: const Icon(
+                    Icons.settings_outlined,
+                    color: AppTheme.textMid,
+                    size: 18,
+                  ),
+                ),
               ),
             ],
           ),
@@ -459,8 +482,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 Expanded(
                   child: Text(
                     'Edit profile',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w400,
+                      color: AppTheme.textHigh,
+                      letterSpacing: -0.3,
                     ),
                   ),
                 ),
@@ -484,11 +510,26 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     uploading: _uploadingPhoto,
                   ),
                   const SizedBox(height: 10),
-                  FilledButton.icon(
+                  OutlinedButton.icon(
                     onPressed: _uploadingPhoto || _saving ? null : _pickPhoto,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(
+                        color: AppTheme.borderMid,
+                        width: 0.5,
+                      ),
+                      foregroundColor: AppTheme.textMid,
+                      textStyle: const TextStyle(
+                        fontSize: 12,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
                     icon: _uploadingPhoto
-                        ? const PremiumLoader.compact(size: 16)
-                        : const Icon(Icons.camera_alt_outlined, size: 18),
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 1.5),
+                          )
+                        : const Icon(Icons.camera_alt_outlined, size: 16),
                     label: Text(
                       _uploadingPhoto
                           ? _uploadProgressLabel(_photoUploadProgress)
@@ -551,12 +592,29 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   : (value) => setState(() => _city = value ?? _city),
             ),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _saving || _uploadingPhoto ? null : _save,
-              icon: _saving
-                  ? const PremiumLoader.compact(size: 18)
-                  : const Icon(Icons.save_outlined),
-              label: Text(_saving ? 'Saving...' : 'Save profile'),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _saving || _uploadingPhoto ? null : _save,
+                child: _saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          color: AppTheme.background,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'SAVE PROFILE',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+              ),
             ),
           ],
         ),
@@ -620,8 +678,8 @@ class _SafeInitialsAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppTheme.neonPink.withValues(alpha: 0.18),
-        border: Border.all(color: AppTheme.accentPink.withValues(alpha: 0.26)),
+        color: AppTheme.goldSubtle,
+        border: Border.all(color: AppTheme.goldBorder, width: 1),
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -680,7 +738,11 @@ class _InitialsFallback extends StatelessWidget {
         fit: BoxFit.scaleDown,
         child: Text(
           _initials(name),
-          style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w900),
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.gold,
+          ),
         ),
       ),
     );
@@ -699,19 +761,22 @@ class _Section extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+          title.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.textLow,
+            letterSpacing: 1.2,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppTheme.glassBorder),
+            color: AppTheme.card,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
           ),
           child: child,
         ),
@@ -729,21 +794,25 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: highlighted
-            ? AppTheme.neonLime.withValues(alpha: 0.14)
-            : AppTheme.primaryViolet.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(999),
+            ? AppTheme.goldSubtle
+            : const Color(0x0DFFFFFF),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: highlighted
-              ? AppTheme.neonLime.withValues(alpha: 0.36)
-              : AppTheme.accentPink.withValues(alpha: 0.34),
+          color: highlighted ? AppTheme.goldBorder : AppTheme.borderSubtle,
+          width: 0.5,
         ),
       ),
       child: Text(
-        Formatters.titleCase(label),
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+        label.toUpperCase(),
+        style: TextStyle(
+          color: highlighted ? AppTheme.gold : AppTheme.textMid,
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -761,14 +830,14 @@ class _InfoTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Icon(icon, color: AppTheme.textMuted, size: 18),
+          Icon(icon, color: AppTheme.textLow, size: 16),
           const SizedBox(width: 9),
           Expanded(
             child: Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppTheme.textMuted),
+              style: const TextStyle(color: AppTheme.textMid, fontSize: 13),
             ),
           ),
         ],
@@ -786,19 +855,31 @@ class _RsvpTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: const CircleAvatar(
-        backgroundColor: AppTheme.elevated,
-        child: Icon(Icons.local_activity_outlined, color: AppTheme.accentPink),
+      leading: CircleAvatar(
+        backgroundColor: AppTheme.goldSubtle,
+        child: const Icon(
+          Icons.local_activity_outlined,
+          color: AppTheme.gold,
+          size: 18,
+        ),
       ),
       title: Text(
         rsvp.eventTitle,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(fontWeight: FontWeight.w800),
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: AppTheme.textHigh,
+        ),
       ),
       subtitle: Text(
-        Formatters.titleCase(rsvp.status),
-        style: const TextStyle(color: AppTheme.textMuted),
+        rsvp.status.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 11,
+          color: AppTheme.textLow,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -814,10 +895,13 @@ class _EmptyPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: AppTheme.accentPink),
+        Icon(icon, color: AppTheme.textLow, size: 18),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(text, style: const TextStyle(color: AppTheme.textMuted)),
+          child: Text(
+            text,
+            style: const TextStyle(color: AppTheme.textLow, fontSize: 13),
+          ),
         ),
       ],
     );
@@ -839,15 +923,22 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive ? AppTheme.accentPink : Colors.white;
+    final iconColor = destructive ? AppTheme.error : AppTheme.textMid;
+    final titleColor = destructive ? AppTheme.error : AppTheme.textHigh;
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: color),
+      leading: Icon(icon, color: iconColor),
       title: Text(
         title,
-        style: TextStyle(color: color, fontWeight: FontWeight.w800),
+        style: TextStyle(
+          color: titleColor,
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+        ),
       ),
-      trailing: destructive ? null : const Icon(Icons.chevron_right),
+      trailing: destructive
+          ? null
+          : const Icon(Icons.chevron_right, color: AppTheme.textLow, size: 16),
       onTap: onTap,
     );
   }
@@ -866,15 +957,22 @@ class _Stat extends StatelessWidget {
         children: [
           Text(
             value,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w300,
+              color: AppTheme.textHigh,
+              letterSpacing: -0.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
-            label,
+            label.toUpperCase(),
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppTheme.textLow,
+              letterSpacing: 0.5,
+            ),
           ),
         ],
       ),

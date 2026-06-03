@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../models/app_user.dart';
 import '../../models/event.dart';
 import '../../services/analytics_service.dart';

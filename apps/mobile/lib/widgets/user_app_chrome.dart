@@ -11,12 +11,14 @@ class UserShellTopBar extends StatelessWidget implements PreferredSizeWidget {
     required this.tabs,
     required this.selectedTabId,
     required this.onSelectTab,
+    required this.onSearchTap,
   });
 
   final AppUser currentUser;
   final List<UserNavTabConfig> tabs;
   final String? selectedTabId;
   final ValueChanged<UserNavTabConfig> onSelectTab;
+  final VoidCallback onSearchTap;
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
@@ -57,6 +59,12 @@ class UserShellTopBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ),
             ),
+            _ChromeIconButton(
+              tooltip: 'Search',
+              icon: Icons.search,
+              onPressed: onSearchTap,
+            ),
+            const SizedBox(width: 8),
             _TopAvatar(
               currentUser: currentUser,
               selected: selectedTabId == 'profile',
