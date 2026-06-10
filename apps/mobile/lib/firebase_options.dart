@@ -41,48 +41,46 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBczObmH2o4Tv0l3_eGpuGcBUwndBZ7xwI',
-    appId: '1:198792802421:web:3da59001fceab9f5da883c',
-    messagingSenderId: '198792802421',
-    projectId: 'nightlife-platform-geek',
-    authDomain: 'nightlife-platform-geek.firebaseapp.com',
-    storageBucket: 'nightlife-platform-geek.firebasestorage.app',
-    measurementId: 'G-BHY7CZRDNM',
+    apiKey: 'AIzaSyBQmEOkxjyqQ9B4ara8SZ_UL5cWMIzPbBQ',
+    appId: '1:912634835284:web:d8a04f2a736c75dd2f18c1',
+    messagingSenderId: '912634835284',
+    projectId: 'party-app-4f142',
+    authDomain: 'party-app-4f142.firebaseapp.com',
+    storageBucket: 'party-app-4f142.firebasestorage.app',
+    measurementId: 'G-3J37TRW1CB',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAonRIyBO714EJCAaOxvAez7YAlre_kfW8',
-    appId: '1:198792802421:android:208f8b5fd98f7cbeda883c',
-    messagingSenderId: '198792802421',
-    projectId: 'nightlife-platform-geek',
-    storageBucket: 'nightlife-platform-geek.firebasestorage.app',
+    apiKey: 'AIzaSyBwrMRc0iOTGYexmCx8ljPHOAyvYvDigeY',
+    appId: '1:912634835284:android:6fab9a4fef21773e2f18c1',
+    messagingSenderId: '912634835284',
+    projectId: 'party-app-4f142',
+    storageBucket: 'party-app-4f142.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBoNfEKZQPaRRD5kW9c0n2WC8omhF4jryU',
-    appId: '1:198792802421:ios:d87f892e70fa2443da883c',
-    messagingSenderId: '198792802421',
-    projectId: 'nightlife-platform-geek',
-    storageBucket: 'nightlife-platform-geek.firebasestorage.app',
+    apiKey: 'AIzaSyCKtdhajms0wCdKgHh7cliQZ4I7q-eNSsE',
+    appId: '1:912634835284:ios:67f9253ace6313122f18c1',
+    messagingSenderId: '912634835284',
+    projectId: 'party-app-4f142',
+    storageBucket: 'party-app-4f142.firebasestorage.app',
     iosBundleId: 'com.example.nlFlutter',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBoNfEKZQPaRRD5kW9c0n2WC8omhF4jryU',
-    appId: '1:198792802421:ios:d87f892e70fa2443da883c',
-    messagingSenderId: '198792802421',
-    projectId: 'nightlife-platform-geek',
-    storageBucket: 'nightlife-platform-geek.firebasestorage.app',
+    apiKey: 'AIzaSyCKtdhajms0wCdKgHh7cliQZ4I7q-eNSsE',
+    appId: '1:912634835284:ios:67f9253ace6313122f18c1',
+    messagingSenderId: '912634835284',
+    projectId: 'party-app-4f142',
+    storageBucket: 'party-app-4f142.firebasestorage.app',
     iosBundleId: 'com.example.nlFlutter',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBczObmH2o4Tv0l3_eGpuGcBUwndBZ7xwI',
-    appId: '1:198792802421:web:e71e4d1e63303372da883c',
-    messagingSenderId: '198792802421',
-    projectId: 'nightlife-platform-geek',
-    authDomain: 'nightlife-platform-geek.firebaseapp.com',
-    storageBucket: 'nightlife-platform-geek.firebasestorage.app',
-    measurementId: 'G-ERHFVQZ0Z8',
+    apiKey: 'AIzaSyBQmEOkxjyqQ9B4ara8SZ_UL5cWMIzPbBQ',
+    appId: '1:912634835284:web:c0d6fa0918df340e2f18c1',
+    messagingSenderId: '912634835284',
+    projectId: 'party-app-4f142',
+    authDomain: 'party-app-4f142.firebaseapp.com',
+    storageBucket: 'party-app-4f142.firebasestorage.app',
+    measurementId: 'G-BLDL45T524',
   );
 }
