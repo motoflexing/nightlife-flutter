@@ -84,7 +84,9 @@ class _PromoterContentState extends State<_PromoterContent> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Rsvp>>(
-      stream: FirestoreService.instance.promoterRsvpsStream(widget.promoter.id),
+      stream: FirestoreService.instance.promoterRsvpsStream(
+        widget.promoter.referralCode,
+      ),
       builder: (context, rsvpSnapshot) {
         if (rsvpSnapshot.hasError) {
           return ErrorStateView(message: rsvpSnapshot.error.toString());
@@ -2178,7 +2180,14 @@ void _showPromoterProfile(
                     icon: Icons.logout_rounded,
                     label: 'Logout',
                     onPressed: () async {
+                      // Capture the navigator before the async gap so we don't
+                      // use a BuildContext across an await.
+                      final navigator = Navigator.of(context);
                       await AuthService.instance.signOut();
+                      // Dismiss the bottom sheet so the RoleRouterScreen's
+                      // authStateChanges StreamBuilder (now showing the login
+                      // screen) is no longer covered by this overlay.
+                      navigator.pop();
                     },
                   ),
                 ),

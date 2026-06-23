@@ -152,10 +152,15 @@ class FirestoreService {
         );
   }
 
-  Stream<List<Rsvp>> promoterRsvpsStream(String promoterId) {
+  Stream<List<Rsvp>> promoterRsvpsStream(String promoterCode) {
+    // Query by promoterCode (not promoterId): the rsvps read rule authorizes a
+    // promoter only via `promoterCode == currentPromoterCode()`, so the query
+    // filter must constrain promoterCode for Firestore to prove access. The code
+    // passed in must equal users/{uid}.promoterCode byte-for-byte (it does:
+    // both derive from the same _makePromoterCode() value at signup, untrimmed).
     return _db
         .collection('rsvps')
-        .where('promoterId', isEqualTo: promoterId)
+        .where('promoterCode', isEqualTo: promoterCode)
         .snapshots()
         .map(
           (snap) =>

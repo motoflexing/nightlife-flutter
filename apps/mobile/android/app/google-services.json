@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "912634835284",
-    "project_id": "party-app-4f142",
-    "storage_bucket": "party-app-4f142.firebasestorage.app"
+    "project_number": "338930228171",
+    "project_id": "party-app-1774e",
+    "storage_bucket": "party-app-1774e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:912634835284:android:6fab9a4fef21773e2f18c1",
+        "mobilesdk_app_id": "1:338930228171:android:940bebef5070aedf7ff44e",
         "android_client_info": {
           "package_name": "com.example.nl_flutter"
         }
@@ -15,7 +15,26 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBwrMRc0iOTGYexmCx8ljPHOAyvYvDigeY"
+          "current_key": "AIzaSyA2XS3CmknpO-Jgs0FdJ6ULSANofGMj8aE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:338930228171:android:0ae79e2b57ad55b17ff44e",
+        "android_client_info": {
+          "package_name": "pa.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2XS3CmknpO-Jgs0FdJ6ULSANofGMj8aE"
         }
       ],
       "services": {

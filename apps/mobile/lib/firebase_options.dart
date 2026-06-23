@@ -41,46 +41,46 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBQmEOkxjyqQ9B4ara8SZ_UL5cWMIzPbBQ',
-    appId: '1:912634835284:web:d8a04f2a736c75dd2f18c1',
-    messagingSenderId: '912634835284',
-    projectId: 'party-app-4f142',
-    authDomain: 'party-app-4f142.firebaseapp.com',
-    storageBucket: 'party-app-4f142.firebasestorage.app',
-    measurementId: 'G-3J37TRW1CB',
+    apiKey: 'AIzaSyCdc6i_eRyu6AxWZ18L8H2xBtHndor8ZFU',
+    appId: '1:338930228171:web:276218a4d4a2dd1b7ff44e',
+    messagingSenderId: '338930228171',
+    projectId: 'party-app-1774e',
+    authDomain: 'party-app-1774e.firebaseapp.com',
+    storageBucket: 'party-app-1774e.firebasestorage.app',
+    measurementId: 'G-EXYS4XL423',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBwrMRc0iOTGYexmCx8ljPHOAyvYvDigeY',
-    appId: '1:912634835284:android:6fab9a4fef21773e2f18c1',
-    messagingSenderId: '912634835284',
-    projectId: 'party-app-4f142',
-    storageBucket: 'party-app-4f142.firebasestorage.app',
+    apiKey: 'AIzaSyA2XS3CmknpO-Jgs0FdJ6ULSANofGMj8aE',
+    appId: '1:338930228171:android:940bebef5070aedf7ff44e',
+    messagingSenderId: '338930228171',
+    projectId: 'party-app-1774e',
+    storageBucket: 'party-app-1774e.firebasestorage.app',
   );
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCKtdhajms0wCdKgHh7cliQZ4I7q-eNSsE',
-    appId: '1:912634835284:ios:67f9253ace6313122f18c1',
-    messagingSenderId: '912634835284',
-    projectId: 'party-app-4f142',
-    storageBucket: 'party-app-4f142.firebasestorage.app',
+    apiKey: 'AIzaSyDgv_iodE7dnjqs2oWYRq_PP5e40Wl13l0',
+    appId: '1:338930228171:ios:b0cdf04b313b950a7ff44e',
+    messagingSenderId: '338930228171',
+    projectId: 'party-app-1774e',
+    storageBucket: 'party-app-1774e.firebasestorage.app',
     iosBundleId: 'com.example.nlFlutter',
   );
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCKtdhajms0wCdKgHh7cliQZ4I7q-eNSsE',
-    appId: '1:912634835284:ios:67f9253ace6313122f18c1',
-    messagingSenderId: '912634835284',
-    projectId: 'party-app-4f142',
-    storageBucket: 'party-app-4f142.firebasestorage.app',
+    apiKey: 'AIzaSyDgv_iodE7dnjqs2oWYRq_PP5e40Wl13l0',
+    appId: '1:338930228171:ios:b0cdf04b313b950a7ff44e',
+    messagingSenderId: '338930228171',
+    projectId: 'party-app-1774e',
+    storageBucket: 'party-app-1774e.firebasestorage.app',
     iosBundleId: 'com.example.nlFlutter',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBQmEOkxjyqQ9B4ara8SZ_UL5cWMIzPbBQ',
-    appId: '1:912634835284:web:c0d6fa0918df340e2f18c1',
-    messagingSenderId: '912634835284',
-    projectId: 'party-app-4f142',
-    authDomain: 'party-app-4f142.firebaseapp.com',
-    storageBucket: 'party-app-4f142.firebasestorage.app',
-    measurementId: 'G-BLDL45T524',
+    apiKey: 'AIzaSyCdc6i_eRyu6AxWZ18L8H2xBtHndor8ZFU',
+    appId: '1:338930228171:web:7f0f2d3922ee8d8d7ff44e',
+    messagingSenderId: '338930228171',
+    projectId: 'party-app-1774e',
+    authDomain: 'party-app-1774e.firebaseapp.com',
+    storageBucket: 'party-app-1774e.firebasestorage.app',
+    measurementId: 'G-GM6R5VDMZG',
   );
 }
