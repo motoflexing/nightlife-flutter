@@ -17,6 +17,59 @@ import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 
+// --- Promoter dashboard design tokens ---------------------------------------
+// The shared AppTheme currently maps neonViolet/accentPink to gold. The new
+// promoter visual spec calls for a deep-violet primary with a restrained pink
+// accent, so these tokens are scoped locally to this screen to avoid changing
+// the global theme (which other screens depend on).
+const Color _kViolet = Color(0xFF6321D6); // primary deep violet
+const Color _kVioletBright = Color(0xFF7C3AED); // gradient highlight
+const Color _kPink = Color(0xFFF2479A); // restrained pink accent
+const Color _kActiveGreen = Color(0xFF38E1A0); // ACTIVE badge / live dot
+const Color _kBackdropTop = Color(0xFF0A0712); // dark nightlife base
+const Color _kBackdropMid = Color(0xFF120A1F);
+const Color _kPanel = Color(0xFF14101F); // glass panel fill
+
+const LinearGradient _kShareGradient = LinearGradient(
+  colors: [_kViolet, _kVioletBright, _kPink],
+  begin: Alignment.centerLeft,
+  end: Alignment.centerRight,
+);
+
+/// Placeholder figures for parts of the dashboard that have no backend yet.
+///
+/// TODO: wire to backend — there is no earnings system or "events filled"
+/// signal in Firestore today. Replace [_PromoterPlaceholders.demo] with values
+/// computed from real data once those collections exist. The widgets below read
+/// every dummy number from this single object so the swap is one place.
+class _PromoterPlaceholders {
+  const _PromoterPlaceholders({
+    required this.totalEarned,
+    required this.earnedThisWeek,
+    required this.eventsFilled,
+    required this.percentThisWeek,
+  });
+
+  /// TODO: wire to backend — total promoter earnings (currency, INR).
+  final int totalEarned;
+
+  /// TODO: wire to backend — earnings gained in the last 7 days.
+  final int earnedThisWeek;
+
+  /// TODO: wire to backend — number of events the promoter has "filled".
+  final int eventsFilled;
+
+  /// TODO: wire to backend — week-over-week growth percentage.
+  final int percentThisWeek;
+
+  static const _PromoterPlaceholders demo = _PromoterPlaceholders(
+    totalEarned: 12480,
+    earnedThisWeek: 1840,
+    eventsFilled: 6,
+    percentThisWeek: 18,
+  );
+}
+
 class PromoterDashboardScreen extends StatelessWidget {
   const PromoterDashboardScreen({super.key, required this.currentUser});
 
@@ -154,6 +207,37 @@ class _PromoterContentState extends State<_PromoterContent> {
                                 ),
                               ),
                               const SizedBox(height: 16),
+                              // Focal point: real referral code + share.
+                              if (loading)
+                                const _HeroSkeleton()
+                              else
+                                _ReferralHeroCard(
+                                  referralCode:
+                                      widget.promoter.referralCode.trim(),
+                                  referralLink: snapshot.referralLink,
+                                  isActive: widget.promoter.isActive,
+                                  onCopy: () => _copy(
+                                    context,
+                                    widget.promoter.referralCode.trim(),
+                                    message: 'Referral code copied',
+                                  ),
+                                  onShare: () => _share(
+                                    context,
+                                    snapshot.referralLink,
+                                  ),
+                                ),
+                              const SizedBox(height: 14),
+                              // Total earned (dummy) — see _PromoterPlaceholders.
+                              _TotalEarnedCard(
+                                placeholders: _PromoterPlaceholders.demo,
+                              ),
+                              const SizedBox(height: 12),
+                              // Stat row: Total RSVPs (REAL) + dummy figures.
+                              _StatCardRow(
+                                totalRsvps: stats.total,
+                                placeholders: _PromoterPlaceholders.demo,
+                              ),
+                              const SizedBox(height: 18),
                               if (loading)
                                 const _HeroSkeleton()
                               else
@@ -631,6 +715,370 @@ class _MobileHeader extends StatelessWidget {
           child: _PromoterAvatar(name: name, size: 42),
         ),
       ],
+    );
+  }
+}
+
+/// Focal hero: the promoter's real referral code, ACTIVE badge, copy button,
+/// short link, and the violet→pink "Share your code" gradient button.
+class _ReferralHeroCard extends StatelessWidget {
+  const _ReferralHeroCard({
+    required this.referralCode,
+    required this.referralLink,
+    required this.isActive,
+    required this.onCopy,
+    required this.onShare,
+  });
+
+  /// The promoter's REAL referral code (e.g. PROMWCRK) — never hardcoded.
+  final String referralCode;
+  final String referralLink;
+  final bool isActive;
+  final VoidCallback onCopy;
+  final VoidCallback onShare;
+
+  @override
+  Widget build(BuildContext context) {
+    final code = referralCode.trim().isEmpty ? '—' : referralCode.trim();
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1B1230), Color(0xFF221141)],
+        ),
+        border: Border.all(color: _kViolet.withValues(alpha: 0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: _kViolet.withValues(alpha: 0.34),
+            blurRadius: 34,
+            offset: const Offset(0, 18),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'YOUR REFERRAL CODE',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.4,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _kActiveGreen.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: _kActiveGreen.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: isActive ? _kActiveGreen : AppTheme.textMuted,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isActive ? 'ACTIVE' : 'INACTIVE',
+                      style: TextStyle(
+                        color: isActive ? _kActiveGreen : AppTheme.textMuted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  code,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                    height: 1.0,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Tooltip(
+                message: 'Copy code',
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    onCopy();
+                  },
+                  child: Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.16),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.copy_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            referralLink,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: _kShareGradient,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: _kPink.withValues(alpha: 0.4),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    onShare();
+                  },
+                  child: const Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.ios_share_rounded,
+                            color: Colors.white, size: 19),
+                        SizedBox(width: 9),
+                        Text(
+                          'Share your code',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Total earned" figure with a "+$X this week" pill. Both values are dummy
+/// placeholders for now (see [_PromoterPlaceholders]).
+class _TotalEarnedCard extends StatelessWidget {
+  const _TotalEarnedCard({required this.placeholders});
+
+  final _PromoterPlaceholders placeholders;
+
+  @override
+  Widget build(BuildContext context) {
+    return _GlassPanel(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+      glow: _kPink.withValues(alpha: 0.18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Total earned',
+                  style: TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              // TODO: wire to backend — "+$X this week" pill.
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _kActiveGreen.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                  border:
+                      Border.all(color: _kActiveGreen.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  '+\$${placeholders.earnedThisWeek} this week',
+                  style: const TextStyle(
+                    color: _kActiveGreen,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // TODO: wire to backend — total earned figure.
+          Text(
+            '\$${placeholders.totalEarned}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 40,
+              height: 1.0,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Row of stat cards: Total RSVPs (REAL), Events filled (dummy), % this week
+/// (dummy).
+class _StatCardRow extends StatelessWidget {
+  const _StatCardRow({
+    required this.totalRsvps,
+    required this.placeholders,
+  });
+
+  /// REAL value from promoterRsvpsStream(referralCode).
+  final int totalRsvps;
+  final _PromoterPlaceholders placeholders;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            value: totalRsvps.toString(),
+            label: 'Total RSVPs',
+            accent: _kViolet,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          // TODO: wire to backend — events filled count.
+          child: _StatCard(
+            value: placeholders.eventsFilled.toString(),
+            label: 'Events filled',
+            accent: _kPink,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          // TODO: wire to backend — % this week.
+          child: _StatCard(
+            value: '${placeholders.percentThisWeek}%',
+            label: 'This week',
+            accent: _kActiveGreen,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.value,
+    required this.label,
+    required this.accent,
+  });
+
+  final String value;
+  final String label;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: _kPanel.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1761,7 +2209,7 @@ class _PremiumMobileBackdrop extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF050509), Color(0xFF0B0614), Color(0xFF090A10)],
+          colors: [_kBackdropTop, _kBackdropMid, _kBackdropTop],
         ),
       ),
       child: CustomPaint(painter: _BackdropPainter()),
@@ -1773,7 +2221,7 @@ class _BackdropPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final violet = Paint()
-      ..color = AppTheme.neonViolet.withValues(alpha: 0.20)
+      ..color = _kViolet.withValues(alpha: 0.26)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 70);
     canvas.drawCircle(
       Offset(size.width * 0.80, size.height * 0.12),
@@ -1782,7 +2230,7 @@ class _BackdropPainter extends CustomPainter {
     );
 
     final pink = Paint()
-      ..color = AppTheme.accentPink.withValues(alpha: 0.11)
+      ..color = _kPink.withValues(alpha: 0.13)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 86);
     canvas.drawCircle(Offset(size.width * 0.10, size.height * 0.38), 140, pink);
 
