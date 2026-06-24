@@ -508,10 +508,20 @@ class AuthService {
   }
 
   Future<void> signOut() async {
+    debugPrint('[LOGOUT] AuthService.signOut: ENTRY');
     _requestedRole = null;
     ReferralService.instance.clear();
-    await NotificationService.instance.clearFcmToken();
-    return _auth.signOut();
+    try {
+      debugPrint('[LOGOUT] AuthService.signOut: before clearFcmToken');
+      await NotificationService.instance.clearFcmToken();
+      debugPrint('[LOGOUT] AuthService.signOut: after clearFcmToken OK');
+    } catch (e, s) {
+      debugPrint('[LOGOUT] AuthService.signOut: clearFcmToken THREW: $e');
+      debugPrint('$s');
+    }
+    debugPrint('[LOGOUT] AuthService.signOut: before _auth.signOut()');
+    await _auth.signOut();
+    debugPrint('[LOGOUT] AuthService.signOut: after _auth.signOut() OK');
   }
 
   Future<void> _approvePromoterProfileIfNeeded(User? user) async {

@@ -42,7 +42,11 @@ class RoleRouterScreen extends StatelessWidget {
         }
 
         final firebaseUser = authSnapshot.data;
+        debugPrint(
+          '[LOGOUT] RoleRouter authState emit: uid=${firebaseUser?.uid ?? 'NULL'}',
+        );
         if (firebaseUser == null) {
+          debugPrint('[LOGOUT] RoleRouter -> building WelcomeScreen');
           return const WelcomeScreen();
         }
 

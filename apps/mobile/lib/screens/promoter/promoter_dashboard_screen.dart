@@ -2628,14 +2628,20 @@ void _showPromoterProfile(
                     icon: Icons.logout_rounded,
                     label: 'Logout',
                     onPressed: () async {
+                      debugPrint('[LOGOUT] promoter sheet: TAP');
                       // Capture the navigator before the async gap so we don't
                       // use a BuildContext across an await.
                       final navigator = Navigator.of(context);
-                      await AuthService.instance.signOut();
-                      // Dismiss the bottom sheet so the RoleRouterScreen's
-                      // authStateChanges StreamBuilder (now showing the login
-                      // screen) is no longer covered by this overlay.
+                      debugPrint('[LOGOUT] promoter sheet: before pop');
                       navigator.pop();
+                      debugPrint('[LOGOUT] promoter sheet: after pop');
+                      try {
+                        debugPrint('[LOGOUT] promoter sheet: before signOut');
+                        await AuthService.instance.signOut();
+                        debugPrint('[LOGOUT] promoter sheet: after signOut');
+                      } catch (e) {
+                        debugPrint('[LOGOUT] promoter sheet: signOut THREW: $e');
+                      }
                     },
                   ),
                 ),
