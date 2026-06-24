@@ -202,7 +202,7 @@ service cloud.firestore {
 
     match /events/{eventId} {
       allow read: if isSuperAdmin()
-        || resource.data.isActive == true
+        || (signedIn() && resource.data.isActive == true)
         || (isClubAdmin() && (
           resource.data.createdBy == request.auth.uid
           || resource.data.clubId == currentClubId()
