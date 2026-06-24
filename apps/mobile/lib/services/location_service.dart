@@ -12,24 +12,14 @@ class LocationService {
   static const defaultMapZoom = 15.0;
 
   Future<UserLocationSnapshot> getUserLocationSnapshot() async {
-    debugPrint('[NEARBY][LS] getUserLocationSnapshot() start kIsWeb=$kIsWeb');
     final position = await getCurrentPosition();
-    debugPrint(
-      '[NEARBY][LS] getCurrentPosition OK -> '
-      'lat=${position.latitude} lng=${position.longitude}',
-    );
     ReadableAddress? address;
     try {
       address = await reverseGeocode(
         latitude: position.latitude,
         longitude: position.longitude,
       );
-      debugPrint(
-        '[NEARBY][LS] reverseGeocode OK -> city=${address?.city} '
-        'fullAddress=${address?.fullAddress}',
-      );
-    } catch (error) {
-      debugPrint('[NEARBY][LS] reverseGeocode FAILED (ignored): $error');
+    } catch (_) {
       address = null;
     }
 
@@ -45,16 +35,13 @@ class LocationService {
   Future<LocationPermissionResult> requestPermission() async {
     try {
       final servicesEnabled = await Geolocator.isLocationServiceEnabled();
-      debugPrint('[NEARBY][LS] isLocationServiceEnabled=$servicesEnabled');
       if (!servicesEnabled) {
         return const LocationPermissionResult.serviceDisabled();
       }
 
       var permission = await Geolocator.checkPermission();
-      debugPrint('[NEARBY][LS] checkPermission=$permission');
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        debugPrint('[NEARBY][LS] requestPermission=$permission');
       }
 
       if (permission == LocationPermission.denied) {
@@ -64,10 +51,8 @@ class LocationService {
         return const LocationPermissionResult.deniedForever();
       }
 
-      debugPrint('[NEARBY][LS] permission GRANTED');
       return const LocationPermissionResult.granted();
-    } catch (error, stack) {
-      debugPrint('[NEARBY][LS] requestPermission THREW: $error\n$stack');
+    } catch (error) {
       return LocationPermissionResult.error(_readableLocationError(error));
     }
   }
@@ -79,27 +64,17 @@ class LocationService {
   Future<Position> getCurrentPosition() async {
     final permission = await requestPermission();
     if (!permission.isGranted) {
-      debugPrint(
-        '[NEARBY][LS] permission NOT granted -> "${permission.message}"',
-      );
       throw LocationServiceException(permission.message);
     }
 
     try {
-      debugPrint('[NEARBY][LS] before Geolocator.getCurrentPosition');
-      final position = await Geolocator.getCurrentPosition(
+      return Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           timeLimit: Duration(seconds: 15),
         ),
       );
-      debugPrint('[NEARBY][LS] after Geolocator.getCurrentPosition OK');
-      return position;
-    } catch (error, stack) {
-      debugPrint(
-        '[NEARBY][LS] Geolocator.getCurrentPosition THREW: '
-        '${error.runtimeType}: $error\n$stack',
-      );
+    } catch (error) {
       throw LocationServiceException(_readableLocationError(error));
     }
   }
