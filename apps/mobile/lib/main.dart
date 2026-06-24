@@ -2,6 +2,8 @@ import 'dart:ui' show PlatformDispatcher;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'core/constants/app_constants.dart';
@@ -19,13 +21,20 @@ import 'services/storage_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Crashlytics is not supported on Flutter web. On web we keep the default
+  // console reporting only; on native we forward to Crashlytics below (after
+  // Firebase.initializeApp, since Crashlytics requires Firebase to be ready).
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
-    // TODO: add Crashlytics.recordFlutterError(details) in Phase 6
+    if (!kIsWeb) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+    }
   };
 
   PlatformDispatcher.instance.onError = (error, stack) {
-    // TODO: add Crashlytics.recordError(error, stack) in Phase 6
+    if (!kIsWeb) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    }
     return true;
   };
 
@@ -35,6 +44,10 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    if (!kIsWeb) {
+      await FirebaseCrashlytics.instance
+          .setCrashlyticsCollectionEnabled(true);
+    }
     FirebaseFirestore.instance.settings = const Settings(
       persistenceEnabled: true,
       cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
