@@ -1668,9 +1668,61 @@ class _LocationSection extends StatelessWidget {
                 ),
               ),
             ),
+          if (hasCoordinates) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => _getDirections(context, latitude, longitude),
+              icon: const Icon(Icons.directions),
+              label: const Text('Get Directions'),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => _viewOnMaps(context, latitude, longitude),
+              icon: const Icon(Icons.map_outlined),
+              label: const Text('View on Maps'),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _getDirections(
+    BuildContext context,
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      await LocationService.instance.openDirections(
+        latitude: latitude,
+        longitude: longitude,
+      );
+    } on LocationServiceException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    }
+  }
+
+  Future<void> _viewOnMaps(
+    BuildContext context,
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      await LocationService.instance.openGoogleMaps(
+        latitude: latitude,
+        longitude: longitude,
+        label: event.venueName,
+        fallbackUrl: event.googleMapsLink,
+      );
+    } on LocationServiceException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    }
   }
 }
 
