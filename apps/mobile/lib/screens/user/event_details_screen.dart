@@ -1601,7 +1601,6 @@ class _LocationSection extends StatelessWidget {
     final address = event.fullAddress.trim().isEmpty
         ? event.address
         : event.fullAddress;
-    final mobile = MediaQuery.sizeOf(context).width < 640;
 
     return _GlassCard(
       child: Column(
@@ -1640,122 +1639,38 @@ class _LocationSection extends StatelessWidget {
               message:
                   'Location not added. Directions will be available after venue coordinates are saved.',
             )
-          else ...[
-            if (kIsWeb && !isGoogleMapsWebSdkReady)
-              const _MapUnavailable(message: 'Map preview unavailable')
-            else
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: SizedBox(
-                  height: 180,
-                  child: GoogleMap(
-                    initialCameraPosition: LocationService.instance.cameraFor(
-                      latitude: latitude,
-                      longitude: longitude,
-                      zoom: 15,
-                    ),
-                    markers: {
-                      Marker(
-                        markerId: MarkerId(event.id),
-                        position: LatLng(latitude, longitude),
-                        infoWindow: InfoWindow(
-                          title: event.venueName,
-                          snippet: event.title,
-                        ),
-                      ),
-                    },
-                    zoomControlsEnabled: false,
-                    scrollGesturesEnabled: false,
-                    tiltGesturesEnabled: false,
-                    rotateGesturesEnabled: false,
-                    mapToolbarEnabled: false,
-                    myLocationButtonEnabled: false,
+          else if (kIsWeb && !isGoogleMapsWebSdkReady)
+            const _MapUnavailable(message: 'Map preview unavailable')
+          else
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: 180,
+                child: GoogleMap(
+                  initialCameraPosition: LocationService.instance.cameraFor(
+                    latitude: latitude,
+                    longitude: longitude,
+                    zoom: 15,
                   ),
+                  markers: {
+                    Marker(
+                      markerId: MarkerId(event.id),
+                      position: LatLng(latitude, longitude),
+                      infoWindow: InfoWindow(
+                        title: event.venueName,
+                        snippet: event.title,
+                      ),
+                    ),
+                  },
+                  zoomControlsEnabled: false,
+                  mapToolbarEnabled: false,
+                  myLocationButtonEnabled: false,
                 ),
               ),
-            const SizedBox(height: 12),
-            if (mobile)
-              Column(
-                children: [
-                  _MapActionButton(
-                    icon: Icons.map_outlined,
-                    label: 'Open Google Maps',
-                    onPressed: () => _openMap(context, latitude, longitude),
-                  ),
-                  const SizedBox(height: 10),
-                  _MapActionButton(
-                    icon: Icons.directions,
-                    label: 'Get Directions',
-                    filled: true,
-                    onPressed: () =>
-                        _openDirections(context, latitude, longitude),
-                  ),
-                ],
-              )
-            else
-              Row(
-                children: [
-                  Expanded(
-                    child: _MapActionButton(
-                      icon: Icons.map_outlined,
-                      label: 'Open Google Maps',
-                      onPressed: () => _openMap(context, latitude, longitude),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _MapActionButton(
-                      icon: Icons.directions,
-                      label: 'Get Directions',
-                      filled: true,
-                      onPressed: () =>
-                          _openDirections(context, latitude, longitude),
-                    ),
-                  ),
-                ],
-              ),
-          ],
+            ),
         ],
       ),
     );
-  }
-
-  Future<void> _openMap(
-    BuildContext context,
-    double latitude,
-    double longitude,
-  ) async {
-    try {
-      await LocationService.instance.openGoogleMaps(
-        latitude: latitude,
-        longitude: longitude,
-        label: event.venueName,
-        fallbackUrl: event.googleMapsLink,
-      );
-    } on LocationServiceException catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
-    }
-  }
-
-  Future<void> _openDirections(
-    BuildContext context,
-    double latitude,
-    double longitude,
-  ) async {
-    try {
-      await LocationService.instance.openDirections(
-        latitude: latitude,
-        longitude: longitude,
-      );
-    } on LocationServiceException catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
-    }
   }
 }
 
@@ -2331,61 +2246,6 @@ class _PressScaleState extends State<_PressScale> {
         curve: Curves.easeOutCubic,
         child: widget.child,
       ),
-    );
-  }
-}
-
-class _MapActionButton extends StatelessWidget {
-  const _MapActionButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-    this.filled = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) {
-    final child = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-        ),
-      ],
-    );
-
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: filled
-          ? ElevatedButton(
-              onPressed: onPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accentPink,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: child,
-            )
-          : OutlinedButton(
-              onPressed: onPressed,
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: child,
-            ),
     );
   }
 }
