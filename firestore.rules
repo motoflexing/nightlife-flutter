@@ -330,9 +330,10 @@ service cloud.firestore {
 
       allow create: if isSuperAdmin()
         || (
-          signedIn()
+          isPromoter()
           && request.resource.data.promoterId == request.auth.uid
           && request.resource.data.referralCode == code
+          && request.resource.data.referralCode == currentPromoterCode()
           && request.resource.data.isActive == true
           && request.resource.data.keys().hasOnly([
             'promoterId',
@@ -345,10 +346,11 @@ service cloud.firestore {
 
       allow update: if isSuperAdmin()
         || (
-          signedIn()
+          isPromoter()
           && resource.data.promoterId == request.auth.uid
           && request.resource.data.promoterId == request.auth.uid
           && request.resource.data.referralCode == code
+          && resource.data.referralCode == currentPromoterCode()
           && request.resource.data.isActive == true
           && request.resource.data.keys().hasOnly([
             'promoterId',

@@ -389,6 +389,13 @@ class AuthService {
           })
           .timeout(const Duration(seconds: 20));
 
+      // SECURITY-CRITICAL ORDERING: the users/{uid} doc (role:'promoter',
+      // status:'approved', isActive:true) is written and AWAITED above BEFORE
+      // this referralCodes write. The firestore.rules referralCodes create
+      // check (isPromoter() + currentPromoterCode()) reads that committed
+      // users doc, so it only passes because the write completed first.
+      // DO NOT batch, reorder, or run these writes concurrently, or promoter
+      // signup will hit permission-denied (the original signup race).
       await _db
           .collection('referralCodes')
           .doc(promoterCode)
