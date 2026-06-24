@@ -68,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loadingNearby = false;
   bool _hasMore = true;
   bool _nearbyEnabled = false;
+  double _radiusKm = 10;
 
   double? _userLatitude;
   double? _userLongitude;
@@ -155,6 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _activateNearby() async {
+    debugPrint('[NEARBY][HS] Nearby tapped (loadingNearby=$_loadingNearby)');
     if (_loadingNearby) return;
 
     setState(() {
@@ -164,7 +166,12 @@ class _HomeScreenState extends State<HomeScreen> {
       _locationMessage = 'Finding parties closest to you...';
     });
 
+    debugPrint('[NEARBY][HS] before requestPermission()');
     final permission = await LocationService.instance.requestPermission();
+    debugPrint(
+      '[NEARBY][HS] permission.isGranted=${permission.isGranted} '
+      'message="${permission.message}"',
+    );
     if (!permission.isGranted) {
       if (!mounted) return;
       setState(() {
@@ -178,37 +185,35 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
+    // STAGE 1 - location only (must stand on its own).
+    UserLocationSnapshot snapshot;
     try {
-      final snapshot = await LocationService.instance.getUserLocationSnapshot();
-      await FirestoreService.instance.updateUserLastKnownLocation(
-        userId: widget.currentUser.uid,
-        latitude: snapshot.latitude,
-        longitude: snapshot.longitude,
-        city: snapshot.city,
-        fullAddress: snapshot.fullAddress,
+      debugPrint('[NEARBY][HS] before getUserLocationSnapshot()');
+      snapshot = await LocationService.instance.getUserLocationSnapshot();
+      debugPrint(
+        '[NEARBY][HS] snapshot OK -> lat=${snapshot.latitude} '
+        'lng=${snapshot.longitude} city="${snapshot.city}"',
       );
-
-      final page = await FirestoreService.instance.fetchEvents(city: 'All');
+    } on LocationServiceException catch (error, stack) {
+      debugPrint(
+        '[NEARBY][HS] LOCATION FAILED (stage 1): '
+        '${error.runtimeType}: ${error.message}\n$stack',
+      );
       if (!mounted) return;
-
       setState(() {
-        _nearbyEnabled = true;
+        _nearbyEnabled = false;
         _loadingNearby = false;
-        _userLatitude = snapshot.latitude;
-        _userLongitude = snapshot.longitude;
-        _userCity = snapshot.city.isEmpty ? null : snapshot.city;
-        _locationMessage = snapshot.fullAddress.isEmpty
-            ? 'Sorted from your current GPS location'
-            : 'Sorted from your current location';
-        _events
-          ..clear()
-          ..addAll(_uniqueEvents(page.events));
-        _lastDocument = page.lastDocument;
-        _hasMore = page.lastDocument != null;
-        _loading = false;
-        _sortEventsByDistance();
+        _userLatitude = null;
+        _userLongitude = null;
+        _locationMessage = error.message;
       });
-    } catch (_) {
+      _showLocationMessage(error.message);
+      return;
+    } catch (error, stack) {
+      debugPrint(
+        '[NEARBY][HS] LOCATION FAILED (stage 1, untyped): '
+        '${error.runtimeType}: $error\n$stack',
+      );
       if (!mounted) return;
       setState(() {
         _nearbyEnabled = false;
@@ -218,7 +223,84 @@ class _HomeScreenState extends State<HomeScreen> {
         _locationMessage = 'Location is unavailable right now.';
       });
       _showLocationMessage('Location is unavailable right now.');
+      return;
     }
+
+    // STAGE 2 - Firestore write (best-effort, must NOT fail Nearby).
+    try {
+      debugPrint('[NEARBY][HS] before updateUserLastKnownLocation()');
+      await FirestoreService.instance.updateUserLastKnownLocation(
+        userId: widget.currentUser.uid,
+        latitude: snapshot.latitude,
+        longitude: snapshot.longitude,
+        city: snapshot.city,
+        fullAddress: snapshot.fullAddress,
+      );
+      debugPrint('[NEARBY][HS] updateUserLastKnownLocation OK');
+    } catch (error, stack) {
+      debugPrint(
+        '[NEARBY][HS] updateUserLastKnownLocation FAILED (non-fatal): '
+        '${error.runtimeType}: $error\n$stack',
+      );
+    }
+
+    // STAGE 3 - fetch events (its own error, never "location unavailable").
+    PagedEvents page;
+    try {
+      debugPrint('[NEARBY][HS] before fetchEvents(city: All)');
+      page = await FirestoreService.instance.fetchEvents(city: 'All');
+      debugPrint(
+        '[NEARBY][HS] fetchEvents OK -> ${page.events.length} events',
+      );
+    } catch (error, stack) {
+      debugPrint(
+        '[NEARBY][HS] fetchEvents FAILED (stage 3): '
+        '${error.runtimeType}: $error\n$stack',
+      );
+      if (!mounted) return;
+      setState(() {
+        _nearbyEnabled = true;
+        _loadingNearby = false;
+        _userLatitude = snapshot.latitude;
+        _userLongitude = snapshot.longitude;
+        _userCity = snapshot.city.isEmpty ? null : snapshot.city;
+        _error = error.toString();
+        _loading = false;
+      });
+      _showLocationMessage('Could not load events. Pull to refresh.');
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _nearbyEnabled = true;
+      _loadingNearby = false;
+      _userLatitude = snapshot.latitude;
+      _userLongitude = snapshot.longitude;
+      _userCity = snapshot.city.isEmpty ? null : snapshot.city;
+      _locationMessage = snapshot.fullAddress.isEmpty
+          ? 'Sorted from your current GPS location'
+          : 'Sorted from your current location';
+      _events
+        ..clear()
+        ..addAll(_uniqueEvents(page.events));
+      _lastDocument = page.lastDocument;
+      _hasMore = page.lastDocument != null;
+      _loading = false;
+      _sortEventsByDistance();
+    });
+
+    final withCoords = _events
+        .where((e) => e.latitude != null && e.longitude != null)
+        .length;
+    final withinRadius = _events.where((e) {
+      final d = _distanceFor(e);
+      return d != null && d <= _radiusKm;
+    }).length;
+    debugPrint(
+      '[NEARBY][HS] DONE -> total=${_events.length} withCoords=$withCoords '
+      'within ${_radiusKm.toStringAsFixed(0)}km=$withinRadius',
+    );
   }
 
   void _showLocationMessage(String message) {
