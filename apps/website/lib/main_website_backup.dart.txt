@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:nightlife_shared/nightlife_shared.dart';
 
+import 'admin_panel.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -35,6 +36,13 @@ class NightlifeWebsiteApp extends StatelessWidget {
         builder: (_) => EventDetailsPage(
           eventId: Uri.decodeComponent(uri.pathSegments.last),
         ),
+      );
+    }
+
+    if (uri.pathSegments.length == 1 && uri.pathSegments.first == 'admin') {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => const AdminPanelPage(),
       );
     }
 

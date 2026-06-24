@@ -1,3 +1,6 @@
+# Local scratch: exported auth data and other throwaway files (never commit)
+/scratch/
+
 # Miscellaneous
 *.class
 *.log

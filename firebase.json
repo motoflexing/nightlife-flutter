@@ -3,20 +3,20 @@
     "platforms": {
       "android": {
         "default": {
-          "projectId": "nightlife-platform-geek",
-          "appId": "1:198792802421:android:208f8b5fd98f7cbeda883c",
+          "projectId": "party-app-1774e",
+          "appId": "1:338930228171:android:940bebef5070aedf7ff44e",
           "fileOutput": "apps/mobile/android/app/google-services.json"
         }
       },
       "dart": {
         "apps/mobile/lib/firebase_options.dart": {
-          "projectId": "nightlife-platform-geek",
+          "projectId": "party-app-1774e",
           "configurations": {
-            "android": "1:198792802421:android:208f8b5fd98f7cbeda883c",
-            "ios": "1:198792802421:ios:d87f892e70fa2443da883c",
-            "macos": "1:198792802421:ios:d87f892e70fa2443da883c",
-            "web": "1:198792802421:web:3da59001fceab9f5da883c",
-            "windows": "1:198792802421:web:e71e4d1e63303372da883c"
+            "android": "1:338930228171:android:940bebef5070aedf7ff44e",
+            "ios": "1:338930228171:ios:b0cdf04b313b950a7ff44e",
+            "macos": "1:338930228171:ios:b0cdf04b313b950a7ff44e",
+            "web": "1:338930228171:web:276218a4d4a2dd1b7ff44e",
+            "windows": "1:338930228171:web:7f0f2d3922ee8d8d7ff44e"
           }
         }
       }

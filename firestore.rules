@@ -328,12 +328,27 @@ service cloud.firestore {
     match /referralCodes/{code} {
       allow read: if signedIn() && resource.data.isActive == true;
 
-      allow create, update: if isSuperAdmin()
+      allow create: if isSuperAdmin()
         || (
-          isPromoter()
-          && code == currentPromoterCode()
+          signedIn()
           && request.resource.data.promoterId == request.auth.uid
-          && request.resource.data.referralCode == currentPromoterCode()
+          && request.resource.data.referralCode == code
+          && request.resource.data.isActive == true
+          && request.resource.data.keys().hasOnly([
+            'promoterId',
+            'referralCode',
+            'isActive',
+            'createdAt',
+            'updatedAt'
+          ])
+        );
+
+      allow update: if isSuperAdmin()
+        || (
+          signedIn()
+          && resource.data.promoterId == request.auth.uid
+          && request.resource.data.promoterId == request.auth.uid
+          && request.resource.data.referralCode == code
           && request.resource.data.isActive == true
           && request.resource.data.keys().hasOnly([
             'promoterId',
