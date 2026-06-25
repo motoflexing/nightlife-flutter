@@ -36,40 +36,6 @@ const LinearGradient _kShareGradient = LinearGradient(
   end: Alignment.centerRight,
 );
 
-/// Placeholder figures for parts of the dashboard that have no backend yet.
-///
-/// TODO: wire to backend — there is no earnings system or "events filled"
-/// signal in Firestore today. Replace [_PromoterPlaceholders.demo] with values
-/// computed from real data once those collections exist. The widgets below read
-/// every dummy number from this single object so the swap is one place.
-class _PromoterPlaceholders {
-  const _PromoterPlaceholders({
-    required this.totalEarned,
-    required this.earnedThisWeek,
-    required this.eventsFilled,
-    required this.percentThisWeek,
-  });
-
-  /// TODO: wire to backend — total promoter earnings (currency, INR).
-  final int totalEarned;
-
-  /// TODO: wire to backend — earnings gained in the last 7 days.
-  final int earnedThisWeek;
-
-  /// TODO: wire to backend — number of events the promoter has "filled".
-  final int eventsFilled;
-
-  /// TODO: wire to backend — week-over-week growth percentage.
-  final int percentThisWeek;
-
-  static const _PromoterPlaceholders demo = _PromoterPlaceholders(
-    totalEarned: 12480,
-    earnedThisWeek: 1840,
-    eventsFilled: 6,
-    percentThisWeek: 18,
-  );
-}
-
 class PromoterDashboardScreen extends StatelessWidget {
   const PromoterDashboardScreen({super.key, required this.currentUser});
 
@@ -117,8 +83,6 @@ class _PromoterContent extends StatefulWidget {
 }
 
 class _PromoterContentState extends State<_PromoterContent> {
-  static const _commissionPerApprovedRsvp = 120;
-
   final _scrollController = ScrollController();
   final _eventsKey = GlobalKey();
   final _activityKey = GlobalKey();
@@ -157,10 +121,7 @@ class _PromoterContentState extends State<_PromoterContent> {
                 eventSnapshot.connectionState == ConnectionState.waiting;
             final rsvps = rsvpSnapshot.data ?? const <Rsvp>[];
             final events = eventSnapshot.data ?? const <NightlifeEvent>[];
-            final stats = _PromoterStats.fromRsvps(
-              rsvps,
-              commissionPerApprovedRsvp: _commissionPerApprovedRsvp,
-            );
+            final stats = _PromoterStats.fromRsvps(rsvps);
             final snapshot = _DashboardSnapshot(
               promoter: widget.promoter,
               currentUser: widget.currentUser,
@@ -170,7 +131,6 @@ class _PromoterContentState extends State<_PromoterContent> {
               referralLink: _generalReferralLink(
                 widget.promoter.referralCode.trim(),
               ),
-              commissionPerRsvp: _commissionPerApprovedRsvp,
             );
 
             return Stack(
@@ -227,16 +187,8 @@ class _PromoterContentState extends State<_PromoterContent> {
                                   ),
                                 ),
                               const SizedBox(height: 14),
-                              // Total earned (dummy) — see _PromoterPlaceholders.
-                              _TotalEarnedCard(
-                                placeholders: _PromoterPlaceholders.demo,
-                              ),
-                              const SizedBox(height: 12),
-                              // Stat row: Total RSVPs (REAL) + dummy figures.
-                              _StatCardRow(
-                                totalRsvps: stats.total,
-                                placeholders: _PromoterPlaceholders.demo,
-                              ),
+                              // Real RSVP-derived counts only — no earnings.
+                              _StatCardRow(stats: stats),
                               const SizedBox(height: 18),
                               if (loading)
                                 const _HeroSkeleton()
@@ -251,8 +203,6 @@ class _PromoterContentState extends State<_PromoterContent> {
                                 ),
                                 onEvents: () => _scrollTo(_eventsKey),
                                 onRsvps: () => _scrollTo(_activityKey),
-                                onEarnings: () =>
-                                    _showEarningsSheet(context, stats),
                               ),
                               const SizedBox(height: 22),
                               _SectionTitle(
@@ -363,7 +313,7 @@ class _PromoterContentState extends State<_PromoterContent> {
                       ),
                       message: 'Best event link copied',
                     ),
-                    onAnalytics: () => _showEarningsSheet(context, stats),
+                    onAnalytics: () => _scrollTo(_activityKey),
                     onProfile: () => _showPromoterProfile(
                       context,
                       widget.promoter,
@@ -412,16 +362,6 @@ class _PromoterContentState extends State<_PromoterContent> {
     _copy(context, value, message: 'Event link copied and ready to share');
   }
 
-  void _showEarningsSheet(BuildContext context, _PromoterStats stats) {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet<void>(
-      context: context,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _EarningsSheet(stats: stats),
-    );
-  }
-
   String _eventReferralLink(NightlifeEvent event, String referralCode) {
     return '/event/${Uri.encodeComponent(event.id)}?ref=$referralCode';
   }
@@ -439,9 +379,6 @@ class _PromoterStats {
     required this.today,
     required this.thisWeekRsvps,
     required this.conversionRate,
-    required this.approvedCommission,
-    required this.pendingCommission,
-    required this.thisMonthEarnings,
     required this.eventTotals,
     required this.eventApprovedTotals,
     required this.eventConversionRates,
@@ -454,27 +391,21 @@ class _PromoterStats {
   final int today;
   final int thisWeekRsvps;
   final int conversionRate;
-  final int approvedCommission;
-  final int pendingCommission;
-  final int thisMonthEarnings;
   final Map<String, int> eventTotals;
   final Map<String, int> eventApprovedTotals;
   final Map<String, int> eventConversionRates;
+
+  /// Real RSVP counts for each of the last 7 days (oldest → today). Genuinely
+  /// all-zero when there is no recent activity; never backfilled with fake data.
   final List<int> growthSeries;
 
-  int get estimatedEarnings => approvedCommission + pendingCommission;
-
-  factory _PromoterStats.fromRsvps(
-    List<Rsvp> rsvps, {
-    required int commissionPerApprovedRsvp,
-  }) {
+  factory _PromoterStats.fromRsvps(List<Rsvp> rsvps) {
     final now = DateTime.now();
     final startOfToday = DateTime(now.year, now.month, now.day);
     var pending = 0;
     var approved = 0;
     var today = 0;
     var thisWeek = 0;
-    var approvedThisMonth = 0;
     final eventTotals = <String, int>{};
     final eventApprovedTotals = <String, int>{};
     final series = List<int>.filled(7, 0);
@@ -487,9 +418,6 @@ class _PromoterStats {
         approved++;
         eventApprovedTotals[rsvp.eventId] =
             (eventApprovedTotals[rsvp.eventId] ?? 0) + 1;
-        if (created.year == now.year && created.month == now.month) {
-          approvedThisMonth++;
-        }
       }
       if (!created.isBefore(startOfToday)) today++;
       final daysAgo = now.difference(created).inDays;
@@ -518,15 +446,10 @@ class _PromoterStats {
       today: today,
       thisWeekRsvps: thisWeek,
       conversionRate: conversion,
-      approvedCommission: approved * commissionPerApprovedRsvp,
-      pendingCommission: pending * commissionPerApprovedRsvp,
-      thisMonthEarnings: approvedThisMonth * commissionPerApprovedRsvp,
       eventTotals: eventTotals,
       eventApprovedTotals: eventApprovedTotals,
       eventConversionRates: eventConversionRates,
-      growthSeries: series.every((value) => value == 0)
-          ? const [1, 2, 2, 4, 3, 5, 6]
-          : series,
+      growthSeries: series,
     );
   }
 }
@@ -539,7 +462,6 @@ class _DashboardSnapshot {
     required this.events,
     required this.rsvps,
     required this.referralLink,
-    required this.commissionPerRsvp,
   });
 
   final Promoter promoter;
@@ -548,7 +470,6 @@ class _DashboardSnapshot {
   final List<NightlifeEvent> events;
   final List<Rsvp> rsvps;
   final String referralLink;
-  final int commissionPerRsvp;
 
   String get promoterName {
     if (promoter.name.trim().isNotEmpty) return promoter.name.trim();
@@ -571,7 +492,6 @@ class _DashboardSnapshot {
         rsvps: total,
         approved: approved,
         conversion: conversion,
-        commission: approved * commissionPerRsvp,
       );
     }).toList();
     items.sort((a, b) {
@@ -597,13 +517,11 @@ class _DashboardSnapshot {
               rsvp.status.toLowerCase() == 'confirmed';
           return _ActivityItem(
             icon: approved
-                ? Icons.payments_outlined
+                ? Icons.verified_outlined
                 : Icons.check_circle_outline,
-            title: approved ? 'Commission credited' : '$name RSVP\'d',
-            subtitle: approved ? eventTitle : 'For $eventTitle',
-            value: approved
-                ? 'INR $commissionPerRsvp'
-                : Formatters.titleCase(rsvp.status),
+            title: '$name RSVP\'d',
+            subtitle: 'For $eventTitle',
+            value: Formatters.titleCase(rsvp.status),
             time: _relativeTime(rsvp.createdAt),
             accent: approved ? AppTheme.neonLime : AppTheme.neonViolet,
           );
@@ -623,14 +541,12 @@ class _EventPerformance {
     required this.rsvps,
     required this.approved,
     required this.conversion,
-    required this.commission,
   });
 
   final NightlifeEvent event;
   final int rsvps;
   final int approved;
   final int conversion;
-  final int commission;
 
   String get title =>
       event.title.trim().isEmpty ? 'Untitled Event' : event.title;
@@ -922,82 +838,12 @@ class _ReferralHeroCard extends StatelessWidget {
   }
 }
 
-/// "Total earned" figure with a "+$X this week" pill. Both values are dummy
-/// placeholders for now (see [_PromoterPlaceholders]).
-class _TotalEarnedCard extends StatelessWidget {
-  const _TotalEarnedCard({required this.placeholders});
-
-  final _PromoterPlaceholders placeholders;
-
-  @override
-  Widget build(BuildContext context) {
-    return _GlassPanel(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-      glow: _kPink.withValues(alpha: 0.18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Total earned',
-                  style: TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              // TODO: wire to backend — "+$X this week" pill.
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _kActiveGreen.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                  border:
-                      Border.all(color: _kActiveGreen.withValues(alpha: 0.3)),
-                ),
-                child: Text(
-                  '+\$${placeholders.earnedThisWeek} this week',
-                  style: const TextStyle(
-                    color: _kActiveGreen,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // TODO: wire to backend — total earned figure.
-          Text(
-            '\$${placeholders.totalEarned}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 40,
-              height: 1.0,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Row of stat cards: Total RSVPs (REAL), Events filled (dummy), % this week
-/// (dummy).
+/// Row of stat cards, all derived from real RSVP data via
+/// promoterRsvpsStream(referralCode): Total RSVPs, Approved, and This week.
 class _StatCardRow extends StatelessWidget {
-  const _StatCardRow({
-    required this.totalRsvps,
-    required this.placeholders,
-  });
+  const _StatCardRow({required this.stats});
 
-  /// REAL value from promoterRsvpsStream(referralCode).
-  final int totalRsvps;
-  final _PromoterPlaceholders placeholders;
+  final _PromoterStats stats;
 
   @override
   Widget build(BuildContext context) {
@@ -1005,25 +851,23 @@ class _StatCardRow extends StatelessWidget {
       children: [
         Expanded(
           child: _StatCard(
-            value: totalRsvps.toString(),
+            value: stats.total.toString(),
             label: 'Total RSVPs',
             accent: _kViolet,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          // TODO: wire to backend — events filled count.
           child: _StatCard(
-            value: placeholders.eventsFilled.toString(),
-            label: 'Events filled',
+            value: stats.approved.toString(),
+            label: 'Approved',
             accent: _kPink,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          // TODO: wire to backend — % this week.
           child: _StatCard(
-            value: '${placeholders.percentThisWeek}%',
+            value: stats.thisWeekRsvps.toString(),
             label: 'This week',
             accent: _kActiveGreen,
           ),
@@ -1191,8 +1035,8 @@ class _ImpactHeroCardState extends State<_ImpactHeroCard>
                 color: AppTheme.neonViolet,
               ),
               _ImpactChip(
-                label: 'Commission',
-                value: 'INR ${stats.approvedCommission}',
+                label: 'This week',
+                value: stats.thisWeekRsvps.toString(),
                 color: AppTheme.accentPink,
               ),
             ],
@@ -1224,13 +1068,11 @@ class _QuickActionGrid extends StatelessWidget {
     required this.onReferralLinks,
     required this.onEvents,
     required this.onRsvps,
-    required this.onEarnings,
   });
 
   final VoidCallback onReferralLinks;
   final VoidCallback onEvents;
   final VoidCallback onRsvps;
-  final VoidCallback onEarnings;
 
   @override
   Widget build(BuildContext context) {
@@ -1259,12 +1101,6 @@ class _QuickActionGrid extends StatelessWidget {
           label: 'My RSVPs',
           gradient: const [Color(0xFF10B981), Color(0xFF7C3AED)],
           onPressed: onRsvps,
-        ),
-        _QuickActionTile(
-          icon: Icons.account_balance_wallet_outlined,
-          label: 'My Earnings',
-          gradient: const [Color(0xFFFF2D55), Color(0xFF7C3AED)],
-          onPressed: onEarnings,
         ),
       ],
     );
@@ -1410,8 +1246,8 @@ class _TopEventCard extends StatelessWidget {
                     ),
                     Expanded(
                       child: _EventStat(
-                        value: 'INR ${item.commission}',
-                        label: 'Commission',
+                        value: item.approved.toString(),
+                        label: 'Approved',
                       ),
                     ),
                     Expanded(
@@ -1591,7 +1427,7 @@ class _FloatingBottomNav extends StatelessWidget {
               _CenterNavButton(onTap: onCreateLink),
               _NavIcon(
                 icon: Icons.bar_chart_rounded,
-                tooltip: 'Analytics',
+                tooltip: 'Activity',
                 onTap: onAnalytics,
               ),
               _NavIcon(
@@ -1759,109 +1595,6 @@ class _MetricCardData {
   final String value;
   final IconData icon;
   final Color color;
-}
-
-class _EarningsSheet extends StatelessWidget {
-  const _EarningsSheet({required this.stats});
-
-  final _PromoterStats stats;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: _GlassPanel(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-          glow: AppTheme.neonLime.withValues(alpha: 0.18),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Commission Insights',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Close',
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              _SheetLine(
-                label: 'Confirmed RSVPs',
-                value: stats.approved.toString(),
-              ),
-              _SheetLine(
-                label: 'Pending RSVPs',
-                value: stats.pending.toString(),
-              ),
-              _SheetLine(
-                label: 'Confirmed commission',
-                value: 'INR ${stats.approvedCommission}',
-                color: AppTheme.neonLime,
-              ),
-              _SheetLine(
-                label: 'Pending commission',
-                value: 'INR ${stats.pendingCommission}',
-              ),
-              _SheetLine(
-                label: 'This month earned',
-                value: 'INR ${stats.thisMonthEarnings}',
-                color: AppTheme.accentPink,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SheetLine extends StatelessWidget {
-  const _SheetLine({
-    required this.label,
-    required this.value,
-    this.color = Colors.white,
-  });
-
-  final String label;
-  final String value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(color: color, fontWeight: FontWeight.w900),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _SectionTitle extends StatelessWidget {

@@ -1165,7 +1165,7 @@ void _showHelpSheet(BuildContext context) {
             ),
             const SizedBox(height: 10),
             const Text(
-              'For RSVP, event, or account issues, contact the venue/admin team from your registered email. In-app support messaging can be connected here later.',
+              'For RSVP, event, or account issues, email us at support@nightlife.app from your registered email address and the team will help you out.',
               style: TextStyle(color: AppTheme.textMuted, height: 1.35),
             ),
             const SizedBox(height: 14),

@@ -14,7 +14,6 @@ import '../../widgets/event_poster.dart';
 import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 import 'event_details_screen.dart';
-import 'nightlife_pass_screen.dart';
 
 enum _DiscoveryFilter {
   all('All'),
@@ -437,9 +436,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           SliverToBoxAdapter(
-            child: _HomeHeroSection(onOpen: () => _openPremiumPass(context)),
-          ),
-          SliverToBoxAdapter(
             child: _DiscoveryControls(
               title: _sectionTitle(visibleEvents.length),
               subtitle: _sectionSubtitle(visibleEvents.length),
@@ -591,11 +587,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openPremiumPass(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const NightlifePassScreen()),
-    );
-  }
 }
 
 class _HomeTopBar extends StatelessWidget {
@@ -678,104 +669,6 @@ class _HomeTopBar extends StatelessWidget {
             onSelected: onDateSelected,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _HomeHeroSection extends StatelessWidget {
-  const _HomeHeroSection({required this.onOpen});
-
-  final VoidCallback onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 2, 16, 14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onOpen,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 88),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.accentPink.withValues(alpha: 0.16),
-                AppTheme.neonViolet.withValues(alpha: 0.08),
-                AppTheme.surface.withValues(alpha: 0.98),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.26),
-                blurRadius: 18,
-                offset: const Offset(0, 12),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppTheme.accentPink.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppTheme.accentPink.withValues(alpha: 0.22),
-                  ),
-                ),
-                child: const Icon(
-                  Icons.workspace_premium,
-                  color: AppTheme.accentPink,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Unlock Premium Parties Before Anyone Else',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        height: 1.15,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    Text(
-                      'Guestlists | VIP Access | Private Nights',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: AppTheme.textMuted,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Icon(
-                Icons.chevron_right,
-                color: AppTheme.accentPink,
-                size: 22,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

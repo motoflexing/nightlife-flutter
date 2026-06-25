@@ -668,7 +668,7 @@ void _openPreferenceAction(BuildContext context, _PreferenceItem item) {
     case _PreferenceAction.promoterSupport:
       _showPromoterSupportSheet(context);
     case null:
-      _showComingSoonSheet(context, item);
+      _showAccountInfoSheet(context, item);
   }
 }
 
@@ -846,18 +846,6 @@ void _showSecuritySheet(BuildContext context) {
           title: 'Change password',
           subtitle: 'Send a secure password reset link to your email.',
         ),
-        const _SecurityActionRow(
-          icon: Icons.phonelink_lock_outlined,
-          title: 'Login sessions',
-          subtitle: 'Review active mobile and desktop sessions.',
-          badge: '2 active',
-        ),
-        const _SecurityActionRow(
-          icon: Icons.verified_user_outlined,
-          title: 'Two-step authentication',
-          subtitle: 'Add a second check before sensitive account changes.',
-          badge: 'Soon',
-        ),
         const SizedBox(height: 10),
         _SheetSwitchRow(
           icon: Icons.notifications_outlined,
@@ -898,13 +886,6 @@ void _showContactSupportSheet(BuildContext context) {
           icon: Icons.schedule_outlined,
           title: 'Response time',
           subtitle: 'Most requests receive a reply within 24 hours.',
-        ),
-        const SizedBox(height: 10),
-        const _SupportInfoCard(
-          icon: Icons.chat_outlined,
-          title: 'WhatsApp support',
-          subtitle: 'Coming soon for urgent entry-window assistance.',
-          badge: 'Optional',
         ),
         const SizedBox(height: 16),
         _SheetActions(
@@ -1089,7 +1070,7 @@ void _showPromoterSupportSheet(BuildContext context) {
   );
 }
 
-void _showComingSoonSheet(BuildContext context, _PreferenceItem item) {
+void _showAccountInfoSheet(BuildContext context, _PreferenceItem item) {
   _showSettingsSheet(
     context: context,
     icon: item.icon,
@@ -1108,7 +1089,7 @@ void _showComingSoonSheet(BuildContext context, _PreferenceItem item) {
             border: Border.all(color: AppTheme.glassBorder),
           ),
           child: const Text(
-            'This preference area is coming soon. We are polishing the workflow so it feels useful before it goes live.',
+            'To reset your password, use "Forgot password?" on the sign-in screen. For anything else about your account, reach the team from Help & Support.',
             style: TextStyle(color: AppTheme.textMuted, height: 1.35),
           ),
         ),
@@ -1293,13 +1274,11 @@ class _SecurityActionRow extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.badge,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
-  final String? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -1311,26 +1290,8 @@ class _SecurityActionRow extends StatelessWidget {
         subtitle,
         style: const TextStyle(color: AppTheme.textMuted, height: 1.25),
       ),
-      trailing: badge == null
-          ? const Icon(Icons.chevron_right)
-          : Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryViolet.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: AppTheme.accentPink.withValues(alpha: 0.35),
-                ),
-              ),
-              child: Text(
-                badge!,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-      onTap: () => _showComingSoonSheet(
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => _showAccountInfoSheet(
         context,
         _PreferenceItem(icon: icon, title: title, subtitle: subtitle),
       ),
