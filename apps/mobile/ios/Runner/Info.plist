@@ -26,6 +26,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>GoogleMapsApiKey</key>
 	<string>AIzaSyCKtdhajms0wCdKgHh7cliQZ4I7q-eNSsE</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
@@ -58,6 +60,8 @@
 		<key>NearbyEvents</key>
 		<string>Nightlife uses precise location to calculate distance to nearby venues.</string>
 	</dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Nightlife needs access to your photos so you can upload a profile picture and a valid ID for venue verification.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -90,7 +94,6 @@
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
 </dict>
