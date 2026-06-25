@@ -10,12 +10,12 @@ import '../../models/app_user.dart';
 import '../../models/event.dart';
 import '../../models/promoter.dart';
 import '../../models/rsvp.dart';
-import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/event_poster.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
+import 'promoter_profile_screen.dart';
 
 // --- Promoter dashboard design tokens ---------------------------------------
 // The shared AppTheme currently maps neonViolet/accentPink to gold. The new
@@ -172,8 +172,8 @@ class _PromoterContentState extends State<_PromoterContent> {
                                 const _HeroSkeleton()
                               else
                                 _ReferralHeroCard(
-                                  referralCode:
-                                      widget.promoter.referralCode.trim(),
+                                  referralCode: widget.promoter.referralCode
+                                      .trim(),
                                   referralLink: snapshot.referralLink,
                                   isActive: widget.promoter.isActive,
                                   onCopy: () => _copy(
@@ -181,10 +181,8 @@ class _PromoterContentState extends State<_PromoterContent> {
                                     widget.promoter.referralCode.trim(),
                                     message: 'Referral code copied',
                                   ),
-                                  onShare: () => _share(
-                                    context,
-                                    snapshot.referralLink,
-                                  ),
+                                  onShare: () =>
+                                      _share(context, snapshot.referralLink),
                                 ),
                               const SizedBox(height: 14),
                               // Real RSVP-derived counts only — no earnings.
@@ -814,8 +812,11 @@ class _ReferralHeroCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.ios_share_rounded,
-                            color: Colors.white, size: 19),
+                        Icon(
+                          Icons.ios_share_rounded,
+                          color: Colors.white,
+                          size: 19,
+                        ),
                         SizedBox(width: 9),
                         Text(
                           'Share your code',
@@ -2285,145 +2286,11 @@ void _showPromoterProfile(
   Promoter? promoter,
   AppUser currentUser,
 ) {
-  showModalBottomSheet<void>(
-    context: context,
-    useSafeArea: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) {
-      final name = promoter?.name.trim().isNotEmpty == true
-          ? promoter!.name
-          : currentUser.name.trim().isEmpty
-          ? 'Promoter'
-          : currentUser.name;
-      final email = promoter?.email.trim().isNotEmpty == true
-          ? promoter!.email
-          : currentUser.email;
-      final code = promoter?.referralCode.trim().isNotEmpty == true
-          ? promoter!.referralCode
-          : currentUser.promoterCode ?? '';
-
-      return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: _GlassPanel(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-            glow: AppTheme.neonViolet.withValues(alpha: 0.20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    _PromoterAvatar(name: name, size: 48),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          Text(
-                            promoter?.isActive == false
-                                ? 'Inactive promoter'
-                                : 'Active promoter',
-                            style: TextStyle(
-                              color: promoter?.isActive == false
-                                  ? AppTheme.textMuted
-                                  : AppTheme.neonLime,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Close',
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _ProfileLine(label: 'Email', value: email),
-                _ProfileLine(label: 'Referral code', value: code),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: _GhostButton(
-                    icon: Icons.logout_rounded,
-                    label: 'Logout',
-                    onPressed: () async {
-                      debugPrint('[LOGOUT] promoter sheet: TAP');
-                      // Capture the navigator before the async gap so we don't
-                      // use a BuildContext across an await.
-                      final navigator = Navigator.of(context);
-                      debugPrint('[LOGOUT] promoter sheet: before pop');
-                      navigator.pop();
-                      debugPrint('[LOGOUT] promoter sheet: after pop');
-                      try {
-                        debugPrint('[LOGOUT] promoter sheet: before signOut');
-                        await AuthService.instance.signOut();
-                        debugPrint('[LOGOUT] promoter sheet: after signOut');
-                      } catch (e) {
-                        debugPrint('[LOGOUT] promoter sheet: signOut THREW: $e');
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    },
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => PromoterProfileScreen(currentUser: currentUser),
+    ),
   );
-}
-
-class _ProfileLine extends StatelessWidget {
-  const _ProfileLine({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 9),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 112,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value.trim().isEmpty ? '-' : value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 String _greeting() {

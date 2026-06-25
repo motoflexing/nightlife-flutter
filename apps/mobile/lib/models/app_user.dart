@@ -18,6 +18,15 @@ class AppUser {
     required this.lastKnownCity,
     required this.lastKnownAddress,
     required this.profilePhotoUrl,
+    required this.coverBannerUrl,
+    required this.venueName,
+    required this.businessName,
+    required this.city,
+    required this.businessPhone,
+    required this.businessAddress,
+    required this.gstNumber,
+    required this.businessRegistrationDetails,
+    required this.contactEmail,
     required this.verificationStatus,
     required this.documentUploadStatus,
     required this.onboardingCompleted,
@@ -40,6 +49,15 @@ class AppUser {
   final String lastKnownCity;
   final String lastKnownAddress;
   final String profilePhotoUrl;
+  final String coverBannerUrl;
+  final String venueName;
+  final String businessName;
+  final String city;
+  final String businessPhone;
+  final String businessAddress;
+  final String gstNumber;
+  final String businessRegistrationDetails;
+  final String contactEmail;
   final String verificationStatus;
   final String documentUploadStatus;
   final bool onboardingCompleted;
@@ -77,6 +95,16 @@ class AppUser {
           data['profileImageUrl'] as String? ??
           data['photoUrl'] as String? ??
           '',
+      coverBannerUrl: data['coverBannerUrl'] as String? ?? '',
+      venueName: data['venueName'] as String? ?? '',
+      businessName: data['businessName'] as String? ?? '',
+      city: data['city'] as String? ?? '',
+      businessPhone: data['businessPhone'] as String? ?? '',
+      businessAddress: data['businessAddress'] as String? ?? '',
+      gstNumber: data['gstNumber'] as String? ?? '',
+      businessRegistrationDetails:
+          data['businessRegistrationDetails'] as String? ?? '',
+      contactEmail: data['contactEmail'] as String? ?? '',
       verificationStatus:
           data['verificationStatus'] as String? ??
           data['status'] as String? ??
@@ -108,6 +136,15 @@ class AppUser {
       'lastKnownCity': lastKnownCity,
       'lastKnownAddress': lastKnownAddress,
       'profilePhotoUrl': profilePhotoUrl,
+      'coverBannerUrl': coverBannerUrl,
+      'venueName': venueName,
+      'businessName': businessName,
+      'city': city,
+      'businessPhone': businessPhone,
+      'businessAddress': businessAddress,
+      'gstNumber': gstNumber,
+      'businessRegistrationDetails': businessRegistrationDetails,
+      'contactEmail': contactEmail,
       'verificationStatus': verificationStatus,
       'documentUploadStatus': documentUploadStatus,
       'onboardingCompleted': onboardingCompleted,

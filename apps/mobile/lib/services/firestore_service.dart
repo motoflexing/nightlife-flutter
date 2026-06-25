@@ -45,11 +45,8 @@ class FirestoreService {
 
     final snapshot = await query.get();
 
-    final events =
-        snapshot.docs
-            .map(NightlifeEvent.fromDoc)
-            .toList()
-          ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    final events = snapshot.docs.map(NightlifeEvent.fromDoc).toList()
+      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
     return PagedEvents(events: events, lastDocument: null);
   }
@@ -339,12 +336,10 @@ class FirestoreService {
     final eventId = event.id.trim();
     final eventTitle = event.title.trim();
 
-
     if (authUserId == null || authUserId.isEmpty) {
       throw const FirestoreAppException('Please sign in again to RSVP.');
     }
-    if (currentUserId.isNotEmpty && currentUserId != authUserId) {
-    }
+    if (currentUserId.isNotEmpty && currentUserId != authUserId) {}
     if (!user.isUser || !user.isApproved) {
       throw const FirestoreAppException('Only approved users can RSVP.');
     }
@@ -479,7 +474,6 @@ class FirestoreService {
       } on FirebaseException catch (error, stackTrace) {
         debugPrintStack(stackTrace: stackTrace);
       }
-
 
       await rsvpRef.set(rsvpWriteData);
     } on FirestoreAppException {
@@ -618,6 +612,154 @@ class FirestoreService {
     });
   }
 
+  Future<void> updatePromoterProfilePhoto({
+    required String userId,
+    required String promoterId,
+    required String profilePhotoUrl,
+  }) async {
+    final cleanUserId = userId.trim();
+    final cleanPromoterId = promoterId.trim().isEmpty
+        ? cleanUserId
+        : promoterId.trim();
+    final cleanPhotoUrl = profilePhotoUrl.trim();
+    if (cleanUserId.isEmpty) {
+      throw const FirestoreAppException('User id is required.');
+    }
+    if (cleanPhotoUrl.isEmpty) {
+      throw const FirestoreAppException('Profile photo URL is required.');
+    }
+
+    await _runFirestoreWrite(() async {
+      final batch = _db.batch();
+      batch.set(_db.collection('users').doc(cleanUserId), {
+        'profileImageUrl': cleanPhotoUrl,
+        'profilePhotoUrl': cleanPhotoUrl,
+        'photoUrl': cleanPhotoUrl,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      batch.set(_db.collection('promoters').doc(cleanPromoterId), {
+        'profileImageUrl': cleanPhotoUrl,
+        'profilePhotoUrl': cleanPhotoUrl,
+        'photoUrl': cleanPhotoUrl,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      await batch.commit().timeout(const Duration(seconds: 20));
+    });
+  }
+
+  Future<void> updateVenueProfile({
+    required String userId,
+    required String clubId,
+    required String venueName,
+    required String city,
+    required String address,
+    required String phone,
+    required String contactEmail,
+    required String gstDetails,
+  }) async {
+    final cleanUserId = userId.trim();
+    final cleanClubId = clubId.trim();
+    final cleanVenueName = venueName.trim();
+    if (cleanUserId.isEmpty) {
+      throw const FirestoreAppException('User id is required.');
+    }
+    if (cleanClubId.isEmpty) {
+      throw const FirestoreAppException('Venue profile is not ready yet.');
+    }
+    if (cleanVenueName.isEmpty) {
+      throw const FirestoreAppException('Venue name cannot be empty.');
+    }
+
+    final cleanCity = city.trim();
+    final cleanAddress = address.trim();
+    final cleanPhone = phone.trim();
+    final cleanEmail = contactEmail.trim().toLowerCase();
+    final cleanGst = gstDetails.trim();
+
+    await _runFirestoreWrite(() async {
+      final batch = _db.batch();
+      batch.set(_db.collection('users').doc(cleanUserId), {
+        'businessName': cleanVenueName,
+        'venueName': cleanVenueName,
+        'businessPhone': cleanPhone,
+        'phone': cleanPhone,
+        'businessAddress': cleanAddress,
+        'city': cleanCity,
+        'gstNumber': cleanGst,
+        'businessRegistrationDetails': cleanGst,
+        'contactEmail': cleanEmail,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      batch.set(_db.collection('clubs').doc(cleanClubId), {
+        'clubName': cleanVenueName,
+        'phone': cleanPhone,
+        'businessEmail': cleanEmail,
+        'city': cleanCity,
+        'address': cleanAddress,
+        'gstNumber': cleanGst,
+        'businessRegistrationDetails': cleanGst,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      await batch.commit().timeout(const Duration(seconds: 20));
+    });
+  }
+
+  Future<void> updateClubMedia({
+    required String userId,
+    required String clubId,
+    String? profilePhotoUrl,
+    String? coverBannerUrl,
+  }) async {
+    final cleanUserId = userId.trim();
+    final cleanClubId = clubId.trim();
+    final cleanProfileUrl = profilePhotoUrl?.trim();
+    final cleanCoverUrl = coverBannerUrl?.trim();
+    if (cleanUserId.isEmpty) {
+      throw const FirestoreAppException('User id is required.');
+    }
+    if (cleanClubId.isEmpty) {
+      throw const FirestoreAppException('Venue profile is not ready yet.');
+    }
+    if ((cleanProfileUrl == null || cleanProfileUrl.isEmpty) &&
+        (cleanCoverUrl == null || cleanCoverUrl.isEmpty)) {
+      throw const FirestoreAppException('Choose an image to upload.');
+    }
+
+    await _runFirestoreWrite(() async {
+      final userUpdates = <String, dynamic>{
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      final clubUpdates = <String, dynamic>{
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      if (cleanProfileUrl != null && cleanProfileUrl.isNotEmpty) {
+        userUpdates['profileImageUrl'] = cleanProfileUrl;
+        userUpdates['profilePhotoUrl'] = cleanProfileUrl;
+        userUpdates['photoUrl'] = cleanProfileUrl;
+        clubUpdates['profileImageUrl'] = cleanProfileUrl;
+        clubUpdates['profilePhotoUrl'] = cleanProfileUrl;
+        clubUpdates['photoUrl'] = cleanProfileUrl;
+      }
+      if (cleanCoverUrl != null && cleanCoverUrl.isNotEmpty) {
+        userUpdates['coverBannerUrl'] = cleanCoverUrl;
+        clubUpdates['coverBannerUrl'] = cleanCoverUrl;
+      }
+
+      final batch = _db.batch();
+      batch.set(
+        _db.collection('users').doc(cleanUserId),
+        userUpdates,
+        SetOptions(merge: true),
+      );
+      batch.set(
+        _db.collection('clubs').doc(cleanClubId),
+        clubUpdates,
+        SetOptions(merge: true),
+      );
+      await batch.commit().timeout(const Duration(seconds: 20));
+    });
+  }
+
   Future<void> setPromoterActive(Promoter promoter, bool isActive) async {
     final promoterId = promoter.id.trim();
     final userId = promoter.userId.trim().isEmpty
@@ -752,7 +894,11 @@ class FirestoreService {
       action: 'user_rejected',
       targetId: user.uid,
       targetType: 'user',
-      metadata: {'role': user.role, 'name': user.name, 'reason': rejectionReason ?? ''},
+      metadata: {
+        'role': user.role,
+        'name': user.name,
+        'reason': rejectionReason ?? '',
+      },
     );
   }
 

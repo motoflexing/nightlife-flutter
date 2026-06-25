@@ -111,6 +111,58 @@ class StorageService {
     }
   }
 
+  Future<String> uploadVenueMedia({
+    required Uint8List bytes,
+    required String userId,
+    required String fileName,
+    required String contentType,
+    required String kind,
+    String filePath = '',
+    ValueChanged<double>? onProgress,
+  }) async {
+    final extension = fileName.split('.').last.toLowerCase();
+    final safeExtension = _imageExtension(extension, contentType);
+    final cleanUserId = userId.trim();
+    final cleanKind = kind.trim() == 'cover' ? 'cover' : 'profile';
+    if (cleanUserId.isEmpty) {
+      throw FirebaseException(
+        plugin: 'firebase_storage',
+        code: 'invalid-user',
+        message: 'User id is required to upload venue media.',
+      );
+    }
+    final normalizedContentType = _imageContentType(contentType, safeExtension);
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final path =
+        'profile_photos/$cleanUserId/venue_${cleanKind}_$timestamp.$safeExtension';
+    final ref = _storage.ref(path);
+    final metadata = SettableMetadata(
+      contentType: normalizedContentType,
+      customMetadata: {'uid': cleanUserId, 'kind': 'venue_$cleanKind'},
+    );
+    final uploadTask = startProfilePhotoUpload(
+      ref: ref,
+      bytes: bytes,
+      filePath: filePath,
+      metadata: metadata,
+    );
+
+    try {
+      final snapshot = await _waitForUpload(
+        uploadTask,
+        path: path,
+        onProgress: onProgress,
+      );
+      return snapshot.ref.getDownloadURL().timeout(const Duration(seconds: 30));
+    } on FirebaseException catch (error, stackTrace) {
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
+    } on TimeoutException catch (error, stackTrace) {
+      debugPrintStack(stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
   Future<TaskSnapshot> _waitForUpload(
     UploadTask uploadTask, {
     required String path,

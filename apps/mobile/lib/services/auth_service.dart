@@ -509,7 +509,9 @@ class AuthService {
       await Future<void>.delayed(interval);
       final snapshot = await ref.get();
       if (snapshot.exists) return AppUser.fromDoc(snapshot);
-      if (!_isSigningUp) break; // signup finished without writing — stop waiting
+      if (!_isSigningUp) {
+        break; // signup finished without writing — stop waiting
+      }
     }
     return null;
   }
@@ -523,6 +525,89 @@ class AuthService {
       // Clearing the FCM token is best-effort and must not block sign-out.
     }
     await _auth.signOut();
+  }
+
+  Future<void> deleteCurrentAccount({required String password}) async {
+    final user = _auth.currentUser;
+    final cleanPassword = password.trim();
+    if (user == null) {
+      throw const AuthException('Please sign in again to delete your account.');
+    }
+    final email = user.email?.trim();
+    if (email == null || email.isEmpty) {
+      throw const AuthException(
+        'Password confirmation is only available for email accounts.',
+      );
+    }
+    if (cleanPassword.isEmpty) {
+      throw const AuthException('Enter your password to continue.');
+    }
+
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: cleanPassword,
+      );
+      await user
+          .reauthenticateWithCredential(credential)
+          .timeout(const Duration(seconds: 20));
+
+      final userRef = _db.collection('users').doc(user.uid);
+      final userDoc = await userRef.get().timeout(const Duration(seconds: 20));
+      final profile = userDoc.exists ? AppUser.fromDoc(userDoc) : null;
+      final batch = _db.batch();
+
+      batch.set(userRef, {
+        'isActive': false,
+        'status': 'rejected',
+        'deletedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (profile?.isPromoter == true) {
+        batch.set(_db.collection('promoters').doc(user.uid), {
+          'isActive': false,
+          'deletedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        final code = profile?.promoterCode?.trim();
+        if (code != null && code.isNotEmpty) {
+          batch.set(_db.collection('referralCodes').doc(code), {
+            'isActive': false,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+      }
+
+      final clubId = profile?.clubId?.trim();
+      if (clubId != null && clubId.isNotEmpty) {
+        batch.set(_db.collection('clubs').doc(clubId), {
+          'verificationStatus': 'deleted',
+          'isActive': false,
+          'deletedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit().timeout(const Duration(seconds: 20));
+      ReferralService.instance.clear();
+      try {
+        await NotificationService.instance.clearFcmToken();
+      } catch (_) {
+        // Token cleanup is best-effort; account deletion should continue.
+      }
+      await user.delete().timeout(const Duration(seconds: 20));
+    } on FirebaseAuthException catch (error) {
+      throw AuthException(_friendlyDeleteError(error));
+    } on TimeoutException {
+      throw const AuthException(
+        'Account deletion timed out. Please check your connection and try again.',
+      );
+    } catch (_) {
+      throw const AuthException(
+        'Unable to delete your account right now. Please try again.',
+      );
+    }
   }
 
   Future<void> _approvePromoterProfileIfNeeded(User? user) async {
@@ -606,6 +691,21 @@ class AuthService {
       default:
         return error.message ?? 'Authentication failed. Please try again.';
     }
+  }
+
+  String _friendlyDeleteError(FirebaseAuthException error) {
+    return switch (error.code) {
+      'wrong-password' ||
+      'invalid-credential' => 'Password is incorrect. Please try again.',
+      'requires-recent-login' =>
+        'Please sign out, sign back in, and try deleting again.',
+      'network-request-failed' =>
+        'Network issue. Check your connection and try again.',
+      _ =>
+        error.message == null || error.message!.trim().isEmpty
+            ? 'Unable to delete your account right now.'
+            : error.message!,
+    };
   }
 }
 

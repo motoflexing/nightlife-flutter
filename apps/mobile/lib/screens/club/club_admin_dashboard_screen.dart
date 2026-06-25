@@ -17,6 +17,7 @@ import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/venue_location_picker.dart';
+import 'club_profile_screen.dart';
 
 class ClubAdminDashboardScreen extends StatefulWidget {
   const ClubAdminDashboardScreen({super.key, required this.currentUser});
@@ -36,10 +37,15 @@ class _ClubAdminDashboardScreenState extends State<ClubAdminDashboardScreen> {
     final pages = [
       _ClubEvents(currentUser: widget.currentUser),
       _ClubRsvps(currentUser: widget.currentUser),
+      ClubProfileScreen(currentUser: widget.currentUser),
     ];
     return NeonScaffold(
       appBar: AppBar(
-        title: Text(_index == 0 ? 'Club events' : 'Club RSVPs'),
+        title: Text(switch (_index) {
+          0 => 'Club events',
+          1 => 'Club RSVPs',
+          _ => 'Club profile',
+        }),
         actions: [
           IconButton(
             tooltip: 'Logout',
@@ -63,6 +69,11 @@ class _ClubAdminDashboardScreenState extends State<ClubAdminDashboardScreen> {
             icon: Icon(Icons.fact_check_outlined),
             selectedIcon: Icon(Icons.fact_check),
             label: 'RSVPs',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
+            label: 'Profile',
           ),
         ],
       ),
@@ -156,10 +167,7 @@ class _ClubEvents extends StatelessWidget {
 }
 
 class _ClubEventTile extends StatefulWidget {
-  const _ClubEventTile({
-    required this.event,
-    required this.onEdit,
-  });
+  const _ClubEventTile({required this.event, required this.onEdit});
 
   final NightlifeEvent event;
   final VoidCallback onEdit;
@@ -228,8 +236,9 @@ class _ClubEventTileState extends State<_ClubEventTile> {
                           if (confirm != true) return;
                           setState(() => _deleting = true);
                           try {
-                            await FirestoreService.instance
-                                .deactivateEvent(widget.event.id);
+                            await FirestoreService.instance.deactivateEvent(
+                              widget.event.id,
+                            );
                           } finally {
                             if (mounted) setState(() => _deleting = false);
                           }

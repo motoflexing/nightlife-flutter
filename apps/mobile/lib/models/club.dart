@@ -13,6 +13,10 @@ class Club {
     required this.instagram,
     required this.googleMapsLink,
     required this.documentUrl,
+    required this.gstNumber,
+    required this.businessRegistrationDetails,
+    required this.profilePhotoUrl,
+    required this.coverBannerUrl,
     required this.verificationStatus,
     required this.createdAt,
   });
@@ -28,6 +32,10 @@ class Club {
   final String instagram;
   final String googleMapsLink;
   final String documentUrl;
+  final String gstNumber;
+  final String businessRegistrationDetails;
+  final String profilePhotoUrl;
+  final String coverBannerUrl;
   final String verificationStatus;
   final DateTime createdAt;
 
@@ -45,6 +53,15 @@ class Club {
       instagram: data['instagram'] as String? ?? '',
       googleMapsLink: data['googleMapsLink'] as String? ?? '',
       documentUrl: data['documentUrl'] as String? ?? '',
+      gstNumber: data['gstNumber'] as String? ?? '',
+      businessRegistrationDetails:
+          data['businessRegistrationDetails'] as String? ?? '',
+      profilePhotoUrl:
+          data['profilePhotoUrl'] as String? ??
+          data['profileImageUrl'] as String? ??
+          data['photoUrl'] as String? ??
+          '',
+      coverBannerUrl: data['coverBannerUrl'] as String? ?? '',
       verificationStatus: data['verificationStatus'] as String? ?? 'pending',
       createdAt: _readDate(data['createdAt']),
     );
