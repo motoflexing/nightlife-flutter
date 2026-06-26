@@ -163,6 +163,47 @@ class StorageService {
     }
   }
 
+  /// Best-effort removal of every Storage object owned by [userId] (profile
+  /// photos and valid IDs). Used by account deletion.
+  ///
+  /// This MUST NOT throw: Storage is not enabled yet (pending Blaze), and even
+  /// once enabled a missing object or a permission gap must not block account
+  /// deletion. Every failure — unconfigured bucket, permission-denied,
+  /// object-not-found, timeout — is swallowed so the caller can proceed.
+  Future<void> deleteAllUserAssets(String userId) async {
+    final cleanUserId = userId.trim();
+    if (cleanUserId.isEmpty) return;
+    final safeUserId = cleanUserId.replaceAll(RegExp(r'[^a-zA-Z0-9_.-]'), '_');
+
+    // Folders the app uploads user-owned assets into. Both the raw uid and the
+    // sanitized variant are covered because uploads sanitize the id.
+    final folders = <String>{
+      'profile_photos/$cleanUserId',
+      'profile_photos/$safeUserId',
+      'valid_ids/$cleanUserId',
+      'valid_ids/$safeUserId',
+    };
+
+    for (final folder in folders) {
+      try {
+        final listing = await _storage
+            .ref(folder)
+            .listAll()
+            .timeout(const Duration(seconds: 20));
+        for (final item in listing.items) {
+          try {
+            await item.delete().timeout(const Duration(seconds: 20));
+          } catch (_) {
+            // Per-object failure is non-fatal; continue deleting the rest.
+          }
+        }
+      } catch (_) {
+        // listAll can fail if Storage is unavailable / not configured / the
+        // folder doesn't exist. Treat as a no-op so deletion still completes.
+      }
+    }
+  }
+
   Future<TaskSnapshot> _waitForUpload(
     UploadTask uploadTask, {
     required String path,

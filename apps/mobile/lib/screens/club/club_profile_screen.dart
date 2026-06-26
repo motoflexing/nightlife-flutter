@@ -13,6 +13,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/compact_ui.dart';
+import '../../widgets/delete_account_dialogs.dart';
 import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 
@@ -261,17 +262,34 @@ class _ClubProfileContentState extends State<_ClubProfileContent> {
 
   Future<void> _deleteAccount() async {
     if (_deletingAccount) return;
-    final password = await _requestPassword(context);
-    if (password == null) return;
+    final password = await confirmAndRequestDeletePassword(
+      context,
+      message:
+          'Your venue admin account will be deactivated and scheduled for '
+          'deletion. You will be signed out and lose access immediately. '
+          'This cannot be undone.',
+    );
+    if (password == null || !mounted) return;
+
+    // Capture the navigator before the async gap so we can leave the pushed
+    // profile route after deletion, the same way Logout does.
+    final navigator = Navigator.of(context);
 
     setState(() => _deletingAccount = true);
     try {
       await AuthService.instance.deleteCurrentAccount(password: password);
+      // Leave the pushed profile route FIRST, then sign out so RoleRouterScreen
+      // rebuilds to WelcomeScreen with no stale screen on top.
+      navigator.pop();
+      try {
+        await AuthService.instance.signOut();
+      } catch (_) {
+        // Auth user is already deleted; RoleRouterScreen rebuilds on its own.
+      }
     } catch (error) {
       if (!mounted) return;
+      setState(() => _deletingAccount = false);
       _showSnack(error.toString());
-    } finally {
-      if (mounted) setState(() => _deletingAccount = false);
     }
   }
 
@@ -831,50 +849,6 @@ class _ActionTile extends StatelessWidget {
       onTap: onTap,
     );
   }
-}
-
-Future<String?> _requestPassword(BuildContext context) async {
-  final controller = TextEditingController();
-  final password = await showDialog<String>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Delete account'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Enter your password to permanently delete this venue admin account.',
-            style: TextStyle(color: AppTheme.textMuted),
-          ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: controller,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Password',
-              prefixIcon: Icon(Icons.lock_outline),
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () {
-            final text = controller.text.trim();
-            if (text.isEmpty) return;
-            Navigator.of(context).pop(text);
-          },
-          child: const Text('Delete', style: TextStyle(color: AppTheme.error)),
-        ),
-      ],
-    ),
-  );
-  controller.dispose();
-  return password;
 }
 
 String _firstNonEmpty(Iterable<String?> values) {

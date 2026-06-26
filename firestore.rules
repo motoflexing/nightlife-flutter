@@ -176,6 +176,25 @@ service cloud.firestore {
             || request.resource.data.status == 'pending_review'
             || request.resource.data.status == resource.data.status
           )
+        )
+        // Self account-deletion (soft delete). The owner deactivates their own
+        // account, scheduling it for purge. One-way guarantee: the write must end
+        // with isActive == false (reactivation false -> true is never allowed by
+        // this or any other branch). Allowed regardless of the current isActive
+        // value so an already-deactivated account (e.g. a rejected club admin) can
+        // still delete. role is immutable, and ONLY the four deletion fields change.
+        || (
+          signedIn()
+          && request.auth.uid == uid
+          && request.resource.data.isActive == false
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.status == 'rejected'
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'isActive',
+            'status',
+            'deletedAt',
+            'updatedAt'
+          ])
         );
 
       allow delete: if isSuperAdmin();
@@ -195,6 +214,23 @@ service cloud.firestore {
           && resource.data.ownerId == request.auth.uid
           && request.resource.data.ownerId == resource.data.ownerId
           && request.resource.data.verificationStatus == 'pending_review'
+          && request.resource.data.isActive == resource.data.isActive
+        )
+        // Self account-deletion (soft delete): the owning club admin marks their
+        // own club deleted. ownerId is immutable and ONLY the deletion fields may
+        // change. Deactivation is one-way (isActive must end false).
+        || (
+          signedIn()
+          && resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId
+          && request.resource.data.isActive == false
+          && request.resource.data.verificationStatus == 'deleted'
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'isActive',
+            'verificationStatus',
+            'deletedAt',
+            'updatedAt'
+          ])
         );
 
       allow delete: if isSuperAdmin();
@@ -316,7 +352,23 @@ service cloud.firestore {
         || (signedIn() && resource.data.userId == request.auth.uid)
         || (isPromoter() && resource.data.referralCode == currentPromoterCode());
 
-      allow update, delete: if isSuperAdmin();
+      allow update: if isSuperAdmin()
+        // Self account-deletion (soft delete): the owning promoter deactivates
+        // their own promoter doc. userId is immutable, deactivation is one-way
+        // (isActive must end false), and ONLY the deletion fields may change.
+        || (
+          signedIn()
+          && resource.data.userId == request.auth.uid
+          && request.resource.data.userId == resource.data.userId
+          && request.resource.data.isActive == false
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'isActive',
+            'deletedAt',
+            'updatedAt'
+          ])
+        );
+
+      allow delete: if isSuperAdmin();
     }
 
     match /referrals/{referralId} {
@@ -357,6 +409,20 @@ service cloud.firestore {
             'referralCode',
             'isActive',
             'createdAt',
+            'updatedAt'
+          ])
+        )
+        // Self account-deletion (soft delete): the owning promoter disables their
+        // own referral code. promoterId/referralCode are immutable, deactivation
+        // is one-way (isActive must end false), and ONLY isActive/updatedAt change.
+        || (
+          signedIn()
+          && resource.data.promoterId == request.auth.uid
+          && request.resource.data.promoterId == resource.data.promoterId
+          && request.resource.data.referralCode == resource.data.referralCode
+          && request.resource.data.isActive == false
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'isActive',
             'updatedAt'
           ])
         );

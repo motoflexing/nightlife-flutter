@@ -13,6 +13,7 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/compact_ui.dart';
+import '../../widgets/delete_account_dialogs.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, required this.currentUser});
@@ -98,6 +99,7 @@ class ProfileScreen extends StatelessWidget {
                           await AuthService.instance.signOut();
                         },
                       ),
+                      const _DeleteAccountTile(),
                     ],
                   ),
                 ),
@@ -904,6 +906,56 @@ class _EmptyPanel extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DeleteAccountTile extends StatefulWidget {
+  const _DeleteAccountTile();
+
+  @override
+  State<_DeleteAccountTile> createState() => _DeleteAccountTileState();
+}
+
+class _DeleteAccountTileState extends State<_DeleteAccountTile> {
+  bool _deleting = false;
+
+  Future<void> _deleteAccount() async {
+    if (_deleting) return;
+    final password = await confirmAndRequestDeletePassword(context);
+    if (password == null || !mounted) return;
+
+    // Capture the navigator before the async gap so we can leave any pushed
+    // route after deletion, the same way Logout-related flows do.
+    final navigator = Navigator.of(context);
+
+    setState(() => _deleting = true);
+    try {
+      await AuthService.instance.deleteCurrentAccount(password: password);
+      // Pop any pushed route first, then sign out so RoleRouterScreen rebuilds
+      // to WelcomeScreen with no stale screen on top.
+      if (navigator.canPop()) navigator.pop();
+      try {
+        await AuthService.instance.signOut();
+      } catch (_) {
+        // Auth user is already deleted; RoleRouterScreen rebuilds on its own.
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _deleting = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _ActionTile(
+      icon: Icons.delete_forever_outlined,
+      title: _deleting ? 'Deleting account...' : 'Delete Account',
+      destructive: true,
+      onTap: _deleting ? () {} : _deleteAccount,
     );
   }
 }

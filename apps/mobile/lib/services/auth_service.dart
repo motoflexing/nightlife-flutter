@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import '../models/app_user.dart';
 import 'notification_service.dart';
 import 'referral_service.dart';
+import 'storage_service.dart';
 
 class AuthService {
   AuthService._();
@@ -589,7 +590,19 @@ class AuthService {
         }, SetOptions(merge: true));
       }
 
+      // ORDERING (security-critical): the Firestore soft-delete writes are
+      // committed and AWAITED here, BEFORE user.delete() below. Once the Auth
+      // user is deleted the client loses permission to touch these docs under
+      // firestore.rules, so this must not be reordered or run concurrently.
       await batch.commit().timeout(const Duration(seconds: 20));
+
+      // Storage cleanup is best-effort and runs WHILE STILL AUTHENTICATED (the
+      // owner-only Storage rules require it) but AFTER the Firestore commit so a
+      // Storage hiccup can't abort the soft-delete. deleteAllUserAssets never
+      // throws — it no-ops when Storage is unavailable (not yet enabled), so the
+      // account is still deleted and this works automatically once Storage is on.
+      await StorageService.instance.deleteAllUserAssets(user.uid);
+
       ReferralService.instance.clear();
       try {
         await NotificationService.instance.clearFcmToken();
