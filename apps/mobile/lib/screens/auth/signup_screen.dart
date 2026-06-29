@@ -37,6 +37,10 @@ class _SignupScreenState extends State<SignupScreen> {
 
   String _selectedRole = 'user';
   String _selectedTitle = 'Mr';
+  // Gender dropdown selection. 'Male'/'Female' are saved as-is; 'Other' reveals
+  // the _gender text field and the typed value is saved instead (falling back to
+  // 'Other' if left blank). Shared by both User and Promoter signup.
+  String _selectedGender = 'Male';
   String _businessCity = AppConstants.defaultCity;
 
   bool _loading = false;
@@ -121,6 +125,15 @@ class _SignupScreenState extends State<SignupScreen> {
     return age;
   }
 
+  /// The gender value to persist: the dropdown choice for Male/Female, or the
+  /// user's typed value when "Other" is selected (falling back to 'Other' if the
+  /// custom field was left blank).
+  String _resolvedGender() {
+    if (_selectedGender != 'Other') return _selectedGender;
+    final custom = _gender.text.trim();
+    return custom.isEmpty ? 'Other' : custom;
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -135,8 +148,9 @@ class _SignupScreenState extends State<SignupScreen> {
         password: _password.text,
         requestedRole: _selectedRole,
         title: isPromoter ? '' : _selectedTitle,
-        gender: isPromoter ? '' : _gender.text.trim(),
-        dob: isPromoter ? '' : _dob.text.trim(),
+        // Gender + DOB now apply to all roles (promoters included).
+        gender: _resolvedGender(),
+        dob: _dob.text.trim(),
         instagramId: isPromoter ? '' : _instagramId.text.trim(),
         snapchatId: isPromoter ? '' : _snapchatId.text.trim(),
         // The valid-ID URL is uploaded and saved AFTER signup (see below), once
@@ -284,6 +298,83 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Widget _gap() => const SizedBox(height: 10);
+
+  /// Gender dropdown (Male / Female / Other) shared by User and Promoter. When
+  /// "Other" is selected, a text field is revealed for a custom value. Required:
+  /// a choice must be made, and an "Other" selection must have a typed value.
+  Widget _genderField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DropdownButtonFormField<String>(
+          initialValue: _selectedGender,
+          decoration: const InputDecoration(
+            labelText: 'Gender',
+            prefixIcon: Icon(Icons.wc_outlined),
+          ),
+          items: const [
+            DropdownMenuItem(value: 'Male', child: Text('Male')),
+            DropdownMenuItem(value: 'Female', child: Text('Female')),
+            DropdownMenuItem(value: 'Other', child: Text('Other')),
+          ],
+          onChanged: _loading
+              ? null
+              : (value) {
+                  if (value != null) {
+                    setState(() => _selectedGender = value);
+                  }
+                },
+        ),
+        if (_selectedGender == 'Other') ...[
+          _gap(),
+          TextFormField(
+            controller: _gender,
+            textInputAction: TextInputAction.next,
+            decoration: const InputDecoration(
+              labelText: 'Your gender',
+              prefixIcon: Icon(Icons.edit_outlined),
+              hintText: 'Type your gender',
+            ),
+            validator: (value) {
+              if (_selectedGender == 'Other' &&
+                  (value == null || value.trim().isEmpty)) {
+                return 'Enter your gender';
+              }
+              return null;
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Date-of-birth picker field with the shared 18+ age gate. Used by both User
+  /// and Promoter. Reuses _pickDob (lastDate = 18 years ago) and the existing
+  /// _parseDob / _ageOnDate helpers — no duplicated age logic.
+  Widget _dobField() {
+    return TextFormField(
+      controller: _dob,
+      readOnly: true,
+      onTap: _loading ? null : _pickDob,
+      decoration: const InputDecoration(
+        labelText: 'Date of birth',
+        prefixIcon: Icon(Icons.calendar_month_outlined),
+      ),
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Select your date of birth';
+        }
+        final dob = _parseDob(value.trim());
+        if (dob == null) {
+          return 'Select a valid date of birth';
+        }
+        if (_ageOnDate(dob, DateTime.now()) < 18) {
+          return 'You must be at least 18 years old to use this app.';
+        }
+        return null;
+      },
+    );
+  }
 
   Widget _roleSelector() {
     return Container(
@@ -494,49 +585,13 @@ class _SignupScreenState extends State<SignupScreen> {
                               return null;
                             },
                           ),
+                          // Gender + DOB (with 18+ age gate) apply to BOTH User
+                          // and Promoter.
+                          _gap(),
+                          _genderField(),
+                          _gap(),
+                          _dobField(),
                           if (!_isPromoterRole) ...[
-                            _gap(),
-                            TextFormField(
-                              controller: _gender,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Gender',
-                                prefixIcon: Icon(Icons.wc_outlined),
-                                hintText: 'Male / Female / Other',
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Enter your gender';
-                                }
-                                return null;
-                              },
-                            ),
-                            _gap(),
-                            TextFormField(
-                              controller: _dob,
-                              readOnly: true,
-                              onTap: _loading ? null : _pickDob,
-                              decoration: const InputDecoration(
-                                labelText: 'Date of birth',
-                                prefixIcon: Icon(
-                                  Icons.calendar_month_outlined,
-                                ),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Select your date of birth';
-                                }
-                                final dob = _parseDob(value.trim());
-                                if (dob == null) {
-                                  return 'Select a valid date of birth';
-                                }
-                                if (_ageOnDate(dob, DateTime.now()) < 18) {
-                                  return 'You must be at least 18 years old to '
-                                      'use this app.';
-                                }
-                                return null;
-                              },
-                            ),
                             _gap(),
                             TextFormField(
                               controller: _instagramId,
