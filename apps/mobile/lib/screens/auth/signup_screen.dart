@@ -128,17 +128,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final isPromoter = _selectedRole == 'promoter';
-      String validIdUrl = '';
-      if (_validIdFile != null) {
-        final idBytes = _validIdBytes ?? await _validIdFile!.readAsBytes();
-        final ext = _validIdFile!.name.split('.').last.toLowerCase();
-        validIdUrl = await StorageService.instance.uploadValidId(
-          bytes: idBytes,
-          userId: _email.text.trim(),
-          fileName: _validIdFile!.name,
-          contentType: 'image/$ext',
-        );
-      }
       await AuthService.instance.signUp(
         name: _name.text.trim(),
         email: _email.text.trim(),
@@ -150,7 +139,11 @@ class _SignupScreenState extends State<SignupScreen> {
         dob: isPromoter ? '' : _dob.text.trim(),
         instagramId: isPromoter ? '' : _instagramId.text.trim(),
         snapchatId: isPromoter ? '' : _snapchatId.text.trim(),
-        validIdUrl: validIdUrl,
+        // The valid-ID URL is uploaded and saved AFTER signup (see below), once
+        // the user is authenticated — Storage rules require request.auth.uid ==
+        // the upload's userId, which only exists post sign-up. Signup itself
+        // stays a pure account+profile write with no Storage dependency.
+        validIdUrl: '',
         businessName: _businessName.text.trim(),
         gstNumber: _gstNumber.text.trim(),
         businessPhone: _businessPhone.text.trim(),
@@ -159,6 +152,34 @@ class _SignupScreenState extends State<SignupScreen> {
         businessInstagram: _businessInstagram.text.trim(),
         documentUploadStatus: 'pending_upload',
       );
+
+      // Upload the valid-ID document AFTER the account exists and is signed in,
+      // keyed by the authenticated UID so it lands at valid_ids/{uid}/... (the
+      // path Storage rules authorize for the owner). Best-effort: a Storage
+      // failure here (e.g. Storage not yet enabled) must NOT fail an otherwise
+      // successful signup — the document is optional and the profile already
+      // carries documentUploadStatus 'pending_upload'.
+      if (_validIdFile != null) {
+        final uid = AuthService.instance.currentFirebaseUser?.uid;
+        if (uid != null && uid.isNotEmpty) {
+          try {
+            final idBytes = _validIdBytes ?? await _validIdFile!.readAsBytes();
+            final ext = _validIdFile!.name.split('.').last.toLowerCase();
+            final validIdUrl = await StorageService.instance.uploadValidId(
+              bytes: idBytes,
+              userId: uid,
+              fileName: _validIdFile!.name,
+              contentType: 'image/$ext',
+            );
+            await AuthService.instance.updateCurrentUserValidIdUrl(validIdUrl);
+          } catch (error, stackTrace) {
+            // Non-fatal: signup already succeeded. The user can re-upload their
+            // ID later; their document status stays 'pending_upload'.
+            debugPrintStack(stackTrace: stackTrace);
+          }
+        }
+      }
+
       AnalyticsService.instance.logSignUp('email');
       if (mounted) {
         final isBusinessRole = _selectedRole == 'clubAdmin';
