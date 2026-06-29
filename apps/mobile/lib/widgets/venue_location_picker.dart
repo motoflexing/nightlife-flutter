@@ -6,6 +6,7 @@ import '../core/theme/app_theme.dart';
 import '../models/event.dart';
 import '../services/location_service.dart';
 import '../services/maps_availability.dart';
+import 'location_permission_flow.dart';
 import 'premium_loader.dart';
 
 class VenueLocationPicker extends StatefulWidget {
@@ -135,6 +136,21 @@ class _VenueLocationPickerState extends State<VenueLocationPicker> {
   }
 
   Future<void> _useCurrentLocation() async {
+    // Show the in-app location disclosure BEFORE the OS prompt (Google Play
+    // foreground-location requirement). Already-granted users skip the dialog.
+    final permissionResult = await ensureLocationPermissionWithRationale(
+      context,
+    );
+    if (permissionResult != LocationRationaleResult.granted) {
+      if (!mounted) return;
+      _showError(
+        permissionResult == LocationRationaleResult.declined
+            ? 'Location access is needed to use your current location.'
+            : 'Location permission was denied.',
+      );
+      return;
+    }
+
     setState(() => _fetchingLocation = true);
     try {
       final snapshot = await LocationService.instance.getUserLocationSnapshot();

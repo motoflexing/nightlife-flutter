@@ -61,6 +61,21 @@ class LocationService {
     return Geolocator.isLocationServiceEnabled();
   }
 
+  /// Reads the CURRENT OS location permission state WITHOUT triggering the
+  /// system prompt. Used to decide whether the in-app rationale dialog needs to
+  /// be shown before the first OS request (we only show the rationale when
+  /// permission has not yet been granted). Returns false on any error so the
+  /// caller falls back to showing the rationale (never silently skips it).
+  Future<bool> hasLocationPermission() async {
+    try {
+      final permission = await Geolocator.checkPermission();
+      return permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<Position> getCurrentPosition() async {
     final permission = await requestPermission();
     if (!permission.isGranted) {

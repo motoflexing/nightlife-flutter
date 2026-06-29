@@ -9,6 +9,7 @@ import '../../models/app_user.dart';
 import '../../models/event.dart';
 import '../../services/location_service.dart';
 import '../../services/maps_availability.dart';
+import '../../widgets/location_permission_flow.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_loader.dart';
 import '../../widgets/user_app_chrome.dart';
@@ -188,6 +189,22 @@ class _MapViewScreenState extends State<MapViewScreen> {
   }
 
   Future<void> _locateMe() async {
+    // Show the in-app location disclosure BEFORE the OS prompt (Google Play
+    // foreground-location requirement). Already-granted users skip the dialog.
+    final permissionResult = await ensureLocationPermissionWithRationale(
+      context,
+    );
+    if (permissionResult != LocationRationaleResult.granted) {
+      if (!mounted) return;
+      final message = permissionResult == LocationRationaleResult.declined
+          ? 'Location access is needed to center the map on you.'
+          : 'Location permission was denied.';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+      return;
+    }
+
     setState(() => _locating = true);
     try {
       final snapshot = await LocationService.instance.getUserLocationSnapshot();

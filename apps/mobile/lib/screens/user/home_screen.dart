@@ -11,6 +11,7 @@ import '../../services/firestore_service.dart';
 import '../../services/location_service.dart';
 import '../../widgets/event_card.dart';
 import '../../widgets/event_poster.dart';
+import '../../widgets/location_permission_flow.dart';
 import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 import 'event_details_screen.dart';
@@ -163,17 +164,24 @@ class _HomeScreenState extends State<HomeScreen> {
       _locationMessage = 'Finding parties closest to you...';
     });
 
-    final permission = await LocationService.instance.requestPermission();
-    if (!permission.isGranted) {
+    // Show the in-app location disclosure BEFORE the OS prompt (Google Play
+    // foreground-location requirement). Already-granted users skip the dialog.
+    final permissionResult = await ensureLocationPermissionWithRationale(
+      context,
+    );
+    if (permissionResult != LocationRationaleResult.granted) {
       if (!mounted) return;
+      final message = permissionResult == LocationRationaleResult.declined
+          ? 'Location access is needed to show parties near you.'
+          : 'Location permission was denied.';
       setState(() {
         _nearbyEnabled = false;
         _loadingNearby = false;
         _userLatitude = null;
         _userLongitude = null;
-        _locationMessage = permission.message;
+        _locationMessage = message;
       });
-      _showLocationMessage(permission.message);
+      _showLocationMessage(message);
       return;
     }
 
