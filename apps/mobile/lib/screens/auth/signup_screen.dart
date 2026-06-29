@@ -73,17 +73,52 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _pickDob() async {
     final now = DateTime.now();
 
+    // The latest selectable date is exactly 18 years ago, so the picker itself
+    // cannot produce an under-18 date of birth. The validator below repeats the
+    // age check as defense in depth (e.g. for any programmatic path).
+    final eighteenYearsAgo = DateTime(now.year - 18, now.month, now.day);
+
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime(now.year - 18),
-      firstDate: DateTime(1950),
-      lastDate: now,
+      initialDate: eighteenYearsAgo,
+      firstDate: DateTime(now.year - 100),
+      lastDate: eighteenYearsAgo,
     );
 
     if (picked != null) {
       _dob.text =
           '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
     }
+  }
+
+  /// Parses a `dd/MM/yyyy` date of birth string (the format written by
+  /// [_pickDob]). Returns null when the text is malformed or not a real
+  /// calendar date.
+  DateTime? _parseDob(String value) {
+    final parts = value.split('/');
+    if (parts.length != 3) return null;
+    final day = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final year = int.tryParse(parts[2]);
+    if (day == null || month == null || year == null) return null;
+    final date = DateTime(year, month, day);
+    // Reject impossible dates that DateTime would otherwise roll over
+    // (e.g. 31/02/2000 -> 02/03/2000).
+    if (date.year != year || date.month != month || date.day != day) {
+      return null;
+    }
+    return date;
+  }
+
+  /// Whole-years age on [asOf], accounting for month and day so someone born
+  /// 17 years and 11 months ago is correctly counted as 17.
+  int _ageOnDate(DateTime dob, DateTime asOf) {
+    var age = asOf.year - dob.year;
+    if (asOf.month < dob.month ||
+        (asOf.month == dob.month && asOf.day < dob.day)) {
+      age--;
+    }
+    return age;
   }
 
   Future<void> _submit() async {
@@ -469,6 +504,14 @@ class _SignupScreenState extends State<SignupScreen> {
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Select your date of birth';
+                                }
+                                final dob = _parseDob(value.trim());
+                                if (dob == null) {
+                                  return 'Select a valid date of birth';
+                                }
+                                if (_ageOnDate(dob, DateTime.now()) < 18) {
+                                  return 'You must be at least 18 years old to '
+                                      'use this app.';
                                 }
                                 return null;
                               },
