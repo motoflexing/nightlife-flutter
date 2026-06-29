@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/app_user.dart';
 import '../../models/promoter.dart';
@@ -274,6 +276,21 @@ class _PromoterProfileContentState extends State<_PromoterProfileContent> {
     );
   }
 
+  /// Opens a hosted legal policy URL (Terms / Privacy) in the browser, matching
+  /// the welcome screen. Fails gracefully with a snackbar instead of crashing.
+  Future<void> _openLegalUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    var launched = false;
+    if (uri != null) {
+      try {
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        launched = false;
+      }
+    }
+    if (!launched) _showSnack("Couldn't open the link");
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -314,12 +331,12 @@ class _PromoterProfileContentState extends State<_PromoterProfileContent> {
               _ActionTile(
                 icon: Icons.description_outlined,
                 title: 'Terms of Service',
-                onTap: () => _showLegalSheet(context, 'Terms of Service'),
+                onTap: () => _openLegalUrl(AppConstants.termsOfServiceUrl),
               ),
               _ActionTile(
                 icon: Icons.privacy_tip_outlined,
                 title: 'Privacy Policy',
-                onTap: () => _showLegalSheet(context, 'Privacy Policy'),
+                onTap: () => _openLegalUrl(AppConstants.privacyPolicyUrl),
               ),
               _ActionTile(
                 icon: Icons.logout_rounded,
@@ -906,47 +923,6 @@ class _ActionTile extends StatelessWidget {
       onTap: onTap,
     );
   }
-}
-
-void _showLegalSheet(BuildContext context, String title) {
-  showModalBottomSheet<void>(
-    context: context,
-    useSafeArea: true,
-    backgroundColor: AppTheme.surface,
-    builder: (context) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: AppTheme.textHigh,
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Review the latest account, referral, data, and venue policies from the Nightlife support team. For a copy of the full legal text, contact support@nightlife.app from your registered email.',
-              style: TextStyle(color: AppTheme.textMuted, height: 1.45),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.check_rounded),
-                label: const Text('Done'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 String? _profileImageContentType(

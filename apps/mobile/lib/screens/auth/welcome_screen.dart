@@ -1,5 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/constants/app_constants.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
 
@@ -72,17 +75,7 @@ class WelcomeScreen extends StatelessWidget {
                 filled: false,
               ),
               const SizedBox(height: 32),
-              const Center(
-                child: Text(
-                  'By continuing you agree to our Terms & Privacy Policy',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Color(0x33FFFFFF),
-                    height: 1.5,
-                  ),
-                ),
-              ),
+              const Center(child: _LegalLinksText()),
             ],
           ),
         ),
@@ -105,6 +98,95 @@ class WelcomeScreen extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// The "By continuing you agree to our Terms & Privacy Policy" line, with the
+/// "Terms" and "Privacy Policy" portions tappable so they open the respective
+/// hosted policy URLs in the browser. Stateful so the [TapGestureRecognizer]s
+/// are owned and disposed correctly.
+class _LegalLinksText extends StatefulWidget {
+  const _LegalLinksText();
+
+  @override
+  State<_LegalLinksText> createState() => _LegalLinksTextState();
+}
+
+class _LegalLinksTextState extends State<_LegalLinksText> {
+  late final TapGestureRecognizer _termsRecognizer;
+  late final TapGestureRecognizer _privacyRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsRecognizer = TapGestureRecognizer()
+      ..onTap = () => _openUrl(AppConstants.termsOfServiceUrl);
+    _privacyRecognizer = TapGestureRecognizer()
+      ..onTap = () => _openUrl(AppConstants.privacyPolicyUrl);
+  }
+
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    var launched = false;
+    if (uri != null) {
+      try {
+        launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      } catch (_) {
+        launched = false;
+      }
+    }
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't open the link")),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const baseStyle = TextStyle(
+      fontSize: 11,
+      color: Color(0x33FFFFFF),
+      height: 1.5,
+    );
+    const linkStyle = TextStyle(
+      fontSize: 11,
+      color: Color(0xFFF59E0B),
+      height: 1.5,
+      decoration: TextDecoration.underline,
+      decorationColor: Color(0xFFF59E0B),
+    );
+
+    return Text.rich(
+      TextSpan(
+        style: baseStyle,
+        children: [
+          const TextSpan(text: 'By continuing you agree to our '),
+          TextSpan(
+            text: 'Terms',
+            style: linkStyle,
+            recognizer: _termsRecognizer,
+          ),
+          const TextSpan(text: ' & '),
+          TextSpan(
+            text: 'Privacy Policy',
+            style: linkStyle,
+            recognizer: _privacyRecognizer,
+          ),
+        ],
+      ),
+      textAlign: TextAlign.center,
     );
   }
 }
