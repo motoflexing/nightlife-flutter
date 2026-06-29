@@ -490,12 +490,13 @@ class _HomeScreenState extends State<HomeScreen> {
       _activateNearby();
       return;
     }
+    // The chip filter and the date selector are independent. "Tonight" already
+    // filters to today's events on its own (see _matchesDiscoveryFilter), so it
+    // must NOT touch _selectedDate / _dateFilter. Previously it forced the date
+    // selector to "Today" and never reset it, leaving the date stuck on Today
+    // after switching to another chip (a hidden, contradictory date filter).
     setState(() {
       _filter = filter;
-      if (filter == _DiscoveryFilter.tonight) {
-        _selectedDate = DateTime.now();
-        _dateFilter = _DateFilterOption.manualDate;
-      }
     });
   }
 
