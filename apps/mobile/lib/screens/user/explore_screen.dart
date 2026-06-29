@@ -67,7 +67,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           return const LoadingView(message: 'Opening discovery');
         }
         if (snapshot.hasError) {
-          return ErrorStateView(message: snapshot.error.toString());
+          return ErrorStateView(
+            message: ErrorStateView.sanitizeError(snapshot.error),
+          );
         }
 
         final allEvents = snapshot.data ?? [];

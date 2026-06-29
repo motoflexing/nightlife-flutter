@@ -1,4 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../../services/analytics_service.dart';
@@ -51,16 +53,15 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on AuthException catch (error) {
       if (mounted) _showError(error.message);
-    } catch (error) {
+    } catch (error, stackTrace) {
+      // Keep the real error for debugging, but never show raw exception text
+      // (code/plugin/runtimeType) to the user.
+      _recordError(error, stackTrace, reason: 'login_submit');
       if (mounted) {
         if (error is FirebaseAuthException) {
-          _showError('[${error.code}] ${error.message ?? 'no message'}');
-        } else if (error is FirebaseException) {
-          _showError(
-            '[${error.plugin}/${error.code}] ${error.message ?? 'no message'}',
-          );
+          _showError(AuthService.friendlyAuthMessage(error));
         } else {
-          _showError('${error.runtimeType}: $error');
+          _showError('Something went wrong. Please try again.');
         }
       }
     } finally {
@@ -76,6 +77,14 @@ class _LoginScreenState extends State<LoginScreen> {
         content: Text(message),
       ),
     );
+  }
+
+  /// Records the real error (with stack) to Crashlytics for debugging, so user
+  /// facing copy can stay generic without losing diagnosability. No-op on web,
+  /// matching the app's Crashlytics setup in main.dart.
+  void _recordError(Object error, StackTrace stackTrace, {String? reason}) {
+    if (kIsWeb) return;
+    FirebaseCrashlytics.instance.recordError(error, stackTrace, reason: reason);
   }
 
   void _showMessage(String message) {
@@ -96,11 +105,12 @@ class _LoginScreenState extends State<LoginScreen> {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email.trim());
       if (mounted) _showMessage('Password reset link sent.');
     } on FirebaseAuthException catch (error) {
+      if (mounted) _showError(AuthService.friendlyAuthMessage(error));
+    } catch (error, stackTrace) {
+      _recordError(error, stackTrace, reason: 'forgot_password');
       if (mounted) {
-        _showError(error.message ?? 'Unable to send password reset email.');
+        _showError('Unable to send password reset email. Please try again.');
       }
-    } catch (error) {
-      if (mounted) _showError(error.toString());
     }
   }
 

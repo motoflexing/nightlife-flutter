@@ -32,7 +32,9 @@ class ClubProfileScreen extends StatelessWidget {
           stream: FirestoreService.instance.clubForOwnerStream(profile.uid),
           builder: (context, clubSnapshot) {
             if (clubSnapshot.hasError) {
-              return ErrorStateView(message: clubSnapshot.error.toString());
+              return ErrorStateView(
+                message: ErrorStateView.sanitizeError(clubSnapshot.error),
+              );
             }
             if (clubSnapshot.connectionState == ConnectionState.waiting) {
               return const LoadingView(message: 'Loading venue profile');

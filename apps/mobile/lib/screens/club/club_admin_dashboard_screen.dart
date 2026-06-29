@@ -96,7 +96,9 @@ class _ClubEvents extends StatelessWidget {
           return const LoadingView(message: 'Loading club events');
         }
         if (snapshot.hasError)
-          return ErrorStateView(message: snapshot.error.toString());
+          return ErrorStateView(
+            message: ErrorStateView.sanitizeError(snapshot.error),
+          );
         final events = snapshot.data ?? [];
         return ListView(
           padding: compactScreenPadding(context),
@@ -279,7 +281,9 @@ class _ClubRsvps extends StatelessWidget {
           return const LoadingView(message: 'Loading club RSVPs');
         }
         if (snapshot.hasError)
-          return ErrorStateView(message: snapshot.error.toString());
+          return ErrorStateView(
+            message: ErrorStateView.sanitizeError(snapshot.error),
+          );
         final rsvps = snapshot.data ?? [];
         if (rsvps.isEmpty) {
           return const EmptyView(

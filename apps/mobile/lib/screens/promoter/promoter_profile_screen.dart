@@ -40,7 +40,9 @@ class PromoterProfileScreen extends StatelessWidget {
             builder: (context, promoterSnapshot) {
               if (promoterSnapshot.hasError) {
                 return ErrorStateView(
-                  message: promoterSnapshot.error.toString(),
+                  message: ErrorStateView.sanitizeError(
+                    promoterSnapshot.error,
+                  ),
                 );
               }
               if (promoterSnapshot.connectionState == ConnectionState.waiting) {

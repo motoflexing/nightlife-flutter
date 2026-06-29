@@ -22,7 +22,9 @@ class MyRsvpsScreen extends StatelessWidget {
           return const LoadingView(message: 'Loading RSVPs');
         }
         if (snapshot.hasError) {
-          return ErrorStateView(message: snapshot.error.toString());
+          return ErrorStateView(
+            message: ErrorStateView.sanitizeError(snapshot.error),
+          );
         }
         final rsvps = snapshot.data ?? [];
         if (rsvps.isEmpty) {

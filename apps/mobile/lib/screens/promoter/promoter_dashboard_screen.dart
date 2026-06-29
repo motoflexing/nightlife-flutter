@@ -50,7 +50,9 @@ class PromoterDashboardScreen extends StatelessWidget {
         ),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return ErrorStateView(message: snapshot.error.toString());
+            return ErrorStateView(
+              message: ErrorStateView.sanitizeError(snapshot.error),
+            );
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const _PromoterDashboardSkeleton();
@@ -106,14 +108,18 @@ class _PromoterContentState extends State<_PromoterContent> {
       ),
       builder: (context, rsvpSnapshot) {
         if (rsvpSnapshot.hasError) {
-          return ErrorStateView(message: rsvpSnapshot.error.toString());
+          return ErrorStateView(
+            message: ErrorStateView.sanitizeError(rsvpSnapshot.error),
+          );
         }
 
         return StreamBuilder<List<NightlifeEvent>>(
           stream: FirestoreService.instance.activeEventsStream(),
           builder: (context, eventSnapshot) {
             if (eventSnapshot.hasError) {
-              return ErrorStateView(message: eventSnapshot.error.toString());
+              return ErrorStateView(
+                message: ErrorStateView.sanitizeError(eventSnapshot.error),
+              );
             }
 
             final loading =

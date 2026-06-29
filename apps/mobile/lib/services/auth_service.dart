@@ -686,6 +686,14 @@ class AuthService {
   }
 
   String _friendlyAuthError(FirebaseAuthException error) {
+    return friendlyAuthMessage(error);
+  }
+
+  /// Maps a [FirebaseAuthException] to safe, user-facing copy. Public and static
+  /// so UI catch-blocks (e.g. the login screen) can reuse the same mapping
+  /// instead of showing raw `error.code`/`error.message` text. Unknown codes
+  /// fall back to a generic message — never the raw exception string.
+  static String friendlyAuthMessage(FirebaseAuthException error) {
     switch (error.code) {
       case 'invalid-email':
         return 'Enter a valid email address.';
@@ -702,7 +710,7 @@ class AuthService {
       case 'network-request-failed':
         return 'Network issue. Check your connection and try again.';
       default:
-        return error.message ?? 'Authentication failed. Please try again.';
+        return 'Something went wrong. Please try again.';
     }
   }
 

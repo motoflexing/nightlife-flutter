@@ -37,9 +37,11 @@ class EventLinkScreen extends StatelessWidget {
               );
             }
             if (profileSnapshot.hasError) {
-              return NeonScaffold(
+              return const NeonScaffold(
                 child: ErrorStateView(
-                  message: profileSnapshot.error.toString(),
+                  message:
+                      'Something went wrong while loading your profile. '
+                      'Please check your connection and try again.',
                 ),
               );
             }
@@ -55,9 +57,11 @@ class EventLinkScreen extends StatelessWidget {
                     );
                   }
                   if (safeSnapshot.hasError) {
-                    return NeonScaffold(
+                    return const NeonScaffold(
                       child: ErrorStateView(
-                        message: safeSnapshot.error.toString(),
+                        message:
+                            'Something went wrong while loading your profile. '
+                            'Please check your connection and try again.',
                       ),
                     );
                   }
@@ -87,7 +91,9 @@ class EventLinkScreen extends StatelessWidget {
                 if (eventSnapshot.hasError) {
                   return NeonScaffold(
                     child: ErrorStateView(
-                      message: eventSnapshot.error.toString(),
+                      message: ErrorStateView.sanitizeError(
+                        eventSnapshot.error,
+                      ),
                     ),
                   );
                 }

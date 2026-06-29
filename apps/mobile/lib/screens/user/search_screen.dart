@@ -104,7 +104,10 @@ class _SearchScreenState extends State<SearchScreen> {
             if (snapshot.connectionState == ConnectionState.waiting)
               const LoadingView(message: 'Searching events')
             else if (snapshot.hasError)
-              ErrorStateView(message: snapshot.error.toString(), onRetry: () {})
+              ErrorStateView(
+                message: ErrorStateView.sanitizeError(snapshot.error),
+                onRetry: () {},
+              )
             else if (events.isEmpty)
               EmptyView(
                 title: 'No events found',
