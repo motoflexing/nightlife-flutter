@@ -430,6 +430,18 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    // Force-update / maintenance kill-switch. This single doc must be readable
+    // by ALL clients — the version check runs at app startup BEFORE login
+    // (SplashScreen -> VersionService.checkVersion), so the reader is often
+    // unauthenticated (fresh installs / logged-out users), and those are exactly
+    // the users the gate must reach. Read is public; writes stay superAdmin-only
+    // so clients can never flip maintenance/version state.
+    match /platform/settings {
+      allow read: if true;
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // Any OTHER platform/* doc stays fully locked to superAdmin (read included).
     match /platform/{documentId} {
       allow read, create, update, delete: if isSuperAdmin();
     }
