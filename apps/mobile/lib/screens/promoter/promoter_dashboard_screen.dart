@@ -272,7 +272,7 @@ class _PromoterContentState extends State<_PromoterContent> {
                                     message: 'Referral code copied',
                                   ),
                                   onShare: () =>
-                                      _share(context, snapshot.referralLink),
+                                      _shareReferral(snapshot.referralLink),
                                 ),
                               const SizedBox(height: 14),
                               // Real RSVP-derived counts only — no earnings.
@@ -336,12 +336,12 @@ class _PromoterContentState extends State<_PromoterContent> {
                                         ),
                                         message: 'Event link copied',
                                       ),
-                                      onShare: () => _share(
-                                        context,
+                                      onShare: () => _shareEvent(
                                         _eventReferralLink(
                                           item.event,
                                           widget.promoter.referralCode.trim(),
                                         ),
+                                        item.event,
                                       ),
                                     ),
                                   ),
@@ -420,10 +420,6 @@ class _PromoterContentState extends State<_PromoterContent> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  void _share(BuildContext context, String value) {
-    _copy(context, value, message: 'Event link copied and ready to share');
   }
 
   String _eventReferralLink(NightlifeEvent event, String referralCode) {

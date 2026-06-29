@@ -588,51 +588,59 @@ class _MetricsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 430;
-        final children = [
-          _MetricTile(
-            icon: Icons.confirmation_number_outlined,
-            value: metrics.totalRsvps.toString(),
-            label: 'Total RSVPs',
-          ),
-          _MetricTile(
-            icon: Icons.trending_up_rounded,
-            value: '${metrics.referralImpact}%',
-            label: 'Referral Impact',
-          ),
-          _MetricTile(
-            icon: Icons.event_available_outlined,
-            value: metrics.eventsJoined.toString(),
-            label: 'Events Joined',
-          ),
-        ];
-        if (compact) {
-          return Column(
-            children: [
-              for (final child in children)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: child,
-                ),
-            ],
-          );
-        }
-        return Row(
-          children: [
-            for (final child in children)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: child,
-                ),
+    // Mobile-first: three equal-width stat cards in a single row that sizes to
+    // the phone width (no odd vertical stacking on narrow screens). Expanded
+    // keeps the cards balanced on wider/web viewports too.
+    const tiles = [
+      _MetricTileData(
+        icon: Icons.confirmation_number_outlined,
+        label: 'Total RSVPs',
+      ),
+      _MetricTileData(
+        icon: Icons.trending_up_rounded,
+        label: 'Referral Impact',
+      ),
+      _MetricTileData(
+        icon: Icons.event_available_outlined,
+        label: 'Events Joined',
+      ),
+    ];
+    final values = [
+      metrics.totalRsvps.toString(),
+      '${metrics.referralImpact}%',
+      metrics.eventsJoined.toString(),
+    ];
+
+    // IntrinsicHeight gives the Row a bounded cross-axis (height) so the cards
+    // can match each other's height. Without it, a Row inside the surrounding
+    // unbounded-height ListView/Column would collapse (the previous
+    // CrossAxisAlignment.stretch tried to stretch to infinite height, which is
+    // why the cards rendered blank).
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < tiles.length; i++) ...[
+            if (i > 0) const SizedBox(width: 10),
+            Expanded(
+              child: _MetricTile(
+                icon: tiles[i].icon,
+                value: values[i],
+                label: tiles[i].label,
               ),
+            ),
           ],
-        );
-      },
+        ],
+      ),
     );
   }
+}
+
+class _MetricTileData {
+  const _MetricTileData({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
 }
 
 class _MetricTile extends StatelessWidget {
@@ -649,29 +657,43 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 92),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
       decoration: BoxDecoration(
         color: AppTheme.elevated,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: AppTheme.gold, size: 20),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppTheme.textHigh,
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
+          const SizedBox(height: 10),
+          // FittedBox prevents the number overflowing in the narrow column.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: const TextStyle(
+                color: AppTheme.textHigh,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
+          const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 11,
+              height: 1.2,
+            ),
           ),
         ],
       ),
