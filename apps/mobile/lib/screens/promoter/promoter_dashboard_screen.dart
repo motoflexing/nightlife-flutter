@@ -3,7 +3,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/app_user.dart';
@@ -89,9 +91,31 @@ class _PromoterContentState extends State<_PromoterContent> {
   final _eventsKey = GlobalKey();
   final _activityKey = GlobalKey();
 
+  /// Which bottom-nav tab is active: 0 = Home, 1 = Events, 2 = Activity.
+  /// Profile (3) is not a tab — it pushes the profile screen — so it never
+  /// becomes the selected index.
+  int _tabIndex = 0;
+
   Future<void> _refresh() async {
     HapticFeedback.mediumImpact();
     await Future<void>.delayed(const Duration(milliseconds: 650));
+  }
+
+  void _selectTab(int index) {
+    if (_tabIndex == index) {
+      // Re-tapping the active Home tab scrolls back to the top, matching the
+      // previous behaviour.
+      if (index == 0 && _scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 420),
+          curve: Curves.easeOutCubic,
+        );
+      }
+      return;
+    }
+    HapticFeedback.selectionClick();
+    setState(() => _tabIndex = index);
   }
 
   @override
@@ -144,20 +168,81 @@ class _PromoterContentState extends State<_PromoterContent> {
                 const Positioned.fill(child: _PremiumMobileBackdrop()),
                 SafeArea(
                   bottom: false,
-                  child: RefreshIndicator(
-                    color: AppTheme.neonViolet,
-                    backgroundColor: AppTheme.surface,
-                    onRefresh: _refresh,
-                    child: CustomScrollView(
-                      controller: _scrollController,
-                      physics: const BouncingScrollPhysics(
-                        parent: AlwaysScrollableScrollPhysics(),
+                  child: IndexedStack(
+                    index: _tabIndex,
+                    children: [
+                      _buildHomeTab(context, snapshot, stats, events, loading),
+                      _PromoterEventsTab(
+                        events: events,
+                        loading: loading,
+                        hasError: eventSnapshot.hasError,
+                        referralCode: widget.promoter.referralCode.trim(),
+                        onCopy: (link) => _copy(
+                          context,
+                          link,
+                          message: 'Event link copied',
+                        ),
+                        onShare: (link, event) => _shareEvent(link, event),
                       ),
-                      slivers: [
-                        SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(16, 10, 16, 112),
-                          sliver: SliverList.list(
-                            children: [
+                      _PromoterActivityTab(
+                        rsvps: rsvps,
+                        loading: loading,
+                        hasError: rsvpSnapshot.hasError,
+                        referralLink: snapshot.referralLink,
+                        onShareReferral: () =>
+                            _shareReferral(snapshot.referralLink),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 18 + MediaQuery.paddingOf(context).bottom,
+                  child: _FloatingBottomNav(
+                    selectedIndex: _tabIndex,
+                    onHome: () => _selectTab(0),
+                    onEvents: () => _selectTab(1),
+                    onAnalytics: () => _selectTab(2),
+                    onProfile: () => _showPromoterProfile(
+                      context,
+                      widget.promoter,
+                      widget.currentUser,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// The original single-scroll dashboard, now the Home tab. Unchanged in
+  /// content — referral hero, share button, stat cards, impact chart, quick
+  /// actions, today's performance, top events, and recent activity.
+  Widget _buildHomeTab(
+    BuildContext context,
+    _DashboardSnapshot snapshot,
+    _PromoterStats stats,
+    List<NightlifeEvent> events,
+    bool loading,
+  ) {
+    return RefreshIndicator(
+      color: AppTheme.neonViolet,
+      backgroundColor: AppTheme.surface,
+      onRefresh: _refresh,
+      child: CustomScrollView(
+        controller: _scrollController,
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 112),
+            sliver: SliverList.list(
+              children: [
                               _MobileHeader(
                                 name: snapshot.promoterName,
                                 onMenu: () => _showPromoterProfile(
@@ -165,7 +250,6 @@ class _PromoterContentState extends State<_PromoterContent> {
                                   widget.promoter,
                                   widget.currentUser,
                                 ),
-                                onNotifications: _showComingSoon,
                                 onProfile: () => _showPromoterProfile(
                                   context,
                                   widget.promoter,
@@ -205,8 +289,8 @@ class _PromoterContentState extends State<_PromoterContent> {
                                   snapshot.referralLink,
                                   message: 'Referral link copied',
                                 ),
-                                onEvents: () => _scrollTo(_eventsKey),
-                                onRsvps: () => _scrollTo(_activityKey),
+                                onEvents: () => _selectTab(1),
+                                onRsvps: () => _selectTab(2),
                               ),
                               const SizedBox(height: 22),
                               _SectionTitle(
@@ -292,66 +376,42 @@ class _PromoterContentState extends State<_PromoterContent> {
                                     child: _ActivityCard(activity: activity),
                                   ),
                                 ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 18 + MediaQuery.paddingOf(context).bottom,
-                  child: _FloatingBottomNav(
-                    onHome: () => _scrollController.animateTo(
-                      0,
-                      duration: const Duration(milliseconds: 420),
-                      curve: Curves.easeOutCubic,
-                    ),
-                    onEvents: () => _scrollTo(_eventsKey),
-                    onCreateLink: () => _copy(
-                      context,
-                      snapshot.bestEventLink(
-                        widget.promoter.referralCode.trim(),
-                      ),
-                      message: 'Best event link copied',
-                    ),
-                    onAnalytics: () => _scrollTo(_activityKey),
-                    onProfile: () => _showPromoterProfile(
-                      context,
-                      widget.promoter,
-                      widget.currentUser,
-                    ),
-                  ),
-                ),
               ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _scrollTo(GlobalKey key) {
-    final context = key.currentContext;
-    if (context == null) return;
-    HapticFeedback.selectionClick();
-    Scrollable.ensureVisible(
-      context,
-      duration: const Duration(milliseconds: 520),
-      curve: Curves.easeOutCubic,
-      alignment: 0.08,
-    );
-  }
-
-  void _showComingSoon() {
-    HapticFeedback.selectionClick();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Notifications are ready for your next push'),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> _shareEvent(String link, NightlifeEvent event) async {
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: link,
+          subject: event.title.trim().isEmpty
+              ? 'Check out this event'
+              : event.title.trim(),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      _copy(context, link, message: 'Event link copied');
+    }
+  }
+
+  Future<void> _shareReferral(String link) async {
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: link,
+          subject: 'My Nightlife referral link',
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      _copy(context, link, message: 'Referral link copied');
+    }
   }
 
   void _copy(BuildContext context, String value, {required String message}) {
@@ -532,11 +592,6 @@ class _DashboardSnapshot {
         })
         .toList(growable: false);
   }
-
-  String bestEventLink(String referralCode) {
-    if (topEvents.isEmpty) return referralLink;
-    return '/event/${Uri.encodeComponent(topEvents.first.event.id)}?ref=$referralCode';
-  }
 }
 
 class _EventPerformance {
@@ -574,17 +629,572 @@ class _ActivityItem {
   final Color accent;
 }
 
+/// EVENTS TAB — the promoter's core tool. Lists ALL active events (from the
+/// same activeEventsStream the dashboard already streams), with search by
+/// title/venue and a city filter (reusing AppConstants.cities). Each card has a
+/// Share button that shares a per-event deep link with the promoter's referral
+/// code attached: /event/{id}?ref=CODE — the exact format the app's deep-link
+/// router and ReferralService already understand. No new backend query, no fake
+/// data.
+class _PromoterEventsTab extends StatefulWidget {
+  const _PromoterEventsTab({
+    required this.events,
+    required this.loading,
+    required this.hasError,
+    required this.referralCode,
+    required this.onCopy,
+    required this.onShare,
+  });
+
+  final List<NightlifeEvent> events;
+  final bool loading;
+  final bool hasError;
+  final String referralCode;
+  final ValueChanged<String> onCopy;
+  final void Function(String link, NightlifeEvent event) onShare;
+
+  @override
+  State<_PromoterEventsTab> createState() => _PromoterEventsTabState();
+}
+
+class _PromoterEventsTabState extends State<_PromoterEventsTab> {
+  final _searchController = TextEditingController();
+  String _query = '';
+  String _city = 'All';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  String _eventLink(NightlifeEvent event) {
+    return '/event/${Uri.encodeComponent(event.id)}?ref=${widget.referralCode}';
+  }
+
+  List<NightlifeEvent> get _filtered {
+    final query = _query.trim().toLowerCase();
+    return widget.events.where((event) {
+      final matchesCity = _city == 'All' || event.city == _city;
+      if (!matchesCity) return false;
+      if (query.isEmpty) return true;
+      return event.title.toLowerCase().contains(query) ||
+          event.venueName.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.hasError) {
+      return const ErrorStateView(
+        message: 'Something went wrong loading events. Please try again.',
+      );
+    }
+
+    final filtered = _filtered;
+
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        14,
+        16,
+        112 + MediaQuery.paddingOf(context).bottom,
+      ),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
+      children: [
+        const _TabTitle(
+          title: 'Events to promote',
+          subtitle: 'Share any event with your code attached.',
+        ),
+        const SizedBox(height: 14),
+        _SearchField(
+          controller: _searchController,
+          hint: 'Search events or venues',
+          onChanged: (value) => setState(() => _query = value),
+        ),
+        const SizedBox(height: 10),
+        _CityFilterChips(
+          selected: _city,
+          onSelected: (city) => setState(() => _city = city),
+        ),
+        const SizedBox(height: 14),
+        if (widget.loading)
+          const _EventSkeletonList()
+        else if (widget.events.isEmpty)
+          const EmptyView(
+            title: 'No active events yet',
+            message:
+                'When venues publish active events, they will appear here ready '
+                'to share with your referral code.',
+            icon: Icons.local_activity_outlined,
+          )
+        else if (filtered.isEmpty)
+          const EmptyView(
+            title: 'No matching events',
+            message: 'Try a different search term or city filter.',
+            icon: Icons.search_off_rounded,
+          )
+        else
+          ...filtered.map(
+            (event) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: _PromoterEventCard(
+                event: event,
+                onCopy: () => widget.onCopy(_eventLink(event)),
+                onShare: () => widget.onShare(_eventLink(event), event),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// A single shareable event card for the Events tab: real poster, title, venue,
+/// date, plus Copy + Share (per-event referral link) actions.
+class _PromoterEventCard extends StatelessWidget {
+  const _PromoterEventCard({
+    required this.event,
+    required this.onCopy,
+    required this.onShare,
+  });
+
+  final NightlifeEvent event;
+  final VoidCallback onCopy;
+  final VoidCallback onShare;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = event.title.trim().isEmpty ? 'Untitled Event' : event.title;
+    final venue = event.venueName.trim();
+    final city = event.city.trim();
+    final venueLine = [
+      if (venue.isNotEmpty) venue,
+      if (city.isNotEmpty) city,
+    ].join(' • ');
+
+    return _GlassPanel(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AspectRatio(
+            aspectRatio: 1.72,
+            child: EventPoster(event: event, borderRadius: 8),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                if (venueLine.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    venueLine,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.event_outlined,
+                      size: 14,
+                      color: AppTheme.textMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        Formatters.eventDate(event.dateTime),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _GhostButton(
+                        icon: Icons.link_rounded,
+                        label: 'Copy link',
+                        onPressed: onCopy,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _GlowButton(
+                        icon: Icons.send_rounded,
+                        label: 'Share',
+                        onPressed: onShare,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ACTIVITY TAB — the promoter's real RSVP feed from promoterRsvpsStream:
+/// who RSVP'd, which event, status, and when. Most recent first (the stream is
+/// already sorted). Real data only — clean empty state when there are none.
+class _PromoterActivityTab extends StatelessWidget {
+  const _PromoterActivityTab({
+    required this.rsvps,
+    required this.loading,
+    required this.hasError,
+    required this.referralLink,
+    required this.onShareReferral,
+  });
+
+  final List<Rsvp> rsvps;
+  final bool loading;
+  final bool hasError;
+  final String referralLink;
+  final VoidCallback onShareReferral;
+
+  @override
+  Widget build(BuildContext context) {
+    if (hasError) {
+      return const ErrorStateView(
+        message: 'Something went wrong loading your RSVPs. Please try again.',
+      );
+    }
+
+    final padding = EdgeInsets.fromLTRB(
+      16,
+      14,
+      16,
+      112 + MediaQuery.paddingOf(context).bottom,
+    );
+
+    if (loading) {
+      return ListView(
+        padding: padding,
+        children: const [
+          _TabTitle(
+            title: 'RSVP activity',
+            subtitle: 'Every RSVP driven by your referral code.',
+          ),
+          SizedBox(height: 14),
+          _ActivitySkeletonList(),
+        ],
+      );
+    }
+
+    if (rsvps.isEmpty) {
+      return ListView(
+        padding: padding,
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
+        children: [
+          const _TabTitle(
+            title: 'RSVP activity',
+            subtitle: 'Every RSVP driven by your referral code.',
+          ),
+          const SizedBox(height: 24),
+          const EmptyView(
+            title: 'No RSVPs yet',
+            message: 'Share your events to get started — RSVPs from your '
+                'referral code will show up here.',
+            icon: Icons.fact_check_outlined,
+          ),
+          const SizedBox(height: 14),
+          Center(
+            child: SizedBox(
+              width: 220,
+              child: _GlowButton(
+                icon: Icons.send_rounded,
+                label: 'Share referral link',
+                onPressed: onShareReferral,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return ListView.builder(
+      padding: padding,
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
+      itemCount: rsvps.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: _TabTitle(
+              title: 'RSVP activity',
+              subtitle: '${rsvps.length} total from your referral code.',
+            ),
+          );
+        }
+        final rsvp = rsvps[index - 1];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _RsvpActivityRow(rsvp: rsvp),
+        );
+      },
+    );
+  }
+}
+
+/// One real RSVP row: guest name, event title, status badge, relative time.
+class _RsvpActivityRow extends StatelessWidget {
+  const _RsvpActivityRow({required this.rsvp});
+
+  final Rsvp rsvp;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = rsvp.userName.trim().isEmpty ? 'A guest' : rsvp.userName.trim();
+    final eventTitle = rsvp.eventTitle.trim().isEmpty
+        ? 'an event'
+        : rsvp.eventTitle.trim();
+    final status = rsvp.status.toLowerCase();
+    final approved = status == 'approved' || status == 'confirmed';
+    final accent = approved ? _kActiveGreen : _kViolet;
+
+    return _GlassPanel(
+      padding: const EdgeInsets.all(12),
+      glow: accent.withValues(alpha: 0.12),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.13),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: accent.withValues(alpha: 0.35)),
+            ),
+            child: Icon(
+              approved
+                  ? Icons.verified_outlined
+                  : Icons.check_circle_outline,
+              color: accent,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$name RSVP\'d',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'For $eventTitle',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppTheme.textMuted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                Formatters.titleCase(rsvp.status),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: accent,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                _relativeTime(rsvp.createdAt),
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shared tab heading (title + subtitle) for the Events and Activity tabs.
+class _TabTitle extends StatelessWidget {
+  const _TabTitle({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            color: AppTheme.textMuted,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SearchField extends StatelessWidget {
+  const _SearchField({
+    required this.controller,
+    required this.hint,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      onChanged: onChanged,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: AppTheme.textMuted),
+        prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textMuted),
+        filled: true,
+        fillColor: _kPanel.withValues(alpha: 0.7),
+        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 14),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _kViolet.withValues(alpha: 0.6)),
+        ),
+      ),
+    );
+  }
+}
+
+class _CityFilterChips extends StatelessWidget {
+  const _CityFilterChips({required this.selected, required this.onSelected});
+
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: AppConstants.cities.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final city = AppConstants.cities[index];
+          final isSelected = city == selected;
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onSelected(city);
+            },
+            child: Container(
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? _kViolet.withValues(alpha: 0.24)
+                    : _kPanel.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: isSelected
+                      ? _kViolet.withValues(alpha: 0.7)
+                      : Colors.white.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Text(
+                city,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : AppTheme.textMuted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _MobileHeader extends StatelessWidget {
   const _MobileHeader({
     required this.name,
     required this.onMenu,
-    required this.onNotifications,
     required this.onProfile,
   });
 
   final String name;
   final VoidCallback onMenu;
-  final VoidCallback onNotifications;
   final VoidCallback onProfile;
 
   @override
@@ -624,12 +1234,6 @@ class _MobileHeader extends StatelessWidget {
             ],
           ),
         ),
-        _CircleIconButton(
-          tooltip: 'Notifications',
-          icon: Icons.notifications_none_rounded,
-          onPressed: onNotifications,
-        ),
-        const SizedBox(width: 10),
         GestureDetector(
           onTap: onProfile,
           child: _PromoterAvatar(name: name, size: 42),
@@ -971,40 +1575,13 @@ class _ImpactHeroCardState extends State<_ImpactHeroCard>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Your Impact',
-                  style: TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppTheme.neonLime.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: AppTheme.neonLime.withValues(alpha: 0.28),
-                  ),
-                ),
-                child: const Text(
-                  '+23% This Month',
-                  style: TextStyle(
-                    color: AppTheme.neonLime,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
+          const Text(
+            'Your Impact',
+            style: TextStyle(
+              color: AppTheme.textMuted,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1384,16 +1961,18 @@ class _ActivityCard extends StatelessWidget {
 
 class _FloatingBottomNav extends StatelessWidget {
   const _FloatingBottomNav({
+    required this.selectedIndex,
     required this.onHome,
     required this.onEvents,
-    required this.onCreateLink,
     required this.onAnalytics,
     required this.onProfile,
   });
 
+  /// Active tab index (0 Home, 1 Events, 2 Activity). Profile is not a tab so
+  /// it is never highlighted.
+  final int selectedIndex;
   final VoidCallback onHome;
   final VoidCallback onEvents;
-  final VoidCallback onCreateLink;
   final VoidCallback onAnalytics;
   final VoidCallback onProfile;
 
@@ -1405,7 +1984,7 @@ class _FloatingBottomNav extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
         child: Container(
           height: 72,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.68),
             borderRadius: BorderRadius.circular(8),
@@ -1419,27 +1998,30 @@ class _FloatingBottomNav extends StatelessWidget {
             ],
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _NavIcon(
                 icon: Icons.home_rounded,
                 tooltip: 'Home',
+                selected: selectedIndex == 0,
                 onTap: onHome,
               ),
               _NavIcon(
                 icon: Icons.local_activity_outlined,
                 tooltip: 'Events',
+                selected: selectedIndex == 1,
                 onTap: onEvents,
               ),
-              _CenterNavButton(onTap: onCreateLink),
               _NavIcon(
                 icon: Icons.bar_chart_rounded,
                 tooltip: 'Activity',
+                selected: selectedIndex == 2,
                 onTap: onAnalytics,
               ),
               _NavIcon(
                 icon: Icons.person_outline_rounded,
                 tooltip: 'Profile',
+                selected: false,
                 onTap: onProfile,
               ),
             ],
@@ -2203,11 +2785,13 @@ class _NavIcon extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onTap,
+    this.selected = false,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onTap;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -2219,42 +2803,10 @@ class _NavIcon extends StatelessWidget {
           onTap();
         },
         icon: Icon(icon),
-        color: Colors.white.withValues(alpha: 0.88),
+        color: selected
+            ? AppTheme.neonViolet
+            : Colors.white.withValues(alpha: 0.7),
         iconSize: 25,
-      ),
-    );
-  }
-}
-
-class _CenterNavButton extends StatelessWidget {
-  const _CenterNavButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: 'Create Link',
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.mediumImpact();
-          onTap();
-        },
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: AppTheme.premiumGradient,
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.neonViolet.withValues(alpha: 0.56),
-                blurRadius: 28,
-              ),
-            ],
-          ),
-          child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
-        ),
       ),
     );
   }

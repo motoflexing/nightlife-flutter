@@ -1202,49 +1202,6 @@ class FirestoreService {
     }, const <String, dynamic>{});
   }
 
-  Future<void> seedDemoEvents(String adminId) async {
-    final batch = _db.batch();
-
-    final examples = [
-      NightlifeEvent.empty(createdBy: adminId).copyWith(
-        title: 'Neon Friday Social',
-        city: 'Guwahati',
-        venueName: 'The Electric Room',
-        address: 'GS Road, Guwahati',
-        dateTime: DateTime.now().add(const Duration(days: 4, hours: 5)),
-        musicType: 'Commercial, Hip-Hop, Afro',
-        crowdType: 'College, young professionals',
-        entryRules: 'Couples and guestlist preferred. Valid ID required.',
-        description:
-            'A high-energy Friday night built for RSVP-driven discovery.',
-        priceText: 'Guestlist entry before 10 PM',
-        posterUrl: '',
-        isActive: true,
-      ),
-      NightlifeEvent.empty(createdBy: adminId).copyWith(
-        title: 'Delhi Bassline Sessions',
-        city: 'Delhi',
-        venueName: 'Warehouse 27',
-        address: 'Mehrauli, New Delhi',
-        dateTime: DateTime.now().add(const Duration(days: 6, hours: 4)),
-        musicType: 'House, Techno',
-        crowdType: 'Premium club crowd',
-        entryRules: 'Smart casuals. Stags subject to door policy.',
-        description:
-            'Underground sounds, RSVP credits, and promoter-led distribution.',
-        priceText: 'Cover starts at INR 999',
-        posterUrl: '',
-        isActive: true,
-      ),
-    ];
-
-    for (final event in examples) {
-      batch.set(_db.collection('events').doc(), event.toCreateMap());
-    }
-
-    await batch.commit();
-  }
-
   Future<void> _logAudit({
     required String action,
     required String targetId,

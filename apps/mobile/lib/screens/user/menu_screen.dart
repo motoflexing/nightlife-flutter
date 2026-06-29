@@ -89,21 +89,17 @@ class MenuScreen extends StatelessWidget {
                 selected: false,
                 destructive: true,
                 onTap: () async {
-                  debugPrint('[LOGOUT] user drawer: TAP');
                   // Capture the navigator before the async gap, close the drawer
                   // FIRST, then sign out so RoleRouterScreen's authStateChanges
                   // listener rebuilds to WelcomeScreen with no stale overlay on
                   // top.
                   final navigator = Navigator.of(context);
-                  debugPrint('[LOGOUT] user drawer: before pop');
                   navigator.pop();
-                  debugPrint('[LOGOUT] user drawer: after pop');
                   try {
-                    debugPrint('[LOGOUT] user drawer: before signOut');
                     await AuthService.instance.signOut();
-                    debugPrint('[LOGOUT] user drawer: after signOut');
-                  } catch (e) {
-                    debugPrint('[LOGOUT] user drawer: signOut THREW: $e');
+                  } catch (_) {
+                    // Sign-out errors are non-fatal; the auth listener still
+                    // rebuilds the router on the next state change.
                   }
                 },
               ),
