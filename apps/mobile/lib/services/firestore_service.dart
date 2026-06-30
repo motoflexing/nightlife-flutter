@@ -8,6 +8,7 @@ import '../models/club.dart';
 import '../models/event.dart';
 import '../models/promoter.dart';
 import '../models/rsvp.dart';
+import '../models/saved_collection.dart';
 import 'referral_service.dart';
 
 class PagedEvents {
@@ -498,6 +499,172 @@ class FirestoreService {
         debugMessage: error.toString(),
       );
     }
+  }
+
+  // ─── Favorites / Saved ──────────────────────────────────────────────────
+  //
+  // Persisted under users/{uid}/savedEvents, users/{uid}/savedClubs and
+  // users/{uid}/savedCollections. The document id is the saved item's id
+  // (eventId / clubId / collectionId) so saves are idempotent and a save check
+  // is a single-doc lookup. Each saved-event doc also stores a lightweight
+  // snapshot of the display fields: the Saved screen renders from the snapshot
+  // so it never needs a second read of events/{id} (which is also unreadable
+  // once an event is deactivated).
+
+  CollectionReference<Map<String, dynamic>>? _savedCollectionRef(String name) {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null || uid.isEmpty) return null;
+    return _db.collection('users').doc(uid).collection(name);
+  }
+
+  Future<void> saveEvent(NightlifeEvent event) async {
+    final ref = _savedCollectionRef('savedEvents');
+    final eventId = event.id.trim();
+    if (ref == null || eventId.isEmpty) return;
+
+    await _runFirestoreWrite(() async {
+      await ref.doc(eventId).set({
+        'eventId': eventId,
+        'title': event.title,
+        'venueName': event.venueName,
+        'city': event.city,
+        'address': event.address,
+        'posterUrl': event.posterUrl,
+        'priceText': event.priceText,
+        'musicType': event.musicType,
+        'dateTime': Timestamp.fromDate(event.dateTime),
+        'savedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Future<void> unsaveEvent(String eventId) async {
+    final ref = _savedCollectionRef('savedEvents');
+    final cleanId = eventId.trim();
+    if (ref == null || cleanId.isEmpty) return;
+    await _runFirestoreWrite(() => ref.doc(cleanId).delete());
+  }
+
+  /// Stream of saved event ids for the current user. Used to drive the heart
+  /// state on event cards across the app.
+  Stream<Set<String>> savedEventIdsStream() {
+    final ref = _savedCollectionRef('savedEvents');
+    if (ref == null) return Stream.value(const <String>{});
+    return ref.snapshots().map(
+      (snap) => snap.docs.map((doc) => doc.id).toSet(),
+    );
+  }
+
+  /// Stream of saved events, reconstructed from the stored snapshot so the
+  /// Saved screen renders without a second read. Newest save first.
+  Stream<List<NightlifeEvent>> savedEventsStream() {
+    final ref = _savedCollectionRef('savedEvents');
+    if (ref == null) return Stream.value(const <NightlifeEvent>[]);
+    return ref.orderBy('savedAt', descending: true).snapshots().map(
+      (snap) => snap.docs.map(_savedEventFromSnapshot).toList(),
+    );
+  }
+
+  NightlifeEvent _savedEventFromSnapshot(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = doc.data();
+    final dateTime = data['dateTime'];
+    return NightlifeEvent.empty().copyWith(
+      id: (data['eventId'] as String?)?.trim().isNotEmpty == true
+          ? (data['eventId'] as String).trim()
+          : doc.id,
+      title: data['title'] as String? ?? '',
+      venueName: data['venueName'] as String? ?? '',
+      city: data['city'] as String? ?? '',
+      address: data['address'] as String? ?? '',
+      posterUrl: data['posterUrl'] as String? ?? '',
+      priceText: data['priceText'] as String? ?? '',
+      musicType: data['musicType'] as String? ?? '',
+      dateTime: dateTime is Timestamp ? dateTime.toDate() : DateTime.now(),
+    );
+  }
+
+  // Saved clubs: write path + streams are ready for when a user-facing club
+  // surface exists. The snapshot is mandatory here because Firestore rules do
+  // not let a regular user re-read clubs/{id}.
+
+  Future<void> saveClub({
+    required String clubId,
+    required String clubName,
+    String city = '',
+    String profilePhotoUrl = '',
+  }) async {
+    final ref = _savedCollectionRef('savedClubs');
+    final cleanId = clubId.trim();
+    if (ref == null || cleanId.isEmpty) return;
+    await _runFirestoreWrite(() async {
+      await ref.doc(cleanId).set({
+        'clubId': cleanId,
+        'clubName': clubName,
+        'city': city,
+        'profilePhotoUrl': profilePhotoUrl,
+        'savedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Future<void> unsaveClub(String clubId) async {
+    final ref = _savedCollectionRef('savedClubs');
+    final cleanId = clubId.trim();
+    if (ref == null || cleanId.isEmpty) return;
+    await _runFirestoreWrite(() => ref.doc(cleanId).delete());
+  }
+
+  Stream<Set<String>> savedClubIdsStream() {
+    final ref = _savedCollectionRef('savedClubs');
+    if (ref == null) return Stream.value(const <String>{});
+    return ref.snapshots().map((snap) => snap.docs.map((doc) => doc.id).toSet());
+  }
+
+  // Saved collections: a saved discovery filter (e.g. "Techno", "Late Night").
+  // The document id is a stable key for the chosen filter so re-saving the same
+  // filter is idempotent.
+
+  Future<void> saveCollection({
+    required String collectionId,
+    required String label,
+    String? genre,
+    String? shortcut,
+  }) async {
+    final ref = _savedCollectionRef('savedCollections');
+    final cleanId = collectionId.trim();
+    if (ref == null || cleanId.isEmpty) return;
+    await _runFirestoreWrite(() async {
+      await ref.doc(cleanId).set({
+        'collectionId': cleanId,
+        'label': label,
+        'genre': ?genre,
+        'shortcut': ?shortcut,
+        'savedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Future<void> unsaveCollection(String collectionId) async {
+    final ref = _savedCollectionRef('savedCollections');
+    final cleanId = collectionId.trim();
+    if (ref == null || cleanId.isEmpty) return;
+    await _runFirestoreWrite(() => ref.doc(cleanId).delete());
+  }
+
+  Stream<List<SavedCollection>> savedCollectionsStream() {
+    final ref = _savedCollectionRef('savedCollections');
+    if (ref == null) return Stream.value(const <SavedCollection>[]);
+    return ref.orderBy('savedAt', descending: true).snapshots().map(
+      (snap) => snap.docs.map(SavedCollection.fromDoc).toList(),
+    );
+  }
+
+  Stream<Set<String>> savedCollectionIdsStream() {
+    final ref = _savedCollectionRef('savedCollections');
+    if (ref == null) return Stream.value(const <String>{});
+    return ref.snapshots().map((snap) => snap.docs.map((doc) => doc.id).toSet());
   }
 
   Future<void> updateUserRole(AppUser user, String role) async {

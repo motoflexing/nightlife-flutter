@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../core/utils/formatters.dart';
 import '../models/event.dart';
+import '../services/firestore_service.dart';
 import '../services/location_service.dart';
 import 'event_poster.dart';
 
@@ -28,6 +31,24 @@ class EventCard extends StatefulWidget {
 class _EventCardState extends State<EventCard> {
   bool _saved = false;
   bool _pressed = false;
+  StreamSubscription<Set<String>>? _savedSub;
+
+  @override
+  void initState() {
+    super.initState();
+    // Reflect real persisted state and keep it in sync if the event is
+    // saved/unsaved elsewhere (e.g. from the Saved screen).
+    _savedSub = FirestoreService.instance.savedEventIdsStream().listen((ids) {
+      final saved = ids.contains(widget.event.id);
+      if (mounted && saved != _saved) setState(() => _saved = saved);
+    });
+  }
+
+  @override
+  void dispose() {
+    _savedSub?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,14 +156,34 @@ class _EventCardState extends State<EventCard> {
     );
   }
 
-  void _toggleSaved() {
-    setState(() => _saved = !_saved);
-    ScaffoldMessenger.of(context).showSnackBar(
+  Future<void> _toggleSaved() async {
+    if (widget.event.id.trim().isEmpty) return;
+    final wantSaved = !_saved;
+    // Optimistic flip; the stream confirms (or the catch below reverts).
+    setState(() => _saved = wantSaved);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
       SnackBar(
-        content: Text(_saved ? 'Event saved' : 'Event removed from saves'),
+        content: Text(wantSaved ? 'Event saved' : 'Event removed from saves'),
         duration: const Duration(milliseconds: 1200),
       ),
     );
+    try {
+      if (wantSaved) {
+        await FirestoreService.instance.saveEvent(widget.event);
+      } else {
+        await FirestoreService.instance.unsaveEvent(widget.event.id);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saved = !wantSaved);
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Could not update saved events. Please try again.'),
+          duration: Duration(milliseconds: 1600),
+        ),
+      );
+    }
   }
 }
 

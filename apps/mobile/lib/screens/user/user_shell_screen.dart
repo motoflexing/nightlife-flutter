@@ -181,7 +181,10 @@ class _UserShellScreenState extends State<UserShellScreen> {
         icon: Icons.favorite_border,
         selectedIcon: Icons.favorite,
         enabled: true,
-        builder: (_) => FavoritesScreen(onExplore: () => _selectPage(1)),
+        builder: (_) => FavoritesScreen(
+          currentUser: currentUser,
+          onExplore: () => _selectPage(1),
+        ),
       ),
       _ShellPanelConfig(
         id: 'profile',

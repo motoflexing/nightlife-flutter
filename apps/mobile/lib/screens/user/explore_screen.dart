@@ -6,6 +6,7 @@ import '../../models/app_user.dart';
 import '../../models/event.dart';
 import '../../services/app_preferences_service.dart';
 import '../../services/event_discovery_service.dart';
+import '../../services/explore_filter_request.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/compact_ui.dart';
 import '../../widgets/event_card.dart';
@@ -50,12 +51,93 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void initState() {
     super.initState();
     _loadCity();
+    _applyPendingFilter();
+    // A saved collection can be opened while Explore is already alive (the
+    // shell keeps primary panels mounted), so also react to later requests.
+    ExploreFilterRequest.instance.pending.addListener(_applyPendingFilter);
+  }
+
+  @override
+  void dispose() {
+    ExploreFilterRequest.instance.pending.removeListener(_applyPendingFilter);
+    super.dispose();
   }
 
   Future<void> _loadCity() async {
     final city = await AppPreferencesService.instance.loadSelectedCity();
     if (!mounted || !AppConstants.cities.contains(city)) return;
     setState(() => _city = city);
+  }
+
+  void _applyPendingFilter() {
+    final filter = ExploreFilterRequest.instance.take();
+    if (filter == null) return;
+    final genre = filter.genre != null && _genres.contains(filter.genre)
+        ? filter.genre
+        : null;
+    final shortcut = _shortcutFromName(filter.shortcut);
+    if (!mounted) {
+      _genre = genre;
+      _shortcut = shortcut;
+      return;
+    }
+    setState(() {
+      _genre = genre;
+      _shortcut = shortcut;
+    });
+  }
+
+  _ExploreShortcut? _shortcutFromName(String? name) {
+    if (name == null) return null;
+    for (final shortcut in _ExploreShortcut.values) {
+      if (shortcut.name == name) return shortcut;
+    }
+    return null;
+  }
+
+  String? _activeCollectionLabel() {
+    if (_shortcut != null) return _shortcut!.label;
+    if (_genre != null) return _genre;
+    return null;
+  }
+
+  Future<void> _saveCurrentCollection() async {
+    final shortcut = _shortcut;
+    final genre = _genre;
+    final String id;
+    final String label;
+    if (shortcut != null) {
+      id = 'shortcut_${shortcut.name}';
+      label = shortcut.label;
+    } else if (genre != null) {
+      id = 'genre_${genre.toLowerCase()}';
+      label = genre;
+    } else {
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await FirestoreService.instance.saveCollection(
+        collectionId: id,
+        label: label,
+        genre: genre,
+        shortcut: shortcut?.name,
+      );
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Saved "$label" to your collections.'),
+          duration: const Duration(milliseconds: 1400),
+        ),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Could not save collection. Please try again.'),
+          duration: Duration(milliseconds: 1600),
+        ),
+      );
+    }
   }
 
   @override
@@ -124,6 +206,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
               selectedShortcut: _shortcut,
               onShortcutTap: _toggleShortcut,
             ),
+            if (_activeCollectionLabel() != null) ...[
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  onPressed: _saveCurrentCollection,
+                  icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+                  label: Text('Save "${_activeCollectionLabel()}"'),
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             const Text(
               'ALL EVENTS',
