@@ -13,7 +13,6 @@ import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/compact_ui.dart';
-import '../../widgets/delete_account_dialogs.dart';
 import '../../widgets/state_views.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -96,11 +95,8 @@ class ProfileScreen extends StatelessWidget {
                         icon: Icons.logout,
                         title: 'Logout',
                         destructive: true,
-                        onTap: () async {
-                          await AuthService.instance.signOut();
-                        },
+                        onTap: () => _confirmAndLogout(context),
                       ),
-                      const _DeleteAccountTile(),
                     ],
                   ),
                 ),
@@ -911,56 +907,6 @@ class _EmptyPanel extends StatelessWidget {
   }
 }
 
-class _DeleteAccountTile extends StatefulWidget {
-  const _DeleteAccountTile();
-
-  @override
-  State<_DeleteAccountTile> createState() => _DeleteAccountTileState();
-}
-
-class _DeleteAccountTileState extends State<_DeleteAccountTile> {
-  bool _deleting = false;
-
-  Future<void> _deleteAccount() async {
-    if (_deleting) return;
-    final password = await confirmAndRequestDeletePassword(context);
-    if (password == null || !mounted) return;
-
-    // Capture the navigator before the async gap so we can leave any pushed
-    // route after deletion, the same way Logout-related flows do.
-    final navigator = Navigator.of(context);
-
-    setState(() => _deleting = true);
-    try {
-      await AuthService.instance.deleteCurrentAccount(password: password);
-      // Pop any pushed route first, then sign out so RoleRouterScreen rebuilds
-      // to WelcomeScreen with no stale screen on top.
-      if (navigator.canPop()) navigator.pop();
-      try {
-        await AuthService.instance.signOut();
-      } catch (_) {
-        // Auth user is already deleted; RoleRouterScreen rebuilds on its own.
-      }
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _deleting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ErrorStateView.friendlyError(error))),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _ActionTile(
-      icon: Icons.delete_forever_outlined,
-      title: _deleting ? 'Deleting account...' : 'Delete Account',
-      destructive: true,
-      onTap: _deleting ? () {} : _deleteAccount,
-    );
-  }
-}
-
 class _ActionTile extends StatelessWidget {
   const _ActionTile({
     required this.icon,
@@ -1150,6 +1096,38 @@ void _showEditProfileSheet(BuildContext context, AppUser user) {
     backgroundColor: AppTheme.surface,
     builder: (_) => _EditProfileSheet(user: user),
   );
+}
+
+/// Confirms intent before signing out. Mirrors the account-deletion dialog:
+/// a plain "Cancel" and a destructive-styled confirm. Sign-out runs only after
+/// the user confirms, so logging out now takes two taps (tile -> confirm).
+Future<void> _confirmAndLogout(BuildContext context) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Log out?'),
+      content: const Text(
+        "You'll need to sign in again to access your account.",
+        style: TextStyle(color: AppTheme.textMuted, height: 1.4),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text(
+            'Log out',
+            style: TextStyle(color: AppTheme.error),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true) return;
+  await AuthService.instance.signOut();
 }
 
 void _showSettingsSheet(BuildContext context, AppUser user) {
