@@ -14,6 +14,7 @@ import '../../services/firestore_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/compact_ui.dart';
 import '../../widgets/delete_account_dialogs.dart';
+import '../../widgets/state_views.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, required this.currentUser});
@@ -455,7 +456,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       ).showSnackBar(const SnackBar(content: Text('Profile updated')));
     } catch (error) {
       if (!mounted) return;
-      _showSnack(error.toString());
+      _showSnack(ErrorStateView.friendlyError(error));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -943,9 +944,9 @@ class _DeleteAccountTileState extends State<_DeleteAccountTile> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _deleting = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ErrorStateView.friendlyError(error))),
+      );
     }
   }
 
@@ -1216,9 +1217,11 @@ void _showHelpSheet(BuildContext context) {
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 10),
-            const Text(
-              'For RSVP, event, or account issues, email us at support@nightlife.app from your registered email address and the team will help you out.',
-              style: TextStyle(color: AppTheme.textMuted, height: 1.35),
+            Text(
+              'For RSVP, event, or account issues, email us at '
+              '${AppConstants.supportEmail} from your registered email address '
+              'and the team will help you out.',
+              style: const TextStyle(color: AppTheme.textMuted, height: 1.35),
             ),
             const SizedBox(height: 14),
             SizedBox(

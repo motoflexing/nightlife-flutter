@@ -31,6 +31,7 @@ class AppUser {
     required this.documentUploadStatus,
     required this.onboardingCompleted,
     required this.rejectionReason,
+    required this.pushNotificationsEnabled,
   });
 
   final String uid;
@@ -62,6 +63,10 @@ class AppUser {
   final String documentUploadStatus;
   final bool onboardingCompleted;
   final String rejectionReason;
+
+  /// Whether the user has opted in to push notifications. Defaults to true for
+  /// existing accounts that predate this flag (absent field reads as enabled).
+  final bool pushNotificationsEnabled;
 
   bool get isUser => role == 'user';
   bool get isPromoter => role == 'promoter';
@@ -115,6 +120,8 @@ class AppUser {
           data['onboardingCompleted'] as bool? ??
           roleSkipsOnboarding(data['role'] as String?),
       rejectionReason: data['rejectionReason'] as String? ?? '',
+      pushNotificationsEnabled:
+          data['pushNotificationsEnabled'] as bool? ?? true,
     );
   }
 
@@ -149,6 +156,7 @@ class AppUser {
       'documentUploadStatus': documentUploadStatus,
       'onboardingCompleted': onboardingCompleted,
       'rejectionReason': rejectionReason,
+      'pushNotificationsEnabled': pushNotificationsEnabled,
     };
   }
 

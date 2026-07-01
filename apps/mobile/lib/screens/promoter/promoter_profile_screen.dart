@@ -261,7 +261,7 @@ class _PromoterProfileContentState extends State<_PromoterProfileContent> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _deletingAccount = false);
-      _showSnack(error.toString());
+      _showSnack(ErrorStateView.friendlyError(error));
     }
   }
 

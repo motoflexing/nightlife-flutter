@@ -1,6 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
+import '../services/location_service.dart';
 import 'premium_loader.dart';
 
 class LoadingView extends StatelessWidget {
@@ -109,6 +113,22 @@ class ErrorStateView extends StatelessWidget {
       return 'Please log in to continue.';
     }
     return 'Something went wrong. Please try again.';
+  }
+
+  /// User-facing message for any caught error, safe to show directly (e.g. in a
+  /// SnackBar). Prefer this over `error.toString()` — the app's typed exceptions
+  /// ([AuthException], [FirestoreAppException], [LocationServiceException]) carry
+  /// an already-friendly `message`, raw [FirebaseAuthException]s are mapped via
+  /// [AuthService.friendlyAuthMessage], and anything else falls back to
+  /// [sanitizeError] (which never leaks a raw exception string).
+  static String friendlyError(Object? error) {
+    if (error is AuthException) return error.message;
+    if (error is FirestoreAppException) return error.message;
+    if (error is LocationServiceException) return error.message;
+    if (error is FirebaseAuthException) {
+      return AuthService.friendlyAuthMessage(error);
+    }
+    return sanitizeError(error);
   }
 
   @override

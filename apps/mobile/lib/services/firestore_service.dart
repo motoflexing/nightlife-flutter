@@ -779,6 +779,98 @@ class FirestoreService {
     });
   }
 
+  /// Persists the user's push-notification opt-in flag on their profile doc.
+  /// Only flips [AppUser.pushNotificationsEnabled]; the FCM token is left in
+  /// place so re-enabling does not require a fresh token round-trip.
+  Future<void> setPushNotificationsEnabled({
+    required String userId,
+    required bool enabled,
+  }) async {
+    final cleanUserId = userId.trim();
+    if (cleanUserId.isEmpty) {
+      throw const FirestoreAppException('User id is required.');
+    }
+    await _runFirestoreWrite(() async {
+      await _db
+          .collection('users')
+          .doc(cleanUserId)
+          .set({
+            'pushNotificationsEnabled': enabled,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true))
+          .timeout(const Duration(seconds: 20));
+    });
+  }
+
+  /// Files a user-submitted report about an event. Writes to the top-level
+  /// `event_reports` collection (superAdmin-triaged). The reporter can only
+  /// create rows for themselves; see firestore.rules.
+  Future<void> submitEventReport({
+    required String eventName,
+    required String reason,
+    required String details,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw const FirestoreAppException('Please sign in to submit a report.');
+    }
+    final cleanEventName = eventName.trim();
+    final cleanReason = reason.trim();
+    if (cleanEventName.isEmpty) {
+      throw const FirestoreAppException('Enter the event name.');
+    }
+    if (cleanReason.isEmpty) {
+      throw const FirestoreAppException('Select a reason.');
+    }
+    await _runFirestoreWrite(() async {
+      await _db
+          .collection('event_reports')
+          .add({
+            'eventName': cleanEventName,
+            'reportedByUid': user.uid,
+            'reportedByEmail': user.email ?? '',
+            'reason': cleanReason,
+            'details': details.trim(),
+            'status': 'open',
+            'createdAt': FieldValue.serverTimestamp(),
+          })
+          .timeout(const Duration(seconds: 20));
+    });
+  }
+
+  /// Files a user support ticket about an RSVP problem. Writes to the top-level
+  /// `support_tickets` collection (superAdmin-triaged). The reporter can only
+  /// create rows for themselves; see firestore.rules.
+  Future<void> submitRsvpProblemTicket({
+    required String message,
+    String rsvpId = '',
+    String eventId = '',
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw const FirestoreAppException('Please sign in to contact support.');
+    }
+    final cleanMessage = message.trim();
+    if (cleanMessage.isEmpty) {
+      throw const FirestoreAppException('Describe the problem.');
+    }
+    await _runFirestoreWrite(() async {
+      await _db
+          .collection('support_tickets')
+          .add({
+            'type': 'rsvp_problem',
+            'rsvpId': rsvpId.trim(),
+            'eventId': eventId.trim(),
+            'reportedByUid': user.uid,
+            'reportedByEmail': user.email ?? '',
+            'message': cleanMessage,
+            'status': 'open',
+            'createdAt': FieldValue.serverTimestamp(),
+          })
+          .timeout(const Duration(seconds: 20));
+    });
+  }
+
   Future<void> updatePromoterProfilePhoto({
     required String userId,
     required String promoterId,

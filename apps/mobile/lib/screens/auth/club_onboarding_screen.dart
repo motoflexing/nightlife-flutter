@@ -11,6 +11,7 @@ import '../../widgets/compact_ui.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_loader.dart';
+import '../../widgets/state_views.dart';
 
 class ClubOnboardingScreen extends StatefulWidget {
   const ClubOnboardingScreen({super.key, required this.currentUser});
@@ -73,9 +74,9 @@ class _ClubOnboardingScreenState extends State<ClubOnboardingScreen> {
       );
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ErrorStateView.friendlyError(error))),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

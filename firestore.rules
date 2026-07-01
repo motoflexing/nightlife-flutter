@@ -145,6 +145,9 @@ service cloud.firestore {
             'documentUrl',
             'clubId',
             'status',
+            'fcmToken',
+            'fcmUpdatedAt',
+            'pushNotificationsEnabled',
             'updatedAt'
           ])
           && request.resource.data.role == resource.data.role
@@ -198,6 +201,21 @@ service cloud.firestore {
         );
 
       allow delete: if isSuperAdmin();
+    }
+
+    // User's own saved/favorited items. Owner-only read+write; the document id
+    // is the saved item's id (eventId / clubId / collection key). No other role
+    // can read or write another user's saves.
+    match /users/{uid}/savedEvents/{eventId} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/savedClubs/{clubId} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/savedCollections/{collectionId} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
     }
 
     match /clubs/{clubId} {
@@ -428,6 +446,28 @@ service cloud.firestore {
         );
 
       allow delete: if isSuperAdmin();
+    }
+
+    // User-submitted event reports. A signed-in user may only create a report
+    // authored by themselves, opened with status 'open'. No eventId exists()
+    // check: reports are filed from the Help menu by free-typed event name, so
+    // there is no id to validate against. Triage (read/update/delete) is
+    // superAdmin-only.
+    match /event_reports/{reportId} {
+      allow create: if signedIn()
+        && request.resource.data.reportedByUid == request.auth.uid
+        && request.resource.data.status == 'open';
+      allow read, update, delete: if isSuperAdmin();
+    }
+
+    // User support tickets (e.g. RSVP problems). A signed-in user may only
+    // create a ticket authored by themselves, opened with status 'open'.
+    // Triage (read/update/delete) is superAdmin-only.
+    match /support_tickets/{ticketId} {
+      allow create: if signedIn()
+        && request.resource.data.reportedByUid == request.auth.uid
+        && request.resource.data.status == 'open';
+      allow read, update, delete: if isSuperAdmin();
     }
 
     // Force-update / maintenance kill-switch. This single doc must be readable

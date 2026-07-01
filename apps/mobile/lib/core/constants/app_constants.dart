@@ -7,6 +7,10 @@ class AppConstants {
       'https://PLACEHOLDER-REPLACE-ME.example.com/privacy';
   static const String termsOfServiceUrl =
       'https://PLACEHOLDER-REPLACE-ME.example.com/terms';
+  // TODO: Replace with the real support inbox before store submission. This
+  // PLACEHOLDER value must not ship to the App Store / Play.
+  static const String supportEmail =
+      'support@PLACEHOLDER-REPLACE-ME.example.com';
   static const cities = ['All', 'Guwahati', 'Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Shillong'];
   static const defaultCity = 'Guwahati';
   static const roles = ['user', 'promoter', 'clubAdmin'];

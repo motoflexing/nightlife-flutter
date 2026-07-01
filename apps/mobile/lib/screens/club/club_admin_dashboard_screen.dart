@@ -454,9 +454,9 @@ class _ClubEventFormState extends State<_ClubEventForm> {
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ErrorStateView.friendlyError(error))),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

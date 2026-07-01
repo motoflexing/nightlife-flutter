@@ -9,6 +9,7 @@ import '../../widgets/compact_ui.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/neon_scaffold.dart';
 import '../../widgets/premium_gradient_button.dart';
+import '../../widgets/state_views.dart';
 
 class VerificationDetailsScreen extends StatefulWidget {
   const VerificationDetailsScreen({super.key, required this.currentUser});
@@ -75,9 +76,9 @@ class _VerificationDetailsScreenState extends State<VerificationDetailsScreen> {
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ErrorStateView.friendlyError(error))),
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }

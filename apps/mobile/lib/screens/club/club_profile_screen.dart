@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
@@ -167,7 +168,7 @@ class _ClubProfileContentState extends State<_ClubProfileContent> {
       _showSnack('Venue profile updated');
     } catch (error) {
       if (!mounted) return;
-      _showSnack(error.toString());
+      _showSnack(ErrorStateView.friendlyError(error));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -291,8 +292,23 @@ class _ClubProfileContentState extends State<_ClubProfileContent> {
     } catch (error) {
       if (!mounted) return;
       setState(() => _deletingAccount = false);
-      _showSnack(error.toString());
+      _showSnack(ErrorStateView.friendlyError(error));
     }
+  }
+
+  /// Opens a hosted legal policy URL (Terms / Privacy) in the browser. Fails
+  /// gracefully with a snackbar instead of crashing.
+  Future<void> _openLegalUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    var launched = false;
+    if (uri != null) {
+      try {
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        launched = false;
+      }
+    }
+    if (!launched) _showSnack("Couldn't open the link");
   }
 
   void _showSnack(String message) {
@@ -441,6 +457,24 @@ class _ClubProfileContentState extends State<_ClubProfileContent> {
                   ],
                 );
               },
+            ),
+          ),
+          const SizedBox(height: 12),
+          _Section(
+            title: 'Legal',
+            child: Column(
+              children: [
+                _ActionTile(
+                  icon: Icons.privacy_tip_outlined,
+                  title: 'Privacy Policy',
+                  onTap: () => _openLegalUrl(AppConstants.privacyPolicyUrl),
+                ),
+                _ActionTile(
+                  icon: Icons.description_outlined,
+                  title: 'Terms of Service',
+                  onTap: () => _openLegalUrl(AppConstants.termsOfServiceUrl),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),

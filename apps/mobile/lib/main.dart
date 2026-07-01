@@ -12,7 +12,6 @@ import 'firebase_options.dart';
 import 'screens/auth/splash_screen.dart';
 import 'screens/user/event_link_screen.dart';
 import 'services/analytics_service.dart';
-import 'services/connectivity_service.dart';
 import 'services/deep_link_service.dart';
 import 'services/notification_service.dart';
 import 'services/referral_service.dart';
@@ -70,7 +69,6 @@ Future<void> main() async {
   }
 
   StorageService.instance.configureRetryLimits();
-  ConnectivityService.instance.initialize();
   runApp(const AppErrorBoundary(child: NightlifePlatformApp()));
 }
 
