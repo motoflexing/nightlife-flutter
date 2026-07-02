@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import '../models/app_user.dart';
 
 class UserShellTopBar extends StatelessWidget implements PreferredSizeWidget {
@@ -46,17 +47,13 @@ class UserShellTopBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
+              // App name stays "Nightlife", set in the Playfair display voice.
               child: Text(
                 'Nightlife',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
-                  color: Color(0xFFF5F5F0),
-                ),
+                style: AppTypography.headlineMedium.copyWith(fontSize: 20),
               ),
             ),
             _ChromeIconButton(
@@ -95,11 +92,11 @@ class PremiumBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+      padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
       decoration: const BoxDecoration(
-        color: Color(0xF5080809),
+        color: AppColors.obsidian,
         border: Border(
-          top: BorderSide(color: Color(0x12FFFFFF), width: 0.5),
+          top: BorderSide(color: AppColors.goldBorder, width: 1),
         ),
       ),
       child: SafeArea(
@@ -146,8 +143,10 @@ class _BottomNavItemState extends State<_BottomNavItem> {
   @override
   Widget build(BuildContext context) {
     final selected = widget.selected;
-    final center = widget.center;
-    final iconColor = selected ? const Color(0xFFF59E0B) : const Color(0x40FFFFFF);
+    // Design nav (DESIGN_TOKENS.md §"Nav · tab bar"): thin icon over a tracked
+    // uppercase label — champagne when selected, dim ivory otherwise. Uniform
+    // items (no filled center pill).
+    final color = selected ? AppColors.champagne : AppColors.textSecondary;
     final icon = selected ? widget.tab.selectedIcon : widget.tab.icon;
 
     return Tooltip(
@@ -165,43 +164,23 @@ class _BottomNavItemState extends State<_BottomNavItem> {
           scale: _pressed ? 0.94 : 1,
           duration: const Duration(milliseconds: 110),
           curve: Curves.easeOutCubic,
-          child: SizedBox(
-            height: 48,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 170),
-                  width: center ? 46 : 42,
-                  height: center ? 46 : 42,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: center
-                        ? const Color(0xFFF59E0B)
-                        : selected
-                        ? const Color(0x1AF59E0B)
-                        : Colors.transparent,
-                  ),
-                  child: Icon(
-                    icon,
-                    size: center ? 23 : 22,
-                    color: center ? const Color(0xFF080809) : iconColor,
-                  ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 24, color: color),
+              const SizedBox(height: 5),
+              Text(
+                widget.tab.label.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.labelSmall.copyWith(
+                  color: color,
+                  fontSize: 9,
+                  letterSpacing: 0.16 * 9,
                 ),
-                Positioned(
-                  bottom: 1,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 170),
-                    width: selected && !center ? 3 : 0,
-                    height: selected && !center ? 3 : 0,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF59E0B),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -250,10 +229,7 @@ class UserBackAppBar extends StatelessWidget implements PreferredSizeWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0,
-                ),
+                style: AppTypography.headlineMedium.copyWith(fontSize: 20),
               ),
             ),
             ...?actions,
@@ -280,9 +256,9 @@ class _ChromeBackdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     return const DecoratedBox(
       decoration: BoxDecoration(
-        color: Color(0xF0080809),
+        color: AppColors.obsidian,
         border: Border(
-          bottom: BorderSide(color: Color(0x12FFFFFF), width: 0.5),
+          bottom: BorderSide(color: AppColors.goldBorder, width: 1),
         ),
       ),
     );
@@ -361,7 +337,7 @@ class _TopNavigationItemState extends State<_TopNavigationItem> {
   @override
   Widget build(BuildContext context) {
     final selected = widget.selected;
-    final color = selected ? AppTheme.accentPink : AppTheme.textMuted;
+    final color = selected ? AppColors.champagne : AppColors.textSecondary;
     return AnimatedScale(
       scale: _pressed ? 0.97 : 1,
       duration: const Duration(milliseconds: 110),
@@ -386,8 +362,8 @@ class _TopNavigationItemState extends State<_TopNavigationItem> {
           borderRadius: BorderRadius.circular(8),
           mouseCursor: SystemMouseCursors.click,
           hoverColor: Colors.transparent,
-          splashColor: AppTheme.accentPink.withValues(alpha: 0.12),
-          highlightColor: AppTheme.accentPink.withValues(alpha: 0.08),
+          splashColor: AppColors.goldWash,
+          highlightColor: AppColors.goldWash,
           onHover: (value) => setState(() => _hovered = value),
           onHighlightChanged: (value) => setState(() => _pressed = value),
           onTap: () {
@@ -411,15 +387,14 @@ class _TopNavigationItemState extends State<_TopNavigationItem> {
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
-                          widget.tab.label,
+                          widget.tab.label.toUpperCase(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: selected ? Colors.white : color,
-                            fontSize: 11.5,
-                            fontWeight: selected
-                                ? FontWeight.w900
-                                : FontWeight.w700,
+                          style: AppTypography.labelSmall.copyWith(
+                            color: selected
+                                ? AppColors.champagne
+                                : color,
+                            fontSize: 11,
                           ),
                         ),
                       ),
@@ -432,22 +407,12 @@ class _TopNavigationItemState extends State<_TopNavigationItem> {
                   bottom: 1,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    height: 2.5,
+                    height: 1.5,
                     decoration: BoxDecoration(
                       color: selected
-                          ? AppTheme.accentPink
+                          ? AppColors.champagne
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(999),
-                      boxShadow: selected
-                          ? [
-                              BoxShadow(
-                                color: AppTheme.accentPink.withValues(
-                                  alpha: 0.44,
-                                ),
-                                blurRadius: 8,
-                              ),
-                            ]
-                          : null,
                     ),
                   ),
                 ),
@@ -480,8 +445,8 @@ class _TopAvatar extends StatelessWidget {
       child: InkWell(
         customBorder: const CircleBorder(),
         mouseCursor: SystemMouseCursors.click,
-        hoverColor: Colors.white.withValues(alpha: 0.06),
-        splashColor: const Color(0x1AF59E0B),
+        hoverColor: AppColors.goldWash,
+        splashColor: AppColors.goldWash,
         onTap: onPressed,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
@@ -489,11 +454,9 @@ class _TopAvatar extends StatelessWidget {
           height: 38,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: photoUrl.isEmpty ? AppTheme.premiumGradient : null,
+            color: photoUrl.isEmpty ? AppColors.surfaceEspresso : null,
             border: Border.all(
-              color: selected
-                  ? const Color(0xFFF59E0B)
-                  : const Color(0x26FFFFFF),
+              color: selected ? AppColors.champagne : AppColors.goldBorder,
               width: selected ? 1.4 : 1,
             ),
           ),
@@ -521,7 +484,11 @@ class _AvatarInitials extends StatelessWidget {
     return Center(
       child: Text(
         initials,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+        style: AppTypography.labelMedium.copyWith(
+          color: AppColors.champagne,
+          fontSize: 13,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -545,11 +512,12 @@ class _ChromeIconButton extends StatelessWidget {
       onPressed: onPressed,
       style: IconButton.styleFrom(
         fixedSize: const Size(38, 38),
-        backgroundColor: const Color(0x0DFFFFFF),
-        foregroundColor: Colors.white,
-        hoverColor: const Color(0x1AF59E0B),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textBody,
+        hoverColor: AppColors.goldWash,
         highlightColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        side: const BorderSide(color: AppColors.goldBorder, width: 1),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
       icon: Icon(icon),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 
 EdgeInsets compactScreenPadding(BuildContext context, {double bottom = 24}) {
   final mobile = MediaQuery.sizeOf(context).width < 640;
@@ -29,18 +30,11 @@ class CompactPanel extends StatelessWidget {
     final mobile = MediaQuery.sizeOf(context).width < 640;
     final panel = Container(
       width: double.infinity,
-      padding: padding ?? EdgeInsets.all(mobile ? 12 : 14),
+      padding: padding ?? EdgeInsets.all(mobile ? 14 : 16),
       decoration: BoxDecoration(
-        color: AppTheme.glassSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.accentPink.withValues(alpha: 0.08),
-            blurRadius: mobile ? 16 : 22,
-            offset: Offset(0, mobile ? 8 : 12),
-          ),
-        ],
+        color: AppColors.surfaceEspresso,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
       ),
       child: child,
     );
@@ -49,7 +43,9 @@ class CompactPanel extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(4),
+        splashColor: Colors.transparent,
+        highlightColor: AppColors.goldWash,
         onTap: onTap,
         child: panel,
       ),
@@ -63,7 +59,7 @@ class CompactStatCard extends StatelessWidget {
     required this.icon,
     required this.value,
     required this.label,
-    this.accent = AppTheme.accentPink,
+    this.accent = AppColors.champagne,
   });
 
   final IconData icon;
@@ -75,45 +71,43 @@ class CompactStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobile = MediaQuery.sizeOf(context).width < 640;
     return CompactPanel(
-      padding: EdgeInsets.all(mobile ? 9 : 11),
+      padding: EdgeInsets.all(mobile ? 11 : 13),
       child: Row(
         children: [
           Container(
             width: mobile ? 30 : 34,
             height: mobile ? 30 : 34,
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: accent.withValues(alpha: 0.34)),
+              color: AppColors.goldWash,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: AppColors.goldBorder, width: 1),
             ),
             child: Icon(icon, color: accent, size: mobile ? 17 : 19),
           ),
-          SizedBox(width: mobile ? 8 : 10),
+          SizedBox(width: mobile ? 10 : 12),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Playfair figure — editorial stat value.
                 Text(
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: mobile ? 20 : 23,
+                  style: AppTypography.headlineMedium.copyWith(
+                    fontSize: mobile ? 22 : 25,
                     height: 1,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 5),
+                // Tracked uppercase micro-label.
                 Text(
-                  label,
+                  label.toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: mobile ? 11 : 12,
-                    fontWeight: FontWeight.w800,
+                  style: AppTypography.labelSmall.copyWith(
+                    fontSize: mobile ? 10 : 11,
                   ),
                 ),
               ],
@@ -140,28 +134,36 @@ class CompactSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                ),
+              // Tracked uppercase eyebrow + trailing gold hairline (design §11).
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      title.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.labelLarge.copyWith(
+                        color: AppColors.champagne,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Expanded(child: _GoldHairline()),
+                ],
               ),
               if (subtitle != null) ...[
-                const SizedBox(height: 2),
+                const SizedBox(height: 8),
                 Text(
                   subtitle!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 12,
-                  ),
+                  style: AppTypography.bodySmall,
                 ),
               ],
             ],
@@ -169,6 +171,27 @@ class CompactSectionHeader extends StatelessWidget {
         ),
         if (action != null) ...[const SizedBox(width: 8), action!],
       ],
+    );
+  }
+}
+
+/// The signature gold hairline that flanks section eyebrows — a champagne rule
+/// that fades to transparent (design "linear-gradient(90deg, gold, transparent)").
+class _GoldHairline extends StatelessWidget {
+  const _GoldHairline();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 1,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.champagne.withValues(alpha: 0.5),
+            Colors.transparent,
+          ],
+        ),
+      ),
     );
   }
 }

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import '../core/utils/formatters.dart';
 import '../models/event.dart';
 import '../services/firestore_service.dart';
@@ -100,14 +102,14 @@ class _EventCardState extends State<EventCard> {
               ),
               child: ClipRRect(
                 borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(12),
+                  left: Radius.circular(_kCardRadius),
                 ),
-                child: _PosterStack(event: event),
+                child: _PosterStack(event: event, saved: _saved),
               ),
             ),
             Expanded(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(12, 11, 11, mobile ? 12 : 11),
+                padding: EdgeInsets.fromLTRB(14, 13, 13, mobile ? 14 : 13),
                 child: _CardDetails(
                   event: event,
                   distanceKm: widget.distanceKm,
@@ -136,10 +138,10 @@ class _EventCardState extends State<EventCard> {
         children: [
           AspectRatio(
             aspectRatio: 16 / 8.6,
-            child: _PosterStack(event: event),
+            child: _PosterStack(event: event, saved: _saved),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: _CardDetails(
               event: event,
               distanceKm: widget.distanceKm,
@@ -187,6 +189,9 @@ class _EventCardState extends State<EventCard> {
   }
 }
 
+/// Crisp editorial radius (DESIGN_TOKENS.md §5 — cards are sharp, 2–8px).
+const double _kCardRadius = 4;
+
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
 class _CardShell extends StatelessWidget {
@@ -200,15 +205,23 @@ class _CardShell extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(_kCardRadius),
         splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
+        highlightColor: AppColors.goldWash,
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
-            color: const Color(0xFF1C1C22),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0x12FFFFFF), width: 0.5),
+            color: AppColors.surfaceEspresso,
+            borderRadius: BorderRadius.circular(_kCardRadius),
+            border: Border.all(color: AppColors.goldBorder, width: 1),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0xB3000000), // soft depth, per design card shadow
+                blurRadius: 40,
+                spreadRadius: -20,
+                offset: Offset(0, 24),
+              ),
+            ],
           ),
           child: child,
         ),
@@ -246,6 +259,8 @@ class _CardDetails extends StatelessWidget {
     final venue = event.venueName.trim().isEmpty ? event.city : event.venueName;
     final location = event.address.trim().isEmpty ? event.city : event.address;
     final primaryLabel = _isPaid(event) ? 'Buy Tickets' : 'RSVP';
+    // Tracked uppercase eyebrow — genre · vibe (design "TECHNO · INTIMATE").
+    final eyebrow = _eyebrowLabel(event);
     final tags = <_CardTagData>[
       _CardTagData(_safeLabel(event.priceText, fallback: 'Guestlist')),
       if (event.musicType.trim().isNotEmpty)
@@ -266,17 +281,31 @@ class _CardDetails extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFFF5F5F0),
-                  letterSpacing: -0.2,
-                  height: 1.08,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    eyebrow,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.champagne,
+                      letterSpacing: 0.22 * 9,
+                      fontSize: 9,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  // Playfair title, bottom-anchored feel (design card title).
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.headlineMedium.copyWith(
+                      fontSize: dense ? 18 : 20,
+                      height: 1.15,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(width: 8),
@@ -284,16 +313,16 @@ class _CardDetails extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 7),
-        _IconLine(icon: Icons.place_outlined, text: '$venue - $location'),
+        _IconLine(icon: Icons.place_outlined, text: '$venue · $location'),
         const SizedBox(height: 5),
         _IconLine(
           icon: Icons.schedule,
           text: Formatters.eventDate(event.dateTime),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 10),
         Wrap(
-          spacing: 6,
-          runSpacing: 6,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             for (final tag in visibleTags)
               _Tag(
@@ -309,12 +338,12 @@ class _CardDetails extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 11),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               flex: 5,
-              child: _GradientActionButton(
+              child: _PrimaryActionButton(
                 label: primaryLabel,
                 onPressed: onPrimary,
               ),
@@ -322,7 +351,7 @@ class _CardDetails extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               flex: 4,
-              child: _SubtleActionButton(
+              child: _GhostActionButton(
                 label: 'Details',
                 onPressed: onDetails,
               ),
@@ -342,9 +371,10 @@ class _CardDetails extends StatelessWidget {
 // ─── Poster + badge ───────────────────────────────────────────────────────────
 
 class _PosterStack extends StatelessWidget {
-  const _PosterStack({required this.event});
+  const _PosterStack({required this.event, required this.saved});
 
   final NightlifeEvent event;
+  final bool saved;
 
   @override
   Widget build(BuildContext context) {
@@ -352,18 +382,29 @@ class _PosterStack extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         EventPoster(event: event, borderRadius: 0),
+        // Date pill — blurred obsidian chip, gold text + gold hairline.
         Positioned(
-          left: 8,
-          top: 8,
-          child: _ProofBadge(label: _eventBadgeLabel(event)),
+          left: 12,
+          top: 12,
+          child: _DatePill(label: _eventBadgeLabel(event)),
+        ),
+        // Favorite marker — mirrors the card's saved state (design top-right).
+        Positioned(
+          right: 12,
+          top: 12,
+          child: Icon(
+            saved ? Icons.favorite : Icons.favorite_border,
+            size: 20,
+            color: saved ? AppColors.champagne : AppColors.ivory,
+          ),
         ),
       ],
     );
   }
 }
 
-class _ProofBadge extends StatelessWidget {
-  const _ProofBadge({required this.label});
+class _DatePill extends StatelessWidget {
+  const _DatePill({required this.label});
 
   final String label;
 
@@ -371,21 +412,23 @@ class _ProofBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C22),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFFF59E0B), width: 0.5),
+        color: AppColors.obsidian.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(100), // full pill (design)
+        border: Border.all(
+          color: AppColors.champagne.withValues(alpha: 0.4),
+          width: 1,
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         child: Text(
           label.toUpperCase(),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Color(0xFFF59E0B),
+          style: AppTypography.labelSmall.copyWith(
+            color: AppColors.champagne,
             fontSize: 9,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.8,
+            letterSpacing: 0.16 * 9,
           ),
         ),
       ),
@@ -424,9 +467,7 @@ class _SaveButton extends StatelessWidget {
           child: Icon(
             saved ? Icons.favorite : Icons.favorite_border,
             size: 18,
-            color: saved
-                ? const Color(0xFFF59E0B)
-                : const Color(0x4DFFFFFF),
+            color: saved ? AppColors.champagne : AppColors.textSecondary,
           ),
         ),
       ),
@@ -446,17 +487,16 @@ class _IconLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 11, color: const Color(0x4DFFFFFF)),
-        const SizedBox(width: 5),
+        Icon(icon, size: 12, color: AppColors.textSecondary),
+        const SizedBox(width: 6),
         Expanded(
           child: Text(
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0x66FFFFFF),
-              fontSize: 11,
-              letterSpacing: 0.1,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textBodyDim,
+              fontSize: 12,
             ),
           ),
         ),
@@ -485,50 +525,44 @@ class _Tag extends StatelessWidget {
     return Container(
       constraints: BoxConstraints(maxWidth: maxWidth),
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 7 : 8,
-        vertical: compact ? 3 : 4,
+        horizontal: compact ? 10 : 12,
+        vertical: compact ? 5 : 6,
       ),
       decoration: BoxDecoration(
-        color: accent
-            ? const Color(0x1AF59E0B)
-            : const Color(0x0DFFFFFF),
-        borderRadius: BorderRadius.circular(4),
+        color: accent ? AppColors.goldWash : Colors.transparent,
+        borderRadius: BorderRadius.circular(100), // pill chips (design §5)
         border: Border.all(
-          color: accent
-              ? const Color(0x4DF59E0B)
-              : const Color(0x1AFFFFFF),
-          width: 0.5,
+          color: accent ? AppColors.champagne : AppColors.textDisabled,
+          width: 1,
         ),
       ),
       child: Text(
-        label,
+        label.toUpperCase(),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: accent
-              ? const Color(0xFFF59E0B)
-              : const Color(0x73FFFFFF),
+        style: AppTypography.labelSmall.copyWith(
+          color: accent ? AppColors.champagne : AppColors.textBody,
           fontSize: 10,
-          letterSpacing: 0.3,
+          letterSpacing: 0.14 * 10,
         ),
       ),
     );
   }
 }
 
-// ─── Primary action button (solid gold) ───────────────────────────────────────
+// ─── Primary action button (ivory fill) ────────────────────────────────────────
 
-class _GradientActionButton extends StatefulWidget {
-  const _GradientActionButton({required this.label, required this.onPressed});
+class _PrimaryActionButton extends StatefulWidget {
+  const _PrimaryActionButton({required this.label, required this.onPressed});
 
   final String label;
   final VoidCallback onPressed;
 
   @override
-  State<_GradientActionButton> createState() => _GradientActionButtonState();
+  State<_PrimaryActionButton> createState() => _PrimaryActionButtonState();
 }
 
-class _GradientActionButtonState extends State<_GradientActionButton> {
+class _PrimaryActionButtonState extends State<_PrimaryActionButton> {
   bool _pressed = false;
 
   @override
@@ -543,28 +577,29 @@ class _GradientActionButtonState extends State<_GradientActionButton> {
         onTapUp: (_) => setState(() => _pressed = false),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: const Color(0xFFF59E0B),
-            borderRadius: BorderRadius.circular(4),
+            color: _pressed
+                ? AppColors.ivory.withValues(alpha: 0.7)
+                : AppColors.ivory,
+            borderRadius: BorderRadius.circular(2), // crisp button (design §7)
           ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(2),
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,
               onTap: widget.onPressed,
               child: SizedBox(
-                height: 32,
+                height: 34,
                 child: Center(
                   child: Text(
                     widget.label.toUpperCase(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF080809),
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.obsidian,
                       fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.8,
+                      letterSpacing: 0.16 * 11,
                     ),
                   ),
                 ),
@@ -577,10 +612,10 @@ class _GradientActionButtonState extends State<_GradientActionButton> {
   }
 }
 
-// ─── Secondary action button (subtle outline) ─────────────────────────────────
+// ─── Secondary action button (gold ghost outline) ──────────────────────────────
 
-class _SubtleActionButton extends StatelessWidget {
-  const _SubtleActionButton({required this.label, required this.onPressed});
+class _GhostActionButton extends StatelessWidget {
+  const _GhostActionButton({required this.label, required this.onPressed});
 
   final String label;
   final VoidCallback onPressed;
@@ -590,15 +625,15 @@ class _SubtleActionButton extends StatelessWidget {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0x80FFFFFF),
-        side: const BorderSide(color: Color(0x26FFFFFF), width: 0.5),
+        foregroundColor: AppColors.champagne,
+        side: const BorderSide(color: AppColors.champagne, width: 1),
         padding: const EdgeInsets.symmetric(horizontal: 9),
-        minimumSize: const Size(0, 32),
+        minimumSize: const Size(0, 34),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        textStyle: const TextStyle(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
+        textStyle: AppTypography.labelMedium.copyWith(
           fontSize: 11,
-          letterSpacing: 0.8,
+          letterSpacing: 0.16 * 11,
         ),
       ),
       child: Text(
@@ -624,6 +659,17 @@ bool _isPaid(NightlifeEvent event) {
 
 bool _isSameDay(DateTime a, DateTime b) {
   return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+/// Tracked uppercase eyebrow — genre · vibe, e.g. "TECHNO · INTIMATE".
+/// Falls back to the badge label when the event has no music type.
+String _eyebrowLabel(NightlifeEvent event) {
+  final music = event.musicType.trim();
+  final vibe = event.crowdType.trim();
+  if (music.isNotEmpty && vibe.isNotEmpty) return '$music · $vibe';
+  if (music.isNotEmpty) return music;
+  if (vibe.isNotEmpty) return vibe;
+  return _eventBadgeLabel(event);
 }
 
 String _eventBadgeLabel(NightlifeEvent event) {

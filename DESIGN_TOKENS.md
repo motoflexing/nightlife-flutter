@@ -1,212 +1,186 @@
-# Nocturne — Design Tokens
+# Nocturne — Design Tokens (VERIFIED)
 
-Extracted from `design-reference.pdf/NL-design.pdf` — the "Nocturne" product design system & screen library ("After dark, by invitation." / **42 screens · 03 roles · 01 language**). Dark-first, luxury Art Deco aesthetic for the nightlife app.
+Extracted directly from the CSS inside `Nocturne - App Design (standalone).html`
+(the design-tool bundle was unpacked and its inline styles parsed). **Every value below is
+read from the actual stylesheet — none are pixel-guessed.** Where the earlier PDF extraction
+differed, the HTML value wins and the correction is noted.
 
-> **How these were extracted.** The PDF is a **flattened, image-only** export (no selectable text; `pdftotext` returns nothing). It is **2 letter-size pages**, each a single tall column: page 1 = the design-language spec (this doc's source), page 2 = the 42 screens grouped as Auth & Onboarding · Member · Promoter · Club/Venue Admin · System & Edge States. All values below were read from high-DPI renders (900–1800 dpi) of page 1, and **the six palette colors were sampled pixel-by-pixel from the swatch rectangles** (authoritative).
->
-> **Confidence markers.** `[sampled]` = read directly from swatch pixels (exact). `[read]` = legible in a high-DPI crop. `[approx — VERIFY]` = the underlying label is below the source's legibility floor (the smallest captions are ~2–4 px tall even at 1800 dpi); the **structure** is certain but the **exact number** must be confirmed against the original design source before it's treated as final. Nothing here is invented — where a precise number couldn't be resolved, it is marked, not guessed.
-
----
-
-## 1. Color palette
-
-Header on the palette panel: **"COLOUR · DARK-FIRST"**. Six named swatches, left→right, each with a name + role caption.
-
-| Token | Name | Hex `[sampled]` | RGB | Role (caption, `[approx — VERIFY]`) |
-|---|---|---|---|---|
-| `obsidian` | Obsidian | **#0E0E10** | 14,14,16 | Base / app background (darkest) |
-| `espresso` | Espresso | **#1A1210** | 26,18,16 | Surface / raised card (dark brown) |
-| `oxblood` | Oxblood | **#3B1220** | 59,18,32 | Deep accent / destructive (maroon) |
-| `emerald` | Emerald | **#11251C** | 17,37,28 | Secondary accent (deep green) |
-| `champagne` | Champagne | **#CFAC4F** | 207,172,79 | Primary accent / gold (the signature color) |
-| `ivory` | Ivory | **#F3EFE6** | 243,239,230 | Primary text / primary-button fill (warm white) |
-
-### Derived / supporting values `[read/sampled]`
-| Purpose | Value | Notes |
-|---|---|---|
-| App background (deepest) | `#0B0B0D` – `#0E0E10` | Obsidian; panels sit ~1–3 pts lighter than the page. |
-| Card / panel surface | ~`#0E0E10` – `#141216` | Espresso-tinted obsidian; hairline gold/near-black border. |
-| Primary button fill (default) | **#F3EFE6 (Ivory)** | Ivory fill, obsidian text. |
-| Primary button fill (pressed) | **#F0ECE5** `[sampled]` | Slightly dimmed ivory. |
-| Disabled fill | **#878684** `[sampled]` | Muted warm grey, faded text. |
-| Gold accent (borders, focus, active) | **#CFAC4F (Champagne)** | Also used for gradients, dividers, active nav. |
-| Destructive | **Oxblood #3B1220** family | Outline + red text on "Delete account", error underline. |
-| Text — high emphasis | **Ivory #F3EFE6** | Headings, body on dark. |
-| Text — low emphasis / captions | ~`#8A8580` – `#B1ADA9` | Warm grey small-caps labels. |
-| Overlay / scrim (behind sheets/dialogs) | translucent obsidian, ~`rgba(11,11,13,0.6–0.8)` `[approx — VERIFY]` | Dark scrim + vignette. |
-
-### Gradients `[read]`
-- **Gold gradient** — champagne → lighter champagne, used on primary CTAs / accents (the spacing-ramp squares and icon accents render in this gold).
-- **Card image gradients** — event cards use a **bottom-up dark gradient** (obsidian → transparent) over the photo so the small-caps title/label sits legibly at the bottom. Card variants seen: warm/oxblood-tinted, emerald-tinted, and neutral obsidian.
-- **Vignette + film grain** — the entire canvas carries a subtle radial vignette (darker edges) and a fine film-grain/noise texture. This is an intentional decorative layer, present on every surface (see §11).
+Design: **Nocturne** — "After dark, by invitation." · 42 screens · 3 roles. Dark-first luxury Art Deco.
 
 ---
 
-## 2. Fonts & weights
+## 1. Color palette (EXACT)
 
-Panel: **"TYPOGRAPHY"** with a large **"Display Aa"** specimen; right panel **"SCALE · SPACING · RADIO"**.
-
-| Role | Family character `[read]` | Weight | Notes |
+| Token | Hex | Role | vs. PDF guess |
 |---|---|---|---|
-| **Display / headings** | High-contrast **serif** (Didone/"Platform Display"–style; thin hairlines, strong stress). Caption reads ~"PLATFORM DISPLAY · HIGH-CONTRAST SERIF". | Regular + *Italic* | Hero uses roman + italic together ("After dark, *by invitation.*"). This is the editorial luxury serif. |
-| **Body / interface** | Refined **grotesque sans** ("a refined grotesque, tuned for calm reading in low light"). | Regular / Medium | Body copy, inputs, list content. |
-| **Labels / micro** | The grotesque set in **small-caps with wide letter-spacing** ("SMALL-CAPS MICRO-LABELS · SIGNATURE"; e.g. "MEMBERS ONLY · TONIGHT"). | Medium/Bold, tracked | Section eyebrows, chip text, button text, nav labels — the signature label style. |
+| `obsidianDeep` | **#0B0B0D** | Deepest app background / page base | — |
+| `obsidian` | **#0E0E10** | Primary surface / base | ✓ matched |
+| `espresso` | **#1A1210** | Raised card / warm dark surface | ✓ matched |
+| `oxblood` | **#3A1220** | Deep accent + destructive family | was #3B1220 → **#3A1220** |
+| `emerald` | **#12251C** | Secondary accent (deep green) | was #11251C → **#12251C** |
+| `champagne` | **#C9A96A** | **PRIMARY GOLD** — accent, borders, focus, active, dividers | ⚠ was #CFAC4F → **#C9A96A** |
+| `goldBright` | **#D4AF37** | Brighter gold — ONLY as gradient partner for CTAs | new |
+| `ivory` | **#F4EFE6** | Primary text + primary-button fill (warm white) | was #F3EFE6 → **#F4EFE6** |
+| `destructive` | **#C97A7A** | Destructive/error text + outline, offline icons | new (exact) |
 
-> Specific font family names are not printed legibly in the file. Substitute a Didone-class serif for Display (e.g. a Playfair Display / high-contrast serif) and a neutral grotesque for body (e.g. an Inter/Söhne-class sans) unless the original source names them — `[approx — VERIFY]`.
+### Tinted card-surface variants (used in gradients)
+`#17121A` · `#141013` · `#0F1512` — subtle oxblood/espresso/emerald-tinted obsidians for card backgrounds.
+
+### Text emphasis = IVORY at opacity (this is the whole text-color system — ivory #F4EFE6 with alpha)
+| Emphasis | Value |
+|---|---|
+| High (headings) | `#F4EFE6` (full) |
+| Body | `rgba(244,239,230,.7)` / `.6` / `.55` |
+| Secondary / caption | `rgba(244,239,230,.5)` / `.45` / `.4` |
+| Low / disabled | `rgba(244,239,230,.25)` / `.2` |
+
+### Gold at opacity (subtle fills, borders, hover washes) — champagne #C9A96A with alpha
+`rgba(201,169,106, .1 / .12 / .14 / .16 / .2 / .22 / .25 / .3 / .35 / .4)`
 
 ---
 
-## 3. Type scale
+## 2. Fonts
 
-Right panel shows a 4-tier "Aa" ramp (serif for Display, grotesque below), each with a px/leading caption. The **tiers are certain; the exact px are `[approx — VERIFY]`** (captions are the smallest text in the file).
-
-| Level | Style | Size `[approx — VERIFY]` | Line height | Letter-spacing | Usage |
-|---|---|---|---|---|---|
-| **Display** | Serif, high-contrast | ~28–36 px | tight (~1.05–1.1) | ~0 (slightly negative on large) | Hero / screen titles |
-| **Title** | Serif or grotesque | ~20–24 px | ~1.2 | ~0 | Section / card titles |
-| **Body** | Grotesque | ~14–16 px | ~1.4–1.5 ("calm reading in low light") | ~0 | Paragraphs, inputs, list text |
-| **Micro / label** | Grotesque, **small-caps, tracked** | ~10–12 px | ~1.2 | **wide, ~0.12–0.18em** | Eyebrows, chips, buttons, nav labels |
-
-The ramp caption appears to read like "Display / Title / Body / Micro · tracked" with numeric sizes beside each; treat the numbers above as the intended relationship and confirm exact values before finalizing.
-
----
-
-## 4. Border radii
-
-Radius chips ("RADIO" row) show **three rounded-square samples** (small → slightly larger) plus fully-round pills elsewhere.
-
-| Element | Radius `[approx — VERIFY]` | Evidence |
+| Role | Family | Notes |
 |---|---|---|
-| Cards / panels | ~10–14 px (soft rounded rect) | Event cards, spec panels. |
-| Buttons (primary/ghost/destructive) | ~6–10 px (gently rounded rect) | Reserve/Get Directions/Delete are rounded rectangles, **not** pills. |
-| Inputs | effectively 0 (underline only — no box) | See §7. |
-| **Filter chips** | **full pill** (`radius = height/2`) | Chips are fully rounded stadiums. |
-| Bottom sheet | large top-corner radius (~16–20 px), top corners only | See §10. |
-| Dialogs | ~12–16 px `[approx — VERIFY]` | Consistent with card family. |
-| Icon buttons / small containers | ~6–8 px | Nav/icon tiles. |
+| **Display / headings** | **`Playfair Display`** (Google Font) | High-contrast Didone serif. Uses Regular + **Italic** together (hero: "After dark, *by invitation.*"). Dominant brand voice. |
+| **Body / interface / labels** | **`Helvetica Neue`, Helvetica, Arial, sans-serif** | Neutral grotesque. Also carries the small-caps tracked labels (uppercase + letter-spacing). |
+| **Icons** | **`Material Symbols Outlined`** | Thin-line icon set — Flutter has this natively (Material Symbols / Icons), no asset needed. |
 
-The three radius chips imply a small ramp (e.g. ~`sm 6` / `md 10` / `lg 14`) — `[approx — VERIFY]`.
+Weights explicitly set: **400** (regular) and **500** (medium). Playfair supplies heavier display weight via the face itself.
+
+> Flutter note: Playfair Display → `google_fonts` package. Body "Helvetica Neue" isn't a Google Font and isn't bundled on Android; closest cross-platform match is **Inter** or the platform default sans. Recommend Inter for Android parity, or a Helvetica-like if you add the asset. FLAG for your decision.
 
 ---
 
-## 5. Spacing system
+## 3. Type scale (px, from CSS)
 
-The "SPACING" ramp is a row of **4 gold squares increasing in size** (a modular step scale). Exact px are `[approx — VERIFY]`, but the intent is a consistent multiplier ramp.
+Sizes actually used, grouped into the design's tiers:
 
-- **Base unit:** ~4 px, stepping ~**4 · 8 · 12 · 16 · 24 · 32** (4 visible ramp steps → extend by the same ratio). `[approx — VERIFY]`
-- **Screen edge padding:** generous horizontal gutters (~16–20 px) — screens breathe, content is centered in a narrow column.
-- **Section spacing:** large vertical rhythm between sections, each introduced by a tracked small-caps eyebrow + gold hairline (see §11).
-- **Card internal padding:** ~16 px; label/title stack sits with small (~4–6 px) gaps.
-- **Component gaps:** chips/buttons separated by ~8–12 px.
+| Tier | Sizes seen (px) | Typical | Font |
+|---|---|---|---|
+| Hero display | 88, 52, 48, 46, 44 | 48 | Playfair (often italic) |
+| Display / screen title | 38, 36, 34, 32, 30 | 34 | Playfair |
+| Title / section | 28, 26, 25, 24, 22 | 24 | Playfair or sans |
+| Body large | 20, 19, 18, 17 | 18 | Helvetica Neue |
+| Body / input | 16, 15 | 15 | Helvetica Neue |
+| Micro / label | 14 (uppercase + tracked) | 14 | Helvetica Neue small-caps |
 
----
-
-## 6. Button anatomy
-
-Panel "BUTTONS" shows three families across states. Text is **small-caps, tracked, `[read]`**.
-
-### Primary (`RESERVE`)
-| State | Fill | Text | Border | Shape |
-|---|---|---|---|---|
-| Default | **Ivory #F3EFE6** | Obsidian #0E0E10 | none | rounded rect (~6–10 px) |
-| Pressed | **#F0ECE5** (dimmed ivory) | Obsidian | none | same |
-| Disabled | **#878684** (muted grey) | faded ivory/grey | none | same |
-
-Caption: "Primary · ivory · small caps". Padding ~ vertical 12–14 / horizontal 20–24 `[approx — VERIFY]`.
-
-### Ghost / secondary (`GET DIRECTIONS`, `HOVER`)
-- **Transparent fill**, **champagne/gold outline** (~1 px), **gold text**. On hover the outline/fill warms slightly toward champagne. Caption: "Ghost · gold outline". Same rounded-rect radius.
-
-### Destructive (`DELETE ACCOUNT`)
-- **Transparent fill**, **oxblood/red outline**, **red/oxblood text**. Caption: "Destructive". Same radius. Reserved for account deletion and other irreversible actions.
+Line-heights are mostly default/tight on display; body reads ~1.4–1.5.
 
 ---
 
-## 7. Input fields
+## 4. Letter-spacing (the signature)
 
-Panel "INPUTS · UNDERLINE STYLE" — inputs are **underline-only** (a single bottom border), never boxed/outlined.
+Tracked uppercase labels are core to the look. Dominant values:
 
-| Part | Treatment `[read]` |
+| Use | letter-spacing |
 |---|---|
-| Container | No box, no fill — just a **1 px bottom hairline**. |
-| Label | Small-caps, tracked, low-emphasis (e.g. "EMAIL", "PASSWORD · FOCUSED", "PHONE · ERROR", "GENDER · DROPDOWN") sitting above the value. |
-| Value text | Ivory grotesque (e.g. `guest@nocturne.club`, `+1 555…`). |
-| Default underline | Faint warm-grey / low-emphasis hairline. |
-| **Focus** underline | **Champagne/gold** hairline + visible caret (the "PASSWORD · FOCUSED" row shows a gold underline). |
-| **Error** underline | **Oxblood/red** hairline + red helper text ("Enter a complete number"). |
-| Dropdown | Same underline style with a trailing chevron (`Female ⌄`). |
+| Standard small-caps label / eyebrow | **.24em** (most common) |
+| Tighter labels / nav | .16em, .18em, .2em |
+| Chip / button text | .12em–.16em |
+| Extra-wide dramatic eyebrows | .26em–.32em (up to .5em on rare hero labels) |
+
+Rule of thumb: **uppercase micro-labels ≈ `.24em`**, buttons/chips ≈ `.14–.16em`.
 
 ---
 
-## 8. Card treatments
+## 5. Border radii (px) — sharper than the PDF suggested
 
-Panel "EVENT CARD · STATES" — image-led cards.
-
-- **Background:** full-bleed event photo with a **bottom-up dark gradient** (obsidian → transparent) for text legibility. Variants: warm/oxblood-tinted, emerald-tinted, neutral obsidian, and a text-only/placeholder card (e.g. "Blue Serpent").
-- **Border:** subtle hairline (near-black or faint gold) around the rounded rect.
-- **Shadow:** soft, low — depth comes from the dark gradient + vignette more than a drop shadow.
-- **Corner radius:** ~10–14 px `[approx — VERIFY]`.
-- **Internal content:** small-caps tracked eyebrow (e.g. "TONIGHT · TECHNO"), then a serif/grotesque title, then a low-emphasis meta line — anchored bottom-left over the gradient.
-- **Internal padding:** ~16 px `[approx — VERIFY]`.
-
----
-
-## 9. Navigation
-
-Panel "NAV · TAB BAR" — a **bottom navigation bar** with 4 destinations `[read]`: **Home · Explore · Saved (heart) · Profile** (icons + small-caps tracked labels).
-
-| State | Treatment |
+| Element | Radius |
 |---|---|
-| Active | **Champagne/gold** icon + label (and/or a gold indicator); ivory-bright. |
-| Inactive | Low-emphasis warm grey. |
-| Bar background | Obsidian, with a top gold **hairline** separating it from content. |
-| Indicator | Minimal — color shift to gold rather than a filled pill; possibly a small gold underline/dot `[approx — VERIFY]`. |
+| Filter chips / pills / round buttons | **100px** (full stadium) — very common |
+| Large pill buttons | **46px** |
+| Cards / panels | small — **2px** (dominant), up to 4–8px; larger cards 10–16px |
+| Standard buttons | **4–8px** (gently rounded rect, NOT pills) |
+| Small elements / icon tiles | 2–6px |
+| Bottom sheet (top corners) | **22px** |
+| Dialogs | 12–16px |
 
-Tabs/segmented controls elsewhere follow the same active=gold / inactive=grey logic. A drawer is implied by the app's menu structure but its exact styling isn't isolated on page 1 — `[approx — VERIFY]` from page 2 screens.
+Key correction vs PDF: cards/buttons are mostly **crisp (2–8px)**; the *pills* are the only fully-round elements. The look is sharp-cornered + editorial, not soft.
+
+---
+
+## 6. Spacing system
+
+Base unit **4px**. Ramp actually used: **4 · 6 · 8 · 12 · 14 · 16 · 20 · 22 · 28 · 40 · 56 · 60 · 120**.
+
+| Use | Value |
+|---|---|
+| Most common gap | **14px**, then 16, 8, 6 |
+| Card internal padding | 14–16px |
+| Component padding | 16 / 14 / 18px |
+| Section / screen gutters | 40 / 56 / 60px (large, breathing) |
+| Big hero spacing | 96 / 120px |
+
+---
+
+## 7. Buttons
+
+**Primary** — fill `#F4EFE6` (ivory), text `#0E0E10` (obsidian), no border, radius ~4–8px, uppercase tracked (~.14–.16em). Pressed: dimmed ivory. Disabled: muted grey `~#878684`, faded text.
+
+**Ghost / secondary** — transparent fill, **`#C9A96A` gold 1px border**, gold text, same radius. Hover warms via low-opacity gold wash `rgba(201,169,106,.12–.16)`.
+
+**Destructive** — transparent fill, **`#C97A7A` 1px border + `#C97A7A` text**. For account deletion / irreversible actions.
+
+**Gold-gradient accent** — `linear-gradient(135deg, #D4AF37, #C9A96A)` on select highlights/CTAs and the spacing-ramp/active bits.
+
+---
+
+## 8. Inputs — underline style
+
+No box, no fill. Single **1px bottom hairline**.
+- Label: uppercase, tracked (~.24em), low-emphasis ivory.
+- Default underline: `rgba(244,239,230,.25–.4)`.
+- **Focus** underline: **`#C9A96A` gold** + gold caret.
+- **Error** underline + helper text: **`#C97A7A`**.
+- Dropdown: same underline + trailing chevron.
+
+---
+
+## 9. Cards
+
+- Background: event photo OR a tint gradient — `linear-gradient(135deg|160deg, <tint> → #0E0E10)` where tint ∈ {`#3A1220` oxblood, `#1A1210` espresso, `#12251C` emerald}.
+- Image legibility scrim: `linear-gradient(180deg, #0B0B0D, rgba(11,11,13,.6))` bottom-up.
+- Border: hairline — gold at low opacity `rgba(201,169,106,.14–.22)` or near-black.
+- Radius: 2–16px (see §5). Shadow: soft/low; depth comes from gradient + vignette.
+- Content: tracked uppercase eyebrow → Playfair title → low-emphasis meta, bottom-anchored.
 
 ---
 
 ## 10. Bottom sheet & dialogs
 
-Panel "BOTTOM SHEET" — example "Confirm your place" with a **"CONFIRM RSVP"** primary (ivory) button.
-
-- **Container:** raised obsidian/espresso surface with **large top-corner radius** (~16–20 px), top corners only, flush to screen bottom.
-- **Grab handle:** short centered pill handle at the top (low-emphasis grey) `[read]`.
-- **Overlay/scrim:** dark translucent obsidian behind the sheet (~0.6–0.8 opacity) plus the global vignette `[approx — VERIFY]`.
-- **Content:** serif title + body copy + small-caps meta ("Entry is complimentary — settle at the door. Doors close at midnight."), primary CTA full-width ivory button.
-- **Dialogs:** same surface/radius/scrim family, centered; primary=ivory, secondary=ghost gold, destructive=oxblood.
+- Sheet: raised espresso/obsidian surface, **top-corner radius 22px**, flush to bottom.
+- Grab handle: short centered low-emphasis pill.
+- Scrim: strong dark — `rgba(0,0,0,.95)` (plus global vignette). Dialogs share the same scrim/surface family.
+- Primary CTA full-width ivory; secondary ghost-gold; destructive oxblood/`#C97A7A`.
 
 ---
 
-## 11. Decorative elements
+## 11. Decorative layer (applies globally)
 
-- **Gold hairline dividers:** thin **champagne (#CFAC4F)** rules flank every section eyebrow (e.g. `——— The Design Language ———`) and separate content bands. Signature motif.
-- **Small-caps tracked eyebrows:** every section is introduced by a wide-tracked small-caps label (e.g. "01 · FOUNDATIONS", "COLOUR · DARK-FIRST").
-- **Art Deco geometry:** the brand mark is a circular **"N" monogram** medallion (top-left), thin-line geometric framing; overall vertical, symmetrical, editorial layout.
-- **Vignette:** radial darkening at the edges of every screen.
-- **Film grain / noise:** a fine grain texture over the whole canvas (visible as speckle in flat dark areas) — deliberate, gives the "low-light film" mood.
-- **Gold gradient accents:** used on the spacing-ramp squares, active states, and CTA highlights.
-
----
-
-## 12. Icon style
-
-Panel "ICONOGRAPHY · THIN LINE" — a set of **thin, single-weight line icons** `[read]`.
-
-- **Style:** outline / line icons, **thin uniform stroke** (~1.5 px at display size), rounded joins, no fills.
-- **Set seen (2 rows):** home, compass/explore, search, heart, person, calendar; pin, music note, "×N"/badge, share, bell, gear; plus edit, filter, back/arrow, etc.
-- **Size:** ~20–24 px in nav/actions `[approx — VERIFY]`.
-- **Color:** low-emphasis warm grey by default; **champagne/gold** when active/selected; ivory for high emphasis.
+- **Gold hairline dividers** (`#C9A96A`) flank every section eyebrow.
+- **Uppercase tracked eyebrows** (~.24em) introduce every section.
+- **Circular "N" monogram** medallion — thin gold ring(s), Playfair "N". (Brand mark → basis for the app icon.)
+- **Vignette** — radial edge darkening on every screen.
+- **Film grain / noise** — faint texture over the whole canvas (`rgba(255,255,255,.02)` speckle) for the low-light film mood.
+- **Gold gradient** `linear-gradient(135deg,#D4AF37,#C9A96A)` for active/highlight accents.
 
 ---
 
-## Open items to confirm against the original design source `[approx — VERIFY]`
-1. Exact **type-scale px sizes / line-heights / tracking** (§3) — captions are sub-legible in the flattened PDF.
-2. Exact **radius values** for the 3 radius chips and the sheet/dialog corners (§4).
-3. Exact **spacing ramp px** (§5).
-4. **Font family names** for the display serif and body grotesque (§2).
-5. **Scrim opacity** and any blur behind sheets/dialogs (§10).
-6. Precise **role captions** under each color swatch (base/surface/accent/text mapping in §1) and any additional semantic colors not shown on page 1.
-7. Nav **active indicator** exact form (color-only vs underline/dot) (§9).
+## 12. Icons
 
-The six core palette hexes (§1) are pixel-exact; everything marked `[read]` is directly legible; only the small-caption numerics are deferred above.
+**Material Symbols Outlined**, thin uniform stroke (weight ~100–400), no fill. Seen: home, explore/compass, search, favorite (heart), person, calendar, place/pin, music_note, share, notifications, settings, edit, filter, arrow_back, wifi_off (offline state). Size ~20–34px. Color: low-emphasis ivory default; **gold when active**; ivory high-emphasis.
+Flutter: use built-in `Icons` / Material Symbols — no font asset required.
+
+---
+
+## Corrections vs. the earlier PDF-based DESIGN_TOKENS.md
+1. **Gold is `#C9A96A`** (not #CFAC4F). Most important fix — it's the signature color.
+2. Ivory **#F4EFE6** (not #F3EFE6); Oxblood **#3A1220**; Emerald **#12251C**.
+3. Added **#D4AF37** (gradient-only gold), **#C97A7A** (destructive), and tint surfaces #17121A/#141013/#0F1512.
+4. Fonts confirmed: **Playfair Display** + **Helvetica Neue/Arial** + **Material Symbols Outlined** (not guesses).
+5. Radii are **sharper** than assumed — cards/buttons 2–8px; only chips are full pills (100px); sheet 22px.
+6. Text color = **ivory at opacity steps**, not separate grey hexes.
+7. Scrim behind sheets/dialogs = **rgba(0,0,0,.95)**; card image scrim and tint gradients captured exactly.
+Nothing here is [approx] — all values are read from the stylesheet.

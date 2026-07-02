@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_colors.dart';
 
+/// A raised surface panel. In Nocturne this is a flat espresso card with a gold
+/// hairline (DESIGN_TOKENS.md §9) — no glass gradient, no neon glow. The name is
+/// kept so existing call sites compile unchanged.
 class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
@@ -18,30 +21,9 @@ class GlassCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
+        color: AppColors.surfaceEspresso,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(color: AppTheme.glassBorder),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.06),
-            AppTheme.surface.withValues(alpha: 0.82),
-            AppTheme.deepPurple.withValues(alpha: 0.34),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primaryViolet.withValues(alpha: 0.22),
-            blurRadius: 22,
-            spreadRadius: -8,
-            offset: const Offset(0, 10),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.42),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: AppColors.goldBorder, width: 1),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),

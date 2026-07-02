@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_colors.dart';
 
+/// App background chrome. Renamed intent for Nocturne: an obsidian canvas with
+/// the design's faint corner vignettes — a warm oxblood glow top-right and a
+/// cool emerald glow lower-left (DESIGN_TOKENS.md §11), no neon. The class name
+/// is kept so existing screens keep compiling.
 class NeonScaffold extends StatelessWidget {
   const NeonScaffold({
     super.key,
@@ -29,10 +33,10 @@ class NeonScaffold extends StatelessWidget {
       floatingActionButton: floatingActionButton,
       floatingActionButtonLocation: floatingActionButtonLocation,
       body: DecoratedBox(
-        decoration: const BoxDecoration(gradient: AppTheme.nightclubGradient),
+        decoration: const BoxDecoration(color: AppColors.obsidianDeep),
         child: Stack(
           children: [
-            Positioned.fill(child: CustomPaint(painter: _NightclubPainter())),
+            Positioned.fill(child: CustomPaint(painter: _VignettePainter())),
             SafeArea(child: child),
           ],
         ),
@@ -41,7 +45,9 @@ class NeonScaffold extends StatelessWidget {
   }
 }
 
-class _NightclubPainter extends CustomPainter {
+/// The Nocturne canvas vignettes — warm oxblood top-right, cool emerald
+/// lower-left, both very faint, fading to transparent.
+class _VignettePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final topRightRect = Rect.fromCircle(
@@ -51,8 +57,8 @@ class _NightclubPainter extends CustomPainter {
     final topRightGlow = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppTheme.accentPink.withValues(alpha: 0.14),
-          AppTheme.neonViolet.withValues(alpha: 0.055),
+          AppColors.oxblood.withValues(alpha: 0.5),
+          AppColors.oxblood.withValues(alpha: 0.12),
           Colors.transparent,
         ],
       ).createShader(topRightRect);
@@ -69,7 +75,7 @@ class _NightclubPainter extends CustomPainter {
     final lowerLeftGlow = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppTheme.neonViolet.withValues(alpha: 0.06),
+          AppColors.emerald.withValues(alpha: 0.4),
           Colors.transparent,
         ],
       ).createShader(lowerLeftRect);

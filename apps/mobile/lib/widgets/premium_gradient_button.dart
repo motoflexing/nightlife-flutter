@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import 'premium_loader.dart';
 
+/// The app's primary call-to-action. In Nocturne this is the ivory-fill button
+/// (DESIGN_TOKENS.md §7): warm-white fill, obsidian label, tracked uppercase,
+/// crisp corners — no gradient, no glow. Public API is unchanged so existing
+/// call sites keep working; [icon] now renders in obsidian alongside the label.
 class PremiumGradientButton extends StatelessWidget {
   const PremiumGradientButton({
     super.key,
@@ -29,36 +34,17 @@ class PremiumGradientButton extends StatelessWidget {
       child: Container(
         height: height,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: enabled
-              ? AppTheme.premiumGradient
-              : LinearGradient(
-                  colors: [
-                    AppTheme.deepPurple.withValues(alpha: 0.75),
-                    AppTheme.surface.withValues(alpha: 0.78),
-                  ],
-                ),
-          boxShadow: enabled
-              ? [
-                  BoxShadow(
-                    color: AppTheme.neonViolet.withValues(alpha: 0.34),
-                    blurRadius: 18,
-                    spreadRadius: -6,
-                    offset: const Offset(0, 8),
-                  ),
-                  BoxShadow(
-                    color: AppTheme.accentPink.withValues(alpha: 0.18),
-                    blurRadius: 22,
-                    spreadRadius: -14,
-                    offset: const Offset(0, 10),
-                  ),
-                ]
-              : null,
+          borderRadius: BorderRadius.circular(2), // crisp CTA (design §7)
+          color: enabled
+              ? AppColors.ivory
+              : const Color(0xFF878684), // disabled muted grey (design §7)
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(2),
+            splashColor: Colors.transparent,
+            highlightColor: AppColors.obsidian.withValues(alpha: 0.08),
             onTap: enabled ? onPressed : null,
             child: Center(
               child: AnimatedSwitcher(
@@ -72,14 +58,14 @@ class PremiumGradientButton extends StatelessWidget {
                         key: const ValueKey('label'),
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(icon, size: 20, color: Colors.white),
-                          const SizedBox(width: 9),
+                          Icon(icon, size: 18, color: AppColors.obsidian),
+                          const SizedBox(width: 10),
                           Text(
-                            label,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
+                            label.toUpperCase(),
+                            style: AppTypography.labelMedium.copyWith(
+                              color: AppColors.obsidian,
+                              fontSize: 12,
+                              letterSpacing: 0.16 * 12,
                             ),
                           ),
                         ],

@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import '../services/auth_service.dart';
 import '../services/firestore_service.dart';
 import '../services/location_service.dart';
@@ -42,35 +43,40 @@ class EmptyView extends StatelessWidget {
         child: Container(
           width: double.infinity,
           constraints: const BoxConstraints(maxWidth: 420),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: AppTheme.surface.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            borderRadius: BorderRadius.circular(4),
+            // Dashed-feel gold hairline framing the honest empty state (design).
+            border: Border.all(color: AppColors.goldBorder, width: 1),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 34, color: AppTheme.accentPink),
-              const SizedBox(height: 10),
+              Icon(
+                icon,
+                size: 34,
+                color: AppColors.champagne.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: 14),
+              // Playfair title (design empty state, e.g. "Nothing yet").
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+                style: AppTypography.headlineMedium.copyWith(fontSize: 18),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 6),
               Text(
                 message,
-                style: const TextStyle(color: AppTheme.textMuted, height: 1.35),
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textCaption,
+                ),
                 textAlign: TextAlign.center,
               ),
               if (actionLabel != null && onAction != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 OutlinedButton(
                   onPressed: onAction,
-                  child: Text(actionLabel!),
+                  child: Text(actionLabel!.toUpperCase()),
                 ),
               ],
             ],
@@ -139,42 +145,43 @@ class ErrorStateView extends StatelessWidget {
         child: Container(
           width: double.infinity,
           constraints: const BoxConstraints(maxWidth: 420),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: AppTheme.surface.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(4),
             border: Border.all(
-              color: AppTheme.accentPink.withValues(alpha: 0.24),
+              color: AppColors.destructive.withValues(alpha: 0.3),
+              width: 1,
             ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Offline/error uses the destructive tone (design "Lost the room").
               const Icon(
-                Icons.error_outline,
-                color: AppTheme.accentPink,
+                Icons.wifi_off,
+                color: AppColors.destructive,
                 size: 34,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+                style: AppTypography.headlineMedium.copyWith(fontSize: 18),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 6),
               Text(
                 message,
-                style: const TextStyle(color: AppTheme.textMuted, height: 1.35),
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textCaption,
+                ),
                 textAlign: TextAlign.center,
               ),
               if (onRetry != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 OutlinedButton.icon(
                   onPressed: onRetry,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('RETRY'),
                 ),
               ],
             ],

@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="a804b842-617a-43bc-a974-fa06a92d2c9f"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<style>/* cyrillic */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("a66c2c1b-0298-4be7-9ee4-cc5ec117e0a5") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("e9c7f312-7da6-463d-80e3-5201d8ccb7df") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("21be9dd6-3407-4507-a60a-2f8ae2a84bcc") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("192a3dfc-0ff2-4d7f-b9fa-ce85011d45f2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url("a66c2c1b-0298-4be7-9ee4-cc5ec117e0a5") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url("e9c7f312-7da6-463d-80e3-5201d8ccb7df") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url("21be9dd6-3407-4507-a60a-2f8ae2a84bcc") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url("192a3dfc-0ff2-4d7f-b9fa-ce85011d45f2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("8bf15aca-c760-45e0-b830-a4aef6e99a7a") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("45c7c85c-f307-43ec-8b6d-c3c55bc2b419") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("16fc1df4-f0a0-4678-b911-1ebf27181a30") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("aae508f1-e7fc-4389-968e-6e8e9e809d9b") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("8bf15aca-c760-45e0-b830-a4aef6e99a7a") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("45c7c85c-f307-43ec-8b6d-c3c55bc2b419") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("16fc1df4-f0a0-4678-b911-1ebf27181a30") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("aae508f1-e7fc-4389-968e-6e8e9e809d9b") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("8bf15aca-c760-45e0-b830-a4aef6e99a7a") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("45c7c85c-f307-43ec-8b6d-c3c55bc2b419") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("16fc1df4-f0a0-4678-b911-1ebf27181a30") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("aae508f1-e7fc-4389-968e-6e8e9e809d9b") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("8bf15aca-c760-45e0-b830-a4aef6e99a7a") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("45c7c85c-f307-43ec-8b6d-c3c55bc2b419") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("16fc1df4-f0a0-4678-b911-1ebf27181a30") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("aae508f1-e7fc-4389-968e-6e8e9e809d9b") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
+<style>/* fallback */
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  font-weight: 100;
+  font-display: swap;
+  src: url("162cd6fe-6aa7-4628-bac7-d8fdc0027153") format('woff2');
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+</style>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+  @keyframes ncShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+  @keyframes ncBreathe { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+  @keyframes ncSpin { to { transform: rotate(360deg); } }
+  @keyframes ncFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#0B0B0D;background-image:radial-gradient(1200px 800px at 15% -5%, rgba(58,18,32,.55), transparent 60%), radial-gradient(1000px 700px at 100% 30%, rgba(18,37,28,.45), transparent 55%), radial-gradient(900px 600px at 50% 120%, rgba(201,169,106,.08), transparent 60%);color:#F4EFE6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;padding:96px 72px 200px;position:relative">
+
+  <div style="position:absolute;inset:0;pointer-events:none;opacity:.05;mix-blend-mode:overlay;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E&quot;)"></div>
+
+  <!-- ================= MASTHEAD ================= -->
+  <header style="position:relative;max-width:1100px">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:40px">
+      <div style="width:46px;height:46px;border-radius:50%;border:1px solid #C9A96A;display:flex;align-items:center;justify-content:center;position:relative">
+        <div style="position:absolute;inset:5px;border-radius:50%;border:1px solid rgba(201,169,106,.35)"></div>
+        <span style="font-family:'Playfair Display';font-size:22px;color:#C9A96A;line-height:1">N</span>
+      </div>
+      <span style="font:600 12px/1 'Helvetica Neue';letter-spacing:.42em;text-transform:uppercase;color:#C9A96A">Nocturne</span>
+    </div>
+    <div style="font:600 12px/1 'Helvetica Neue';letter-spacing:.42em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:22px">Product Design System &amp; Screen Library</div>
+    <h1 style="font-family:'Playfair Display';font-weight:400;font-size:88px;line-height:.98;margin:0 0 28px;letter-spacing:-.5px">After dark,<br><em style="color:#C9A96A">by invitation.</em></h1>
+    <p style="max-width:560px;font-size:16px;line-height:1.7;color:rgba(244,239,230,.62);margin:0">A members-only guide to the city's most rarefied nights. The complete mobile experience — one design language across every screen, for guests, promoters, and the houses that host them.</p>
+    <div style="display:flex;gap:40px;margin-top:56px;flex-wrap:wrap">
+      <div><div style="font-family:'Playfair Display';font-size:34px;color:#C9A96A">42</div><div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:8px">Screens</div></div>
+      <div style="width:1px;background:rgba(201,169,106,.2)"></div>
+      <div><div style="font-family:'Playfair Display';font-size:34px;color:#C9A96A">03</div><div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:8px">Roles</div></div>
+      <div style="width:1px;background:rgba(201,169,106,.2)"></div>
+      <div><div style="font-family:'Playfair Display';font-size:34px;color:#C9A96A">01</div><div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:8px">Language</div></div>
+    </div>
+  </header>
+
+  <!-- ================= 01 · THE SYSTEM ================= -->
+  <div style="display:flex;align-items:baseline;gap:28px;margin:150px 0 56px">
+    <span style="font:600 12px/1 'Helvetica Neue';letter-spacing:.32em;text-transform:uppercase;color:#C9A96A">01 — Foundations</span>
+    <h2 style="font-family:'Playfair Display';font-weight:500;font-size:48px;margin:0;letter-spacing:-.5px">The Design Language</h2>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(201,169,106,.5),transparent)"></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px;max-width:1180px">
+
+    <!-- Palette -->
+    <div style="grid-column:1 / -1;background:rgba(255,255,255,.02);border:1px solid rgba(201,169,106,.14);border-radius:4px;padding:40px">
+      <div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:28px">Colour · Dark-first</div>
+      <div style="display:flex;flex-wrap:wrap;gap:20px">
+        <div style="flex:1;min-width:150px"><div style="height:96px;border-radius:3px;background:#0E0E10;border:1px solid rgba(255,255,255,.08)"></div><div style="margin-top:12px;font-family:'Playfair Display';font-size:15px">Obsidian</div><div style="font:500 11px/1.4 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:4px">#0E0E10 · base</div></div>
+        <div style="flex:1;min-width:150px"><div style="height:96px;border-radius:3px;background:#1A1210"></div><div style="margin-top:12px;font-family:'Playfair Display';font-size:15px">Espresso</div><div style="font:500 11px/1.4 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:4px">#1A1210 · surface</div></div>
+        <div style="flex:1;min-width:150px"><div style="height:96px;border-radius:3px;background:#3A1220"></div><div style="margin-top:12px;font-family:'Playfair Display';font-size:15px">Oxblood</div><div style="font:500 11px/1.4 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:4px">#3A1220 · depth</div></div>
+        <div style="flex:1;min-width:150px"><div style="height:96px;border-radius:3px;background:#12251C"></div><div style="margin-top:12px;font-family:'Playfair Display';font-size:15px">Emerald</div><div style="font:500 11px/1.4 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:4px">#12251C · depth</div></div>
+        <div style="flex:1;min-width:150px"><div style="height:96px;border-radius:3px;background:linear-gradient(135deg,#D4AF37,#C9A96A)"></div><div style="margin-top:12px;font-family:'Playfair Display';font-size:15px;color:#C9A96A">Champagne</div><div style="font:500 11px/1.4 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:4px">#C9A96A · accent</div></div>
+        <div style="flex:1;min-width:150px"><div style="height:96px;border-radius:3px;background:#F4EFE6"></div><div style="margin-top:12px;font-family:'Playfair Display';font-size:15px">Ivory</div><div style="font:500 11px/1.4 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:4px">#F4EFE6 · text</div></div>
+      </div>
+    </div>
+
+    <!-- Typography -->
+    <div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,169,106,.14);border-radius:4px;padding:40px">
+      <div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:28px">Typography</div>
+      <div style="border-bottom:1px solid rgba(201,169,106,.12);padding-bottom:20px;margin-bottom:20px">
+        <div style="font-family:'Playfair Display';font-size:52px;line-height:1;letter-spacing:-.5px">Display Aa</div>
+        <div style="font:500 11px/1 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-top:14px">Playfair Display · high-contrast serif</div>
+      </div>
+      <div style="border-bottom:1px solid rgba(201,169,106,.12);padding-bottom:20px;margin-bottom:20px">
+        <div style="font:400 22px/1.4 'Helvetica Neue'">Body &amp; interface set in a refined grotesque, tuned for calm reading in low light.</div>
+        <div style="font:500 11px/1 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-top:14px">Helvetica Neue · grotesque</div>
+      </div>
+      <div>
+        <div style="font:600 13px/1 'Helvetica Neue';letter-spacing:.34em;text-transform:uppercase;color:#C9A96A">Members Only · Tonight</div>
+        <div style="font:500 11px/1 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-top:14px">Small-caps micro-label · signature</div>
+      </div>
+    </div>
+
+    <!-- Type scale + grid -->
+    <div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,169,106,.14);border-radius:4px;padding:40px">
+      <div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:28px">Scale · Spacing · Radii</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:26px">
+        <div style="display:flex;align-items:baseline;gap:16px"><span style="font-family:'Playfair Display';font-size:40px">Aa</span><span style="font:500 11px 'Helvetica Neue';color:rgba(244,239,230,.4)">Display / 40–88</span></div>
+        <div style="display:flex;align-items:baseline;gap:16px"><span style="font-family:'Playfair Display';font-size:26px">Aa</span><span style="font:500 11px 'Helvetica Neue';color:rgba(244,239,230,.4)">Title / 22–28</span></div>
+        <div style="display:flex;align-items:baseline;gap:16px"><span style="font:400 16px 'Helvetica Neue'">Aa</span><span style="font:500 11px 'Helvetica Neue';color:rgba(244,239,230,.4)">Body / 15–16</span></div>
+        <div style="display:flex;align-items:baseline;gap:16px"><span style="font:600 11px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase">Aa</span><span style="font:500 11px 'Helvetica Neue';color:rgba(244,239,230,.4)">Micro / 11–13 · tracked</span></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:24px">
+        <div style="width:8px;height:8px;background:#C9A96A"></div><div style="width:16px;height:16px;background:#C9A96A"></div><div style="width:24px;height:24px;background:#C9A96A"></div><div style="width:32px;height:32px;background:#C9A96A"></div><div style="width:48px;height:48px;background:#C9A96A"></div>
+        <span style="font:500 11px 'Helvetica Neue';color:rgba(244,239,230,.4);margin-left:8px">8·16·24·32·48 grid</span>
+      </div>
+      <div style="display:flex;gap:16px;align-items:center">
+        <div style="width:52px;height:36px;border:1px solid #C9A96A;border-radius:2px"></div>
+        <div style="width:52px;height:36px;border:1px solid #C9A96A;border-radius:4px"></div>
+        <div style="width:52px;height:36px;border:1px solid #C9A96A;border-radius:12px"></div>
+        <span style="font:500 11px 'Helvetica Neue';color:rgba(244,239,230,.4)">radii 2 · 4 · 12</span>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,169,106,.14);border-radius:4px;padding:40px">
+      <div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:28px">Buttons</div>
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+          <button style="background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:15px 30px;font:600 12px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;cursor:pointer">Reserve</button>
+          <button style="background:rgba(244,239,230,.7);color:#0E0E10;border:none;border-radius:2px;padding:15px 30px;font:600 12px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Pressed</button>
+          <button style="background:rgba(244,239,230,.15);color:rgba(244,239,230,.4);border:none;border-radius:2px;padding:15px 30px;font:600 12px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Disabled</button>
+          <span style="font:500 11px 'Helvetica Neue';color:rgba(244,239,230,.4)">Primary · default / pressed / disabled</span>
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+          <button style="background:transparent;color:#C9A96A;border:1px solid #C9A96A;border-radius:2px;padding:15px 30px;font:600 12px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;cursor:pointer">Get Directions</button>
+          <button style="background:rgba(201,169,106,.12);color:#C9A96A;border:1px solid #C9A96A;border-radius:2px;padding:15px 30px;font:600 12px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Hover</button>
+          <span style="font:500 11px 'Helvetica Neue';color:rgba(244,239,230,.4)">Ghost · gold hairline</span>
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+          <button style="background:transparent;color:#C97a7a;border:1px solid rgba(201,122,122,.5);border-radius:2px;padding:15px 30px;font:600 12px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;cursor:pointer">Delete Account</button>
+          <span style="font:500 11px 'Helvetica Neue';color:rgba(244,239,230,.4)">Destructive</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inputs + dropdown -->
+    <div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,169,106,.14);border-radius:4px;padding:40px">
+      <div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:28px">Inputs · Underline style</div>
+      <div style="display:flex;flex-direction:column;gap:26px">
+        <div>
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:10px">Email</div>
+          <div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:10px;color:rgba(244,239,230,.9);font-size:16px">guest@nocturne.club</div>
+        </div>
+        <div>
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:10px">Password · focused</div>
+          <div style="border-bottom:1px solid #C9A96A;padding-bottom:10px;color:#F4EFE6;font-size:16px">••••••••<span style="border-left:1px solid #C9A96A;margin-left:2px;animation:ncBreathe 1.2s infinite"></span></div>
+        </div>
+        <div>
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C97a7a;margin-bottom:10px">Phone · error</div>
+          <div style="border-bottom:1px solid rgba(201,122,122,.6);padding-bottom:10px;color:rgba(244,239,230,.9);font-size:16px">+1 555</div>
+          <div style="font:400 12px 'Helvetica Neue';color:#C97a7a;margin-top:8px">Enter a complete number.</div>
+        </div>
+        <div>
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:10px">Gender · dropdown</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:10px;color:rgba(244,239,230,.9);font-size:16px">Female<span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:22px;color:#C9A96A">expand_more</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chips -->
+    <div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,169,106,.14);border-radius:4px;padding:40px">
+      <div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:28px">Filter chips</div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px">
+        <span style="background:#C9A96A;color:#0E0E10;border-radius:100px;padding:9px 18px;font:600 11px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Tonight</span>
+        <span style="border:1px solid rgba(244,239,230,.25);color:rgba(244,239,230,.75);border-radius:100px;padding:9px 18px;font:600 11px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Techno</span>
+        <span style="border:1px solid rgba(244,239,230,.25);color:rgba(244,239,230,.75);border-radius:100px;padding:9px 18px;font:600 11px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Jazz</span>
+        <span style="border:1px solid rgba(244,239,230,.25);color:rgba(244,239,230,.75);border-radius:100px;padding:9px 18px;font:600 11px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Rooftop</span>
+        <span style="border:1px solid rgba(244,239,230,.25);color:rgba(244,239,230,.75);border-radius:100px;padding:9px 18px;font:600 11px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Black Tie</span>
+        <span style="border:1px solid rgba(201,169,106,.6);color:#C9A96A;border-radius:100px;padding:9px 18px;font:600 11px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px">Intimate<span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px">close</span></span>
+      </div>
+      <div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.45);margin:32px 0 20px">Nav · tab bar</div>
+      <div style="background:#0E0E10;border:1px solid rgba(201,169,106,.14);border-radius:4px;display:flex;justify-content:space-around;padding:14px 8px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#C9A96A"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">home</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Home</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">explore</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Explore</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">favorite</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Saved</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">person</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Profile</span></div>
+      </div>
+    </div>
+
+    <!-- Icon set -->
+    <div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,169,106,.14);border-radius:4px;padding:40px">
+      <div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:28px">Iconography · thin line</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:24px;color:rgba(244,239,230,.8);font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:28px">
+        <span>home</span><span>explore</span><span>search</span><span>favorite</span><span>person</span><span>calendar_month</span><span>location_on</span><span>music_note</span><span>groups</span><span>share</span><span>notifications</span><span>settings</span><span>add</span><span>edit</span><span>verified</span><span>local_bar</span><span>schedule</span><span>arrow_forward</span>
+      </div>
+    </div>
+
+    <!-- Event card states -->
+    <div style="grid-column:1 / -1;background:rgba(255,255,255,.02);border:1px solid rgba(201,169,106,.14);border-radius:4px;padding:40px">
+      <div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:28px">Event card · states</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <!-- default -->
+        <div style="width:260px;background:#141013;border:1px solid rgba(201,169,106,.16);border-radius:4px;overflow:hidden;box-shadow:0 24px 40px -20px rgba(0,0,0,.7)">
+          <div style="height:150px;position:relative;background:radial-gradient(120% 90% at 30% 20%, rgba(201,169,106,.35), transparent 55%),linear-gradient(160deg,#3A1220,#0E0E10)">
+            <span style="position:absolute;top:12px;left:12px;background:rgba(14,14,16,.7);backdrop-filter:blur(4px);color:#C9A96A;border:1px solid rgba(201,169,106,.4);border-radius:100px;padding:5px 12px;font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Fri · 11PM</span>
+            <span style="position:absolute;top:12px;right:12px;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:22px;color:#F4EFE6">favorite</span>
+          </div>
+          <div style="padding:18px">
+            <div style="font:600 9px 'Helvetica Neue';letter-spacing:.22em;text-transform:uppercase;color:#C9A96A;margin-bottom:8px">Techno · Intimate</div>
+            <div style="font-family:'Playfair Display';font-size:20px;line-height:1.15">Velvet Hours</div>
+            <div style="font:400 12px 'Helvetica Neue';color:rgba(244,239,230,.5);margin-top:6px">Maison Rouge · Lisbon</div>
+          </div>
+        </div>
+        <!-- saved -->
+        <div style="width:260px;background:#141013;border:1px solid rgba(201,169,106,.4);border-radius:4px;overflow:hidden;box-shadow:0 24px 40px -20px rgba(0,0,0,.7)">
+          <div style="height:150px;position:relative;background:radial-gradient(120% 90% at 70% 20%, rgba(18,37,28,.6), transparent 55%),linear-gradient(160deg,#12251C,#0E0E10)">
+            <span style="position:absolute;top:12px;left:12px;background:rgba(14,14,16,.7);color:#C9A96A;border:1px solid rgba(201,169,106,.4);border-radius:100px;padding:5px 12px;font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Sat · 10PM</span>
+            <span style="position:absolute;top:12px;right:12px;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:22px;color:#C9A96A">favorite</span>
+          </div>
+          <div style="padding:18px">
+            <div style="font:600 9px 'Helvetica Neue';letter-spacing:.22em;text-transform:uppercase;color:#C9A96A;margin-bottom:8px">Deep House · Saved</div>
+            <div style="font-family:'Playfair Display';font-size:20px;line-height:1.15">The Emerald Room</div>
+            <div style="font:400 12px 'Helvetica Neue';color:rgba(244,239,230,.5);margin-top:6px">Hôtel Lune · Paris</div>
+          </div>
+        </div>
+        <!-- loading -->
+        <div style="width:260px;background:#141013;border:1px solid rgba(201,169,106,.16);border-radius:4px;overflow:hidden">
+          <div style="height:150px;background:linear-gradient(90deg,rgba(255,255,255,.03),rgba(201,169,106,.1),rgba(255,255,255,.03));background-size:200% 100%;animation:ncShimmer 1.6s infinite"></div>
+          <div style="padding:18px">
+            <div style="height:10px;width:60%;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,.03),rgba(201,169,106,.1),rgba(255,255,255,.03));background-size:200% 100%;animation:ncShimmer 1.6s infinite"></div>
+            <div style="height:16px;width:85%;margin-top:12px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,.03),rgba(201,169,106,.1),rgba(255,255,255,.03));background-size:200% 100%;animation:ncShimmer 1.6s infinite"></div>
+            <div style="height:10px;width:50%;margin-top:12px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,.03),rgba(201,169,106,.1),rgba(255,255,255,.03));background-size:200% 100%;animation:ncShimmer 1.6s infinite"></div>
+          </div>
+        </div>
+        <!-- sold out / closed -->
+        <div style="width:260px;background:#141013;border:1px solid rgba(255,255,255,.06);border-radius:4px;overflow:hidden;opacity:.7">
+          <div style="height:150px;position:relative;background:linear-gradient(160deg,#1A1210,#0E0E10);filter:grayscale(.4)">
+            <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 11px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:rgba(244,239,230,.6)">At Capacity</span>
+          </div>
+          <div style="padding:18px">
+            <div style="font:600 9px 'Helvetica Neue';letter-spacing:.22em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:8px">Jazz · Closed</div>
+            <div style="font-family:'Playfair Display';font-size:20px;line-height:1.15;color:rgba(244,239,230,.6)">Blue Serpent</div>
+            <div style="font:400 12px 'Helvetica Neue';color:rgba(244,239,230,.35);margin-top:6px">Old Town · Milan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- States: loading / empty / error + bottom sheet -->
+    <div style="background:rgba(255,255,255,.02);border:1px solid rgba(201,169,106,.14);border-radius:4px;padding:40px">
+      <div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:28px">Feedback states</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px;text-align:center;padding:28px 16px;border:1px dashed rgba(201,169,106,.2);border-radius:4px">
+          <div style="width:34px;height:34px;border:1.5px solid rgba(201,169,106,.3);border-top-color:#C9A96A;border-radius:50%;margin:0 auto 16px;animation:ncSpin 1s linear infinite"></div>
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:rgba(244,239,230,.5)">Loading</div>
+        </div>
+        <div style="flex:1;min-width:150px;text-align:center;padding:28px 16px;border:1px dashed rgba(201,169,106,.2);border-radius:4px">
+          <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:34px;color:rgba(201,169,106,.5)">nightlife</span>
+          <div style="font-family:'Playfair Display';font-size:15px;margin-top:12px">Nothing yet</div>
+          <div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:4px">The night is young.</div>
+        </div>
+        <div style="flex:1;min-width:150px;text-align:center;padding:28px 16px;border:1px dashed rgba(201,122,122,.3);border-radius:4px">
+          <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:34px;color:#C97a7a">wifi_off</span>
+          <div style="font-family:'Playfair Display';font-size:15px;margin-top:12px">Lost the room</div>
+          <div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:4px">Tap to try again.</div>
+        </div>
+      </div>
+      <div style="font:600 11px/1 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.45);margin:32px 0 16px">Bottom sheet</div>
+      <div style="background:#17121A;border:1px solid rgba(201,169,106,.2);border-radius:16px 16px 4px 4px;padding:22px">
+        <div style="width:40px;height:4px;border-radius:100px;background:rgba(244,239,230,.25);margin:0 auto 20px"></div>
+        <div style="font-family:'Playfair Display';font-size:20px">Confirm your place</div>
+        <div style="font:400 13px 'Helvetica Neue';color:rgba(244,239,230,.55);margin-top:8px;line-height:1.6">Entry is complimentary — settle at the door. Doors close at midnight.</div>
+        <button style="width:100%;margin-top:20px;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:15px;font:600 12px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Confirm RSVP</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<section style="background:#0B0B0D;background-image:radial-gradient(1100px 700px at 90% 0%, rgba(58,18,32,.5), transparent 60%),radial-gradient(900px 600px at 0% 60%, rgba(18,37,28,.4), transparent 55%);color:#F4EFE6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;padding:120px 72px 140px;position:relative">
+  <div style="display:flex;align-items:baseline;gap:28px;margin-bottom:64px;max-width:1180px">
+    <span style="font:600 12px/1 'Helvetica Neue';letter-spacing:.32em;text-transform:uppercase;color:#C9A96A">02 — Entry</span>
+    <h2 style="font-family:'Playfair Display';font-weight:500;font-size:48px;margin:0;letter-spacing:-.5px">Auth &amp; Onboarding</h2>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(201,169,106,.5),transparent)"></div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:56px 48px">
+
+    <!-- SPLASH -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Splash · logo reveal</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 42%, rgba(201,169,106,.14), transparent 60%),#0B0B0D"></div>
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:ncFade 1.2s ease both">
+          <svg width="150" height="150" viewBox="0 0 150 150" fill="none" style="margin-bottom:34px">
+            <circle cx="75" cy="75" r="72" stroke="#C9A96A" stroke-width="1"></circle>
+            <circle cx="75" cy="75" r="58" stroke="#C9A96A" stroke-opacity=".35" stroke-width="1"></circle>
+            <g stroke="#C9A96A" stroke-width="1" stroke-opacity=".55"><path d="M75 24 L75 46"></path><path d="M75 104 L75 126"></path><path d="M24 75 L46 75"></path><path d="M104 75 L126 75"></path><path d="M39 39 L54 54"></path><path d="M96 96 L111 111"></path><path d="M111 39 L96 54"></path><path d="M54 96 L39 111"></path></g>
+            <text x="75" y="92" text-anchor="middle" font-family="Playfair Display" font-size="58" fill="#C9A96A">N</text>
+          </svg>
+          <div style="font:600 13px 'Helvetica Neue';letter-spacing:.5em;text-transform:uppercase;color:#F4EFE6;padding-left:.5em">Nocturne</div>
+          <div style="font:400 11px 'Playfair Display';font-style:italic;letter-spacing:.1em;color:rgba(201,169,106,.7);margin-top:14px">the night, curated</div>
+        </div>
+        <div style="position:absolute;bottom:64px;left:0;right:0;text-align:center;font:600 9px 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.3)">Members Only</div>
+        <div style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:130px;height:5px;border-radius:100px;background:rgba(244,239,230,.3)"></div>
+      </div>
+    </div>
+
+    <!-- WELCOME -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Welcome · role selection</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(58,18,32,.55),transparent 40%),radial-gradient(100% 60% at 50% 100%, rgba(201,169,106,.1), transparent 60%),#0B0B0D"></div>
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px"></div>
+        <div style="position:relative;padding:96px 32px 40px;height:100%;display:flex;flex-direction:column">
+          <div style="width:40px;height:40px;border-radius:50%;border:1px solid #C9A96A;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-size:20px;color:#C9A96A;margin-bottom:40px">N</div>
+          <h1 style="font-family:'Playfair Display';font-weight:400;font-size:42px;line-height:1.05;margin:0 0 16px">The city keeps<br>its best rooms<br><em style="color:#C9A96A">quiet.</em></h1>
+          <p style="font:400 14px/1.7 'Helvetica Neue';color:rgba(244,239,230,.55);margin:0 0 40px;max-width:280px">Find them. An invitation-led guide to after-hours culture. Choose how you'll enter.</p>
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:16px">I am a…</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:16px;border:1px solid #C9A96A;background:rgba(201,169,106,.08);border-radius:4px;padding:18px 20px">
+              <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px;color:#C9A96A">local_bar</span>
+              <div style="flex:1"><div style="font-family:'Playfair Display';font-size:17px">Guest</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.5)">Discover &amp; reserve the night</div></div>
+              <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:#C9A96A">arrow_forward</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;border:1px solid rgba(244,239,230,.15);border-radius:4px;padding:18px 20px">
+              <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px;color:rgba(244,239,230,.7)">campaign</span>
+              <div style="flex:1"><div style="font-family:'Playfair Display';font-size:17px">Promoter</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.5)">Fill rooms, earn your standing</div></div>
+              <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:rgba(244,239,230,.4)">arrow_forward</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;border:1px solid rgba(244,239,230,.15);border-radius:4px;padding:18px 20px">
+              <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px;color:rgba(244,239,230,.7)">domain</span>
+              <div style="flex:1"><div style="font-family:'Playfair Display';font-size:17px">Club / Venue</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.5)">Host &amp; manage your house</div></div>
+              <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:rgba(244,239,230,.4)">arrow_forward</span>
+            </div>
+          </div>
+          <div style="margin-top:auto;text-align:center;font:400 11px/1.7 'Helvetica Neue';color:rgba(244,239,230,.4)">By entering you accept our<br><span style="color:#C9A96A;text-decoration:underline;text-underline-offset:3px">Privacy Policy</span> &amp; <span style="color:#C9A96A;text-decoration:underline;text-underline-offset:3px">Terms of Service</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGIN -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Login</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;inset:0;background:radial-gradient(90% 50% at 50% 0%, rgba(58,18,32,.5), transparent 55%),#0B0B0D"></div>
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px"></div>
+        <div style="position:relative;padding:110px 32px 40px;height:100%;display:flex;flex-direction:column">
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Welcome back</div>
+          <h1 style="font-family:'Playfair Display';font-weight:400;font-size:38px;line-height:1.05;margin:0 0 48px">Step inside.</h1>
+          <div style="margin-bottom:34px">
+            <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:12px">Email</div>
+            <div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:11px;color:rgba(244,239,230,.9);font-size:16px">amelia.vance@gmail.com</div>
+          </div>
+          <div style="margin-bottom:20px">
+            <div style="display:flex;justify-content:space-between;font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:12px"><span>Password</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #C9A96A;padding-bottom:11px;color:#F4EFE6;font-size:16px"><span>••••••••••</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:rgba(244,239,230,.5)">visibility_off</span></div>
+          </div>
+          <div style="text-align:right;font:400 12px 'Helvetica Neue';color:rgba(201,169,106,.8);text-decoration:underline;text-underline-offset:3px;margin-bottom:44px">Forgotten password?</div>
+          <button style="width:100%;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:17px;font:600 12px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase">Enter</button>
+          <div style="margin-top:auto;text-align:center;font:400 13px 'Helvetica Neue';color:rgba(244,239,230,.5)">New here? <span style="color:#C9A96A;text-decoration:underline;text-underline-offset:3px">Request an invitation</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIGNUP ATTENDEE -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Sign up · Guest · 18+ gate</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;inset:0;background:#0B0B0D"></div>
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:3"></div>
+        <div style="position:relative;height:100%;overflow:hidden">
+          <div style="padding:70px 32px 22px;background:linear-gradient(180deg,#0B0B0D,rgba(11,11,13,.6));position:relative;z-index:2">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:22px;color:#C9A96A">arrow_back</span><div style="flex:1;height:1px;background:rgba(201,169,106,.2)"></div><span style="font:600 9px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.4)">Guest · 1 of 1</span></div>
+            <h1 style="font-family:'Playfair Display';font-weight:400;font-size:32px;line-height:1.05;margin:0">Create your<br>membership.</h1>
+          </div>
+          <div style="padding:8px 32px 40px;display:flex;flex-direction:column;gap:24px">
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Full name</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">Amelia Vance</div></div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Email</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">amelia.vance@gmail.com</div></div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Phone</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">+351 912 044 118</div></div>
+            <div style="display:flex;gap:20px">
+              <div style="flex:1"><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Date of birth</div><div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px"><span>14 · 03 · 1994</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">calendar_month</span></div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;background:rgba(201,169,106,.08);border:1px solid rgba(201,169,106,.25);border-radius:3px;padding:9px 12px;margin-top:-8px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px;color:#C9A96A">verified</span><span style="font:500 11px 'Helvetica Neue';color:rgba(244,239,230,.7)">Age confirmed — you must be 18 or over.</span></div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Gender</div><div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px"><span>Female</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:#C9A96A">expand_more</span></div></div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Password</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">••••••••</div></div>
+            <button style="width:100%;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:16px;font:600 12px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;margin-top:8px">Create account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIGNUP PROMOTER -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Sign up · Promoter · referral</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;inset:0;background:#0B0B0D"></div>
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:3"></div>
+        <div style="position:relative;height:100%">
+          <div style="padding:70px 32px 22px">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:22px;color:#C9A96A">arrow_back</span><div style="flex:1;height:1px;background:rgba(201,169,106,.2)"></div><span style="font:600 9px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.4)">Promoter</span></div>
+            <h1 style="font-family:'Playfair Display';font-weight:400;font-size:32px;line-height:1.05;margin:0">Build your<br>following.</h1>
+          </div>
+          <div style="padding:8px 32px 40px;display:flex;flex-direction:column;gap:24px">
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Full name</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">Marco Devlin</div></div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Email</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">marco@devlinpresents.com</div></div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Phone</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">+44 7700 900 812</div></div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Date of birth</div><div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px"><span>02 · 09 · 1991</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">calendar_month</span></div></div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Password</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">••••••••</div></div>
+            <div style="background:linear-gradient(135deg,rgba(201,169,106,.14),rgba(58,18,32,.3));border:1px solid rgba(201,169,106,.35);border-radius:6px;padding:20px;text-align:center;margin-top:6px">
+              <div style="font:600 9px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:rgba(244,239,230,.55);margin-bottom:12px">Your referral code awaits</div>
+              <div style="font-family:'Playfair Display';font-size:30px;letter-spacing:.14em;color:#C9A96A">MARCO·NOX</div>
+              <div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.5);margin-top:10px">Issued the moment you join. Every RSVP it brings is yours.</div>
+            </div>
+            <button style="width:100%;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:16px;font:600 12px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase">Claim my code</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIGNUP CLUB - business -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Sign up · Venue · business</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;inset:0;background:#0B0B0D"></div>
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:3"></div>
+        <div style="position:relative;height:100%">
+          <div style="padding:70px 32px 18px">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:22px;color:#C9A96A">arrow_back</span><div style="flex:1;height:1px;background:rgba(201,169,106,.2)"></div><span style="font:600 9px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.4)">Venue · 1 of 3</span></div>
+            <div style="display:flex;gap:6px;margin-bottom:18px"><div style="flex:1;height:2px;background:#C9A96A"></div><div style="flex:1;height:2px;background:rgba(244,239,230,.15)"></div><div style="flex:1;height:2px;background:rgba(244,239,230,.15)"></div></div>
+            <h1 style="font-family:'Playfair Display';font-weight:400;font-size:28px;line-height:1.05;margin:0">Register your house.</h1>
+          </div>
+          <div style="padding:6px 32px 40px;display:flex;flex-direction:column;gap:22px">
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Business name</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">Maison Rouge</div></div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Address</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">Rua da Rosa 214</div></div>
+            <div style="display:flex;gap:20px">
+              <div style="flex:1"><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">City</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">Lisbon</div></div>
+              <div style="flex:1"><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">GST / Reg.</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">PT-509 882 114</div></div>
+            </div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Business phone</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">+351 213 460 021</div></div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Instagram</div><div style="display:flex;align-items:center;gap:4px;border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px"><span style="color:rgba(244,239,230,.4)">@</span>maisonrouge.lx</div></div>
+            <button style="width:100%;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:16px;font:600 12px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px">Continue<span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px">arrow_forward</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VERIFICATION -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Venue · verification upload</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;inset:0;background:#0B0B0D"></div>
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:3"></div>
+        <div style="position:relative;height:100%">
+          <div style="padding:70px 32px 18px">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:22px;color:#C9A96A">arrow_back</span><div style="flex:1;height:1px;background:rgba(201,169,106,.2)"></div><span style="font:600 9px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.4)">Venue · 2 of 3</span></div>
+            <div style="display:flex;gap:6px;margin-bottom:18px"><div style="flex:1;height:2px;background:#C9A96A"></div><div style="flex:1;height:2px;background:#C9A96A"></div><div style="flex:1;height:2px;background:rgba(244,239,230,.15)"></div></div>
+            <h1 style="font-family:'Playfair Display';font-weight:400;font-size:28px;line-height:1.05;margin:0 0 10px">Verification details.</h1>
+            <p style="font:400 13px/1.6 'Helvetica Neue';color:rgba(244,239,230,.5);margin:0">A single document confirms your house is real. Reviewed by hand, never shared.</p>
+          </div>
+          <div style="padding:14px 32px 40px;display:flex;flex-direction:column;gap:22px">
+            <div>
+              <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:12px">Business licence or ID</div>
+              <div style="border:1px dashed rgba(201,169,106,.4);border-radius:6px;padding:34px 20px;text-align:center;background:rgba(201,169,106,.04)">
+                <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:38px;color:#C9A96A">upload_file</span>
+                <div style="font-family:'Playfair Display';font-size:16px;margin-top:12px">Upload document</div>
+                <div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:4px">PDF, JPG or PNG · up to 10MB</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;background:rgba(18,37,28,.4);border:1px solid rgba(201,169,106,.2);border-radius:6px;padding:14px 16px">
+              <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:24px;color:#C9A96A">description</span>
+              <div style="flex:1"><div style="font:500 13px 'Helvetica Neue'">maison-rouge-licence.pdf</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.4)">Uploaded · 1.8MB</div></div>
+              <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:rgba(244,239,230,.4)">close</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:8px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px;color:rgba(244,239,230,.4);margin-top:1px">lock</span><span style="font:400 11px/1.6 'Helvetica Neue';color:rgba(244,239,230,.4)">Documents are encrypted and used solely to verify ownership. They are deleted after review.</span></div>
+            <button style="width:100%;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:16px;font:600 12px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;margin-top:6px">Submit for review</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WAITING FOR APPROVAL -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Venue · awaiting approval</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;inset:0;background:radial-gradient(100% 60% at 50% 35%, rgba(58,18,32,.5), transparent 60%),#0B0B0D"></div>
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:3"></div>
+        <div style="position:relative;padding:0 40px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+          <div style="width:110px;height:110px;border-radius:50%;border:1px solid rgba(201,169,106,.35);display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:40px">
+            <div style="position:absolute;inset:0;border-radius:50%;border-top:1px solid #C9A96A;animation:ncSpin 3s linear infinite"></div>
+            <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:44px;color:#C9A96A">hourglass_top</span>
+          </div>
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:#C9A96A;margin-bottom:18px">Under review</div>
+          <h1 style="font-family:'Playfair Display';font-weight:400;font-size:34px;line-height:1.1;margin:0 0 18px">We're reviewing<br>your house.</h1>
+          <p style="font:400 14px/1.7 'Helvetica Neue';color:rgba(244,239,230,.55);margin:0 0 40px;max-width:280px">Our team is confirming your details. This usually takes under 24 hours — we'll notify you the moment Maison Rouge is approved.</p>
+          <div style="width:100%;max-width:280px;border:1px solid rgba(201,169,106,.2);border-radius:6px;padding:16px 18px;display:flex;align-items:center;gap:14px;text-align:left">
+            <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:22px;color:#C9A96A">mail</span>
+            <div style="font:400 12px 'Helvetica Neue';color:rgba(244,239,230,.6)">A confirmation will arrive at<br><span style="color:#F4EFE6">hello@maisonrouge.lx</span></div>
+          </div>
+          <div style="position:absolute;bottom:56px;font:400 12px 'Helvetica Neue';color:rgba(244,239,230,.4)">Questions? <span style="color:#C9A96A;text-decoration:underline;text-underline-offset:3px">Contact concierge</span></div>
+          <div style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:130px;height:5px;border-radius:100px;background:rgba(244,239,230,.3)"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<section style="background:#0B0B0D;background-image:radial-gradient(1100px 700px at 10% 0%, rgba(18,37,28,.45), transparent 60%),radial-gradient(900px 600px at 100% 50%, rgba(58,18,32,.4), transparent 55%);color:#F4EFE6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;padding:120px 72px 140px;position:relative">
+  <div style="display:flex;align-items:baseline;gap:28px;margin-bottom:16px;max-width:1180px">
+    <span style="font:600 12px/1 'Helvetica Neue';letter-spacing:.32em;text-transform:uppercase;color:#C9A96A">03 — The Guest</span>
+    <h2 style="font-family:'Playfair Display';font-weight:500;font-size:48px;margin:0;letter-spacing:-.5px">Attendee</h2>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(201,169,106,.5),transparent)"></div>
+  </div>
+  <p style="font:400 15px/1.7 'Helvetica Neue';color:rgba(244,239,230,.5);max-width:520px;margin:0 0 64px">The primary member. Cinematic discovery, effortless reservation. Entry is complimentary throughout — settle at the door, never in the app.</p>
+
+  <div style="display:flex;flex-wrap:wrap;gap:56px 48px">
+
+    <!-- HOME -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Home · discovery feed</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;overflow:hidden;display:flex;flex-direction:column">
+          <!-- header -->
+          <div style="padding:64px 24px 14px;display:flex;justify-content:space-between;align-items:flex-end;background:#0B0B0D;z-index:4">
+            <div><div style="font:600 9px 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.4)">Tonight in</div><div style="display:flex;align-items:center;gap:6px;margin-top:4px"><span style="font-family:'Playfair Display';font-size:24px">Lisbon</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:#C9A96A">expand_more</span></div></div>
+            <div style="display:flex;gap:18px;color:rgba(244,239,230,.7);font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px"><span>search</span><span style="position:relative">notifications<span style="position:absolute;top:0;right:0;width:6px;height:6px;border-radius:50%;background:#C9A96A"></span></span></div>
+          </div>
+          <div style="flex:1;overflow:hidden;padding:0 0 90px">
+            <!-- HERO -->
+            <div style="margin:6px 20px 0;border-radius:8px;overflow:hidden;position:relative;height:400px;background:radial-gradient(130% 90% at 25% 15%, rgba(201,169,106,.4), transparent 55%),linear-gradient(160deg,#3A1220 5%,#0E0E10 75%)">
+              <svg width="100%" height="100%" viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;opacity:.35"><g stroke="#C9A96A" stroke-width=".6" fill="none"><path d="M150 -40 L60 200 L240 200 Z"></path><path d="M150 20 L100 200 L200 200 Z"></path><circle cx="150" cy="200" r="90"></circle><circle cx="150" cy="200" r="130"></circle></g></svg>
+              <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(11,11,13,.9))"></div>
+              <div style="position:absolute;top:16px;left:16px;background:rgba(14,14,16,.6);backdrop-filter:blur(6px);border:1px solid rgba(201,169,106,.5);color:#C9A96A;border-radius:100px;padding:6px 14px;font:600 9px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase">✦ Editor's pick</div>
+              <span style="position:absolute;top:16px;right:16px;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px;color:#F4EFE6">favorite</span>
+              <div style="position:absolute;bottom:0;left:0;right:0;padding:24px">
+                <div style="font:600 9px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:10px">Fri · Doors 11PM · Techno</div>
+                <div style="font-family:'Playfair Display';font-size:34px;line-height:1.02;margin-bottom:8px">Midnight at<br>Maison Rouge</div>
+                <div style="display:flex;align-items:center;gap:6px;font:400 12px 'Helvetica Neue';color:rgba(244,239,230,.6)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:15px">location_on</span>Bairro Alto · Lisbon</div>
+              </div>
+            </div>
+            <!-- rail label -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:28px 24px 14px"><span style="font:600 11px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:#F4EFE6">This Weekend</span><span style="font:600 10px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:#C9A96A">See all</span></div>
+            <div style="display:flex;gap:16px;padding:0 24px;overflow:hidden">
+              <div style="flex:0 0 200px">
+                <div style="height:150px;border-radius:6px;position:relative;overflow:hidden;background:radial-gradient(120% 90% at 70% 20%, rgba(18,37,28,.7), transparent 55%),linear-gradient(160deg,#12251C,#0E0E10)"><span style="position:absolute;top:10px;left:10px;background:rgba(14,14,16,.7);color:#C9A96A;border:1px solid rgba(201,169,106,.4);border-radius:100px;padding:4px 10px;font:600 8px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Sat · 10PM</span></div>
+                <div style="font:600 8px 'Helvetica Neue';letter-spacing:.22em;text-transform:uppercase;color:#C9A96A;margin:12px 0 6px">Deep House</div>
+                <div style="font-family:'Playfair Display';font-size:17px">The Emerald Room</div>
+                <div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:3px">Hôtel Lune · Chiado</div>
+              </div>
+              <div style="flex:0 0 200px">
+                <div style="height:150px;border-radius:6px;position:relative;overflow:hidden;background:radial-gradient(120% 90% at 30% 20%, rgba(201,169,106,.3), transparent 55%),linear-gradient(160deg,#3A1220,#0E0E10)"><span style="position:absolute;top:10px;left:10px;background:rgba(14,14,16,.7);color:#C9A96A;border:1px solid rgba(201,169,106,.4);border-radius:100px;padding:4px 10px;font:600 8px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Sat · 11PM</span></div>
+                <div style="font:600 8px 'Helvetica Neue';letter-spacing:.22em;text-transform:uppercase;color:#C9A96A;margin:12px 0 6px">Jazz · Live</div>
+                <div style="font-family:'Playfair Display';font-size:17px">Blue Serpent</div>
+                <div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:3px">Cais do Sodré</div>
+              </div>
+            </div>
+          </div>
+          <!-- tab bar -->
+          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,transparent,#0B0B0D 30%);padding:14px 8px 26px;display:flex;justify-content:space-around;z-index:5;border-top:1px solid rgba(201,169,106,.12)">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#C9A96A"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:24px">home</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Home</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">explore</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Explore</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">favorite</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Saved</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">person</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Profile</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPLORE -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Explore · filters</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;display:flex;flex-direction:column">
+          <div style="padding:64px 24px 8px">
+            <h1 style="font-family:'Playfair Display';font-weight:400;font-size:30px;margin:0 0 16px">Explore</h1>
+            <div style="display:flex;align-items:center;gap:10px;border:1px solid rgba(244,239,230,.15);border-radius:100px;padding:11px 16px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px">search</span><span style="font:400 13px 'Helvetica Neue'">Search venues, sounds, cities</span></div>
+          </div>
+          <div style="flex:1;overflow:hidden;padding-bottom:90px">
+            <!-- quick tonight -->
+            <div style="margin:18px 24px 0;background:linear-gradient(120deg,rgba(201,169,106,.16),rgba(58,18,32,.35));border:1px solid rgba(201,169,106,.4);border-radius:8px;padding:18px 20px;display:flex;align-items:center;gap:16px">
+              <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:28px;color:#C9A96A">bedtime</span>
+              <div style="flex:1"><div style="font-family:'Playfair Display';font-size:19px">Tonight</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.55)">14 rooms opening after dark</div></div>
+              <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:#C9A96A">arrow_forward</span>
+            </div>
+            <!-- filter groups -->
+            <div style="padding:26px 24px 0">
+              <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:12px">City</div>
+              <div style="display:flex;flex-wrap:wrap;gap:9px">
+                <span style="background:#C9A96A;color:#0E0E10;border-radius:100px;padding:8px 15px;font:600 10px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Lisbon</span>
+                <span style="border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.7);border-radius:100px;padding:8px 15px;font:600 10px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Porto</span>
+                <span style="border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.7);border-radius:100px;padding:8px 15px;font:600 10px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Madrid</span>
+                <span style="border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.7);border-radius:100px;padding:8px 15px;font:600 10px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Paris</span>
+              </div>
+            </div>
+            <div style="padding:22px 24px 0">
+              <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:12px">Music</div>
+              <div style="display:flex;flex-wrap:wrap;gap:9px">
+                <span style="background:#C9A96A;color:#0E0E10;border-radius:100px;padding:8px 15px;font:600 10px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Techno</span>
+                <span style="border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.7);border-radius:100px;padding:8px 15px;font:600 10px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Deep House</span>
+                <span style="border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.7);border-radius:100px;padding:8px 15px;font:600 10px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Jazz</span>
+                <span style="border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.7);border-radius:100px;padding:8px 15px;font:600 10px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Disco</span>
+              </div>
+            </div>
+            <div style="padding:22px 24px 0">
+              <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:12px">Crowd</div>
+              <div style="display:flex;flex-wrap:wrap;gap:9px">
+                <span style="border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.7);border-radius:100px;padding:8px 15px;font:600 10px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Intimate</span>
+                <span style="background:#C9A96A;color:#0E0E10;border-radius:100px;padding:8px 15px;font:600 10px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Black Tie</span>
+                <span style="border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.7);border-radius:100px;padding:8px 15px;font:600 10px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Rooftop</span>
+              </div>
+            </div>
+            <div style="padding:22px 24px 0">
+              <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:12px">Date</div>
+              <div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(244,239,230,.2);padding-bottom:10px;font-size:14px"><span>This weekend</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">calendar_month</span></div>
+            </div>
+          </div>
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:14px 24px 26px;background:linear-gradient(180deg,transparent,#0B0B0D 40%)"><button style="width:100%;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:16px;font:600 12px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase">Show 14 nights</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Search · results</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;display:flex;flex-direction:column">
+          <div style="padding:60px 24px 14px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px;color:rgba(244,239,230,.6)">arrow_back</span>
+              <div style="flex:1;display:flex;align-items:center;gap:10px;border-bottom:1px solid #C9A96A;padding-bottom:9px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:#C9A96A">search</span><span style="font-size:15px">techno</span><span style="border-left:1px solid #C9A96A;height:16px;animation:ncBreathe 1.2s infinite"></span></div>
+            </div>
+          </div>
+          <div style="flex:1;overflow:hidden;padding:8px 24px">
+            <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:16px">4 nights found</div>
+            <div style="display:flex;flex-direction:column;gap:18px">
+              <div style="display:flex;gap:14px"><div style="width:76px;height:76px;flex:0 0 76px;border-radius:5px;background:radial-gradient(120% 90% at 30% 20%, rgba(201,169,106,.35), transparent 55%),linear-gradient(160deg,#3A1220,#0E0E10)"></div><div style="flex:1"><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:#C9A96A;margin-bottom:5px">Fri · Techno</div><div style="font-family:'Playfair Display';font-size:18px;line-height:1.1">Midnight at Maison Rouge</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:4px">Bairro Alto · Lisbon</div></div></div>
+              <div style="height:1px;background:rgba(201,169,106,.1)"></div>
+              <div style="display:flex;gap:14px"><div style="width:76px;height:76px;flex:0 0 76px;border-radius:5px;background:radial-gradient(120% 90% at 70% 20%, rgba(18,37,28,.7), transparent 55%),linear-gradient(160deg,#12251C,#0E0E10)"></div><div style="flex:1"><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:#C9A96A;margin-bottom:5px">Sat · Techno</div><div style="font-family:'Playfair Display';font-size:18px;line-height:1.1">Concrete Hours</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:4px">Marvila · Lisbon</div></div></div>
+              <div style="height:1px;background:rgba(201,169,106,.1)"></div>
+              <div style="display:flex;gap:14px"><div style="width:76px;height:76px;flex:0 0 76px;border-radius:5px;background:radial-gradient(120% 90% at 40% 30%, rgba(201,169,106,.28), transparent 55%),linear-gradient(160deg,#1A1210,#0E0E10)"></div><div style="flex:1"><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:#C9A96A;margin-bottom:5px">Sat · Techno</div><div style="font-family:'Playfair Display';font-size:18px;line-height:1.1">The Cellar Sessions</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:4px">Alcântara · Lisbon</div></div></div>
+            </div>
+            <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin:28px 0 14px">Recent searches</div>
+            <div style="display:flex;flex-wrap:wrap;gap:9px"><span style="border:1px solid rgba(244,239,230,.16);color:rgba(244,239,230,.6);border-radius:100px;padding:7px 14px;font:400 12px 'Helvetica Neue'">rooftop</span><span style="border:1px solid rgba(244,239,230,.16);color:rgba(244,239,230,.6);border-radius:100px;padding:7px 14px;font:400 12px 'Helvetica Neue'">jazz lisbon</span><span style="border:1px solid rgba(244,239,230,.16);color:rgba(244,239,230,.6);border-radius:100px;padding:7px 14px;font:400 12px 'Helvetica Neue'">black tie</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVENT DETAILS -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Event Details</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;overflow:hidden;position:relative">
+          <!-- poster -->
+          <div style="height:440px;position:relative;background:radial-gradient(130% 80% at 30% 10%, rgba(201,169,106,.42), transparent 55%),linear-gradient(160deg,#3A1220 5%,#0E0E10 80%)">
+            <svg width="100%" height="100%" viewBox="0 0 300 440" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;opacity:.32"><g stroke="#C9A96A" stroke-width=".6" fill="none"><path d="M150 -60 L40 240 L260 240 Z"></path><path d="M150 10 L90 240 L210 240 Z"></path><circle cx="150" cy="230" r="100"></circle><circle cx="150" cy="230" r="150"></circle><path d="M20 300 H280 M20 320 H280"></path></g></svg>
+            <div style="position:absolute;top:56px;left:20px;right:20px;display:flex;justify-content:space-between"><span style="width:38px;height:38px;border-radius:50%;background:rgba(14,14,16,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:#F4EFE6">arrow_back</span><div style="display:flex;gap:10px"><span style="width:38px;height:38px;border-radius:50%;background:rgba(14,14,16,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:#F4EFE6">favorite</span><span style="width:38px;height:38px;border-radius:50%;background:rgba(14,14,16,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:#F4EFE6">share</span></div></div>
+            <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,#0E0E10)"></div>
+            <div style="position:absolute;bottom:22px;left:24px;right:24px"><div style="font:600 9px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:10px">Techno · Intimate</div><div style="font-family:'Playfair Display';font-size:36px;line-height:1;">Midnight at<br>Maison Rouge</div></div>
+          </div>
+          <div style="padding:0 24px 130px;margin-top:-6px">
+            <!-- meta grid -->
+            <div style="display:flex;gap:0;border-top:1px solid rgba(201,169,106,.15);border-bottom:1px solid rgba(201,169,106,.15);margin-top:18px">
+              <div style="flex:1;padding:16px 4px;border-right:1px solid rgba(201,169,106,.12)"><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:6px">Date</div><div style="font:500 13px 'Helvetica Neue'">Fri, 12 Jul</div></div>
+              <div style="flex:1;padding:16px 4px;border-right:1px solid rgba(201,169,106,.12)"><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:6px">Doors</div><div style="font:500 13px 'Helvetica Neue'">11:00 PM</div></div>
+              <div style="flex:1;padding:16px 4px"><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:6px">Crowd</div><div style="font:500 13px 'Helvetica Neue'">Intimate</div></div>
+            </div>
+            <!-- venue -->
+            <div style="display:flex;align-items:center;gap:14px;padding:20px 0;border-bottom:1px solid rgba(201,169,106,.12)">
+              <div style="width:44px;height:44px;border-radius:50%;border:1px solid rgba(201,169,106,.4);display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:22px;color:#C9A96A">domain</div>
+              <div style="flex:1"><div style="font-family:'Playfair Display';font-size:17px">Maison Rouge</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.45)">Rua da Rosa 214, Bairro Alto</div></div>
+              <span style="font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:#C9A96A">View</span>
+            </div>
+            <!-- description -->
+            <div style="padding:22px 0;border-bottom:1px solid rgba(201,169,106,.12)">
+              <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:12px">The Night</div>
+              <p style="font:400 14px/1.75 'Helvetica Neue';color:rgba(244,239,230,.72);margin:0">A single room, low light, and a sound system built for those who stay late. Resident selectors trace the line from Detroit to Berlin until the last guest leaves. Dress with intention.</p>
+            </div>
+            <!-- lineup -->
+            <div style="padding:22px 0;border-bottom:1px solid rgba(201,169,106,.12)">
+              <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:16px">Lineup</div>
+              <div style="display:flex;gap:22px">
+                <div style="text-align:center"><div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#3A1220,#0E0E10);border:1px solid rgba(201,169,106,.3);margin:0 auto 8px"></div><div style="font:500 12px 'Helvetica Neue'">SÉVERINE</div></div>
+                <div style="text-align:center"><div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#12251C,#0E0E10);border:1px solid rgba(201,169,106,.3);margin:0 auto 8px"></div><div style="font:500 12px 'Helvetica Neue'">KALDER</div></div>
+                <div style="text-align:center"><div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#1A1210,#0E0E10);border:1px solid rgba(201,169,106,.3);margin:0 auto 8px"></div><div style="font:500 12px 'Helvetica Neue'">NOA V.</div></div>
+              </div>
+            </div>
+            <!-- entry rules -->
+            <div style="padding:22px 0;border-bottom:1px solid rgba(201,169,106,.12)">
+              <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:14px">House Rules</div>
+              <div style="display:flex;flex-direction:column;gap:11px;font:400 13px 'Helvetica Neue';color:rgba(244,239,230,.7)"><div style="display:flex;gap:10px;align-items:center"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">event_available</span>18+ · valid ID at the door</div><div style="display:flex;gap:10px;align-items:center"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">styler</span>Smart dress · no sportswear</div><div style="display:flex;gap:10px;align-items:center"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">no_photography</span>Phones down on the floor</div></div>
+            </div>
+            <!-- map -->
+            <div style="padding:22px 0">
+              <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:14px">Location</div>
+              <div style="height:140px;border-radius:6px;position:relative;overflow:hidden;background:#0F1512;border:1px solid rgba(201,169,106,.2)">
+                <svg width="100%" height="100%" viewBox="0 0 300 140" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0"><g stroke="rgba(201,169,106,.18)" stroke-width="1"><path d="M0 40 H300 M0 90 H300 M60 0 V140 M140 0 V140 M220 0 V140"></path></g><path d="M20 120 L90 60 L160 80 L260 30" stroke="#C9A96A" stroke-width="1.5" fill="none" stroke-opacity=".5"></path></svg>
+                <div style="position:absolute;top:50%;left:52%;transform:translate(-50%,-100%);color:#C9A96A;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:32px">location_on</div>
+              </div>
+              <button style="width:100%;margin-top:14px;background:transparent;color:#C9A96A;border:1px solid #C9A96A;border-radius:2px;padding:14px;font:600 11px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px">directions</span>Get directions</button>
+            </div>
+          </div>
+          <!-- sticky RSVP -->
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:16px 24px 26px;background:linear-gradient(180deg,transparent,#0B0B0D 35%);display:flex;align-items:center;gap:16px">
+            <div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:#C9A96A">Entry</div><div style="font-family:'Playfair Display';font-size:19px">Complimentary</div></div>
+            <button style="flex:1;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:17px;font:600 12px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase">Reserve a place</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RSVP SHEET -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">RSVP · bottom sheet</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <!-- dimmed detail behind -->
+        <div style="position:absolute;inset:0;background:radial-gradient(130% 60% at 30% 10%, rgba(201,169,106,.2), transparent 55%),linear-gradient(160deg,#3A1220,#0E0E10);filter:blur(1px)"></div>
+        <div style="position:absolute;inset:0;background:rgba(11,11,13,.7)"></div>
+        <!-- sheet -->
+        <div style="position:absolute;bottom:0;left:0;right:0;background:#17121A;border:1px solid rgba(201,169,106,.25);border-bottom:none;border-radius:22px 22px 0 0;padding:16px 26px 34px">
+          <div style="width:40px;height:4px;border-radius:100px;background:rgba(244,239,230,.25);margin:0 auto 22px"></div>
+          <div style="font:600 9px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:#C9A96A;margin-bottom:12px">Confirm your place</div>
+          <div style="font-family:'Playfair Display';font-size:26px;line-height:1.05;margin-bottom:6px">Midnight at Maison Rouge</div>
+          <div style="display:flex;align-items:center;gap:6px;font:400 12px 'Helvetica Neue';color:rgba(244,239,230,.5);margin-bottom:24px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:15px">schedule</span>Fri, 12 Jul · Doors 11PM</div>
+          <div style="display:flex;flex-direction:column;gap:16px;border-top:1px solid rgba(201,169,106,.14);padding-top:22px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:400 13px 'Helvetica Neue';color:rgba(244,239,230,.55)">Reserving as</span><span style="font:500 13px 'Helvetica Neue'">Amelia Vance</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:400 13px 'Helvetica Neue';color:rgba(244,239,230,.55)">Guests</span><div style="display:flex;align-items:center;gap:16px"><span style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(244,239,230,.25);display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px;color:rgba(244,239,230,.6)">remove</span><span style="font:500 15px 'Helvetica Neue';min-width:14px;text-align:center">2</span><span style="width:28px;height:28px;border-radius:50%;border:1px solid #C9A96A;display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px;color:#C9A96A">add</span></div></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:400 13px 'Helvetica Neue';color:rgba(244,239,230,.55)">Entry</span><span style="font-family:'Playfair Display';font-size:16px;color:#C9A96A">Free · pay nothing</span></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;background:rgba(18,37,28,.4);border-radius:5px;padding:12px 14px;margin:22px 0"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px;color:#C9A96A;margin-top:1px">info</span><span style="font:400 11px/1.5 'Helvetica Neue';color:rgba(244,239,230,.55)">Your name goes on the door list. Nothing is charged — settle any bar tab at the venue.</span></div>
+          <button style="width:100%;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:17px;font:600 12px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase">Confirm RSVP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RSVP CONFIRMATION -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">RSVP · confirmed</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="position:absolute;inset:0;background:radial-gradient(100% 55% at 50% 30%, rgba(201,169,106,.16), transparent 60%),#0B0B0D"></div>
+        <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 40px">
+          <div style="width:96px;height:96px;border-radius:50%;border:1px solid #C9A96A;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:36px">
+            <div style="position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(201,169,106,.2)"></div>
+            <span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:44px;color:#C9A96A">check</span>
+          </div>
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:#C9A96A;margin-bottom:18px">You're on the list</div>
+          <h1 style="font-family:'Playfair Display';font-weight:400;font-size:34px;line-height:1.08;margin:0 0 16px">We'll see you<br>after midnight.</h1>
+          <p style="font:400 14px/1.7 'Helvetica Neue';color:rgba(244,239,230,.55);margin:0 0 34px;max-width:270px">Your place for <span style="color:#F4EFE6">Midnight at Maison Rouge</span> is confirmed for two. Bring valid ID.</p>
+          <div style="width:100%;max-width:290px;border:1px solid rgba(201,169,106,.25);border-radius:8px;padding:18px 20px;display:flex;gap:16px;align-items:center;text-align:left;margin-bottom:30px">
+            <div style="text-align:center;border-right:1px solid rgba(201,169,106,.18);padding-right:16px"><div style="font-family:'Playfair Display';font-size:26px;color:#C9A96A;line-height:1">12</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:rgba(244,239,230,.5)">Jul</div></div>
+            <div><div style="font:500 13px 'Helvetica Neue'">Doors 11:00 PM</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:3px">Rua da Rosa 214 · Lisbon</div></div>
+          </div>
+          <button style="width:100%;max-width:290px;background:transparent;color:#C9A96A;border:1px solid #C9A96A;border-radius:2px;padding:15px;font:600 11px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px">calendar_add_on</span>Add to calendar</button>
+          <div style="margin-top:20px;font:600 11px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.5)">Back to home</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<section style="background:#0B0B0D;background-image:radial-gradient(1000px 700px at 90% 10%, rgba(18,37,28,.4), transparent 55%);color:#F4EFE6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;padding:20px 72px 140px;position:relative">
+  <div style="display:flex;flex-wrap:wrap;gap:56px 48px">
+
+    <!-- FAVORITES -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Favorites · saved events</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;display:flex;flex-direction:column">
+          <div style="padding:62px 24px 0"><h1 style="font-family:'Playfair Display';font-weight:400;font-size:30px;margin:0 0 18px">Saved</h1>
+            <div style="display:flex;gap:26px;border-bottom:1px solid rgba(201,169,106,.14)">
+              <div style="padding-bottom:12px;border-bottom:1.5px solid #C9A96A;font:600 11px 'Helvetica Neue';letter-spacing:.1em;text-transform:uppercase;color:#F4EFE6">Events</div>
+              <div style="padding-bottom:12px;font:600 11px 'Helvetica Neue';letter-spacing:.1em;text-transform:uppercase;color:rgba(244,239,230,.4)">Collections</div>
+              <div style="padding-bottom:12px;font:600 11px 'Helvetica Neue';letter-spacing:.1em;text-transform:uppercase;color:rgba(244,239,230,.4)">Clubs</div>
+            </div>
+          </div>
+          <div style="flex:1;overflow:hidden;padding:20px 24px 90px;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;gap:14px;align-items:center"><div style="width:88px;height:88px;flex:0 0 88px;border-radius:6px;position:relative;background:radial-gradient(120% 90% at 30% 20%, rgba(201,169,106,.35), transparent 55%),linear-gradient(160deg,#3A1220,#0E0E10)"><span style="position:absolute;bottom:8px;left:8px;font:600 7px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:#C9A96A">Fri 11PM</span></div><div style="flex:1"><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:#C9A96A;margin-bottom:5px">Techno</div><div style="font-family:'Playfair Display';font-size:18px;line-height:1.1">Midnight at Maison Rouge</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:4px">Bairro Alto · Lisbon</div></div><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:22px;color:#C9A96A">favorite</span></div>
+            <div style="height:1px;background:rgba(201,169,106,.1)"></div>
+            <div style="display:flex;gap:14px;align-items:center"><div style="width:88px;height:88px;flex:0 0 88px;border-radius:6px;position:relative;background:radial-gradient(120% 90% at 70% 20%, rgba(18,37,28,.7), transparent 55%),linear-gradient(160deg,#12251C,#0E0E10)"><span style="position:absolute;bottom:8px;left:8px;font:600 7px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:#C9A96A">Sat 10PM</span></div><div style="flex:1"><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:#C9A96A;margin-bottom:5px">Deep House</div><div style="font-family:'Playfair Display';font-size:18px;line-height:1.1">The Emerald Room</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:4px">Hôtel Lune · Chiado</div></div><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:22px;color:#C9A96A">favorite</span></div>
+            <div style="height:1px;background:rgba(201,169,106,.1)"></div>
+            <div style="display:flex;gap:14px;align-items:center"><div style="width:88px;height:88px;flex:0 0 88px;border-radius:6px;position:relative;background:radial-gradient(120% 90% at 40% 30%, rgba(201,169,106,.28), transparent 55%),linear-gradient(160deg,#1A1210,#0E0E10)"><span style="position:absolute;bottom:8px;left:8px;font:600 7px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:#C9A96A">Sat 11PM</span></div><div style="flex:1"><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:#C9A96A;margin-bottom:5px">Jazz · Live</div><div style="font-family:'Playfair Display';font-size:18px;line-height:1.1">Blue Serpent</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:4px">Cais do Sodré</div></div><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:22px;color:#C9A96A">favorite</span></div>
+          </div>
+          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,transparent,#0B0B0D 30%);padding:14px 8px 26px;display:flex;justify-content:space-around;border-top:1px solid rgba(201,169,106,.12)">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">home</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Home</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">explore</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Explore</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#C9A96A"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:24px">favorite</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Saved</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">person</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Profile</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAVORITES EMPTY (collections) -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Favorites · empty collection</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;display:flex;flex-direction:column">
+          <div style="padding:62px 24px 0"><h1 style="font-family:'Playfair Display';font-weight:400;font-size:30px;margin:0 0 18px">Saved</h1>
+            <div style="display:flex;gap:26px;border-bottom:1px solid rgba(201,169,106,.14)">
+              <div style="padding-bottom:12px;font:600 11px 'Helvetica Neue';letter-spacing:.1em;text-transform:uppercase;color:rgba(244,239,230,.4)">Events</div>
+              <div style="padding-bottom:12px;border-bottom:1.5px solid #C9A96A;font:600 11px 'Helvetica Neue';letter-spacing:.1em;text-transform:uppercase;color:#F4EFE6">Collections</div>
+              <div style="padding-bottom:12px;font:600 11px 'Helvetica Neue';letter-spacing:.1em;text-transform:uppercase;color:rgba(244,239,230,.4)">Clubs</div>
+            </div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 44px">
+            <svg width="72" height="72" viewBox="0 0 72 72" fill="none" style="margin-bottom:26px"><circle cx="36" cy="36" r="34" stroke="#C9A96A" stroke-opacity=".3"></circle><g stroke="#C9A96A" stroke-width="1" stroke-opacity=".6" fill="none"><path d="M36 16 L26 40 L46 40 Z"></path><path d="M22 48 H50 M26 54 H46"></path></g></svg>
+            <div style="font:600 10px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:#C9A96A;margin-bottom:16px">No collections yet</div>
+            <h2 style="font-family:'Playfair Display';font-weight:400;font-size:26px;line-height:1.15;margin:0 0 14px">Save a search,<br>name the mood.</h2>
+            <p style="font:400 13px/1.7 'Helvetica Neue';color:rgba(244,239,230,.5);margin:0 0 30px">Turn a filter — say "Techno Nights" or "Rooftops in July" — into a living collection that updates itself.</p>
+            <button style="background:transparent;color:#C9A96A;border:1px solid #C9A96A;border-radius:2px;padding:14px 28px;font:600 11px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase">Start a collection</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Profile</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;overflow:hidden">
+          <!-- cover -->
+          <div style="height:200px;position:relative;background:radial-gradient(120% 90% at 70% 10%, rgba(58,18,32,.7), transparent 55%),linear-gradient(160deg,#3A1220,#0E0E10)">
+            <svg width="100%" height="100%" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;opacity:.3"><g stroke="#C9A96A" stroke-width=".6" fill="none"><circle cx="150" cy="80" r="60"></circle><circle cx="150" cy="80" r="90"></circle><path d="M150 -10 V170 M60 80 H240"></path></g></svg>
+            <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,#0E0E10)"></div>
+            <span style="position:absolute;top:56px;right:20px;width:36px;height:36px;border-radius:50%;background:rgba(14,14,16,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:19px;color:#F4EFE6">settings</span>
+          </div>
+          <div style="padding:0 24px;margin-top:-52px;position:relative">
+            <div style="width:96px;height:96px;border-radius:50%;border:1px solid #C9A96A;background:linear-gradient(135deg,#1A1210,#0E0E10);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-size:38px;color:#C9A96A">A</div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:16px">
+              <div><h1 style="font-family:'Playfair Display';font-weight:400;font-size:28px;margin:0">Amelia Vance</h1><div style="font:400 12px 'Helvetica Neue';color:rgba(244,239,230,.5);margin-top:4px">Member since 2023 · Lisbon</div></div>
+              <span style="border:1px solid #C9A96A;color:#C9A96A;border-radius:2px;padding:8px 16px;font:600 10px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Edit</span>
+            </div>
+            <!-- stats -->
+            <div style="display:flex;margin-top:26px;border-top:1px solid rgba(201,169,106,.15);border-bottom:1px solid rgba(201,169,106,.15)">
+              <div style="flex:1;padding:16px 0;text-align:center;border-right:1px solid rgba(201,169,106,.12)"><div style="font-family:'Playfair Display';font-size:24px;color:#C9A96A">12</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:4px">Attended</div></div>
+              <div style="flex:1;padding:16px 0;text-align:center;border-right:1px solid rgba(201,169,106,.12)"><div style="font-family:'Playfair Display';font-size:24px;color:#C9A96A">3</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:4px">Upcoming</div></div>
+              <div style="flex:1;padding:16px 0;text-align:center"><div style="font-family:'Playfair Display';font-size:24px;color:#C9A96A">28</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:4px">Saved</div></div>
+            </div>
+            <!-- upcoming -->
+            <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin:26px 0 14px">Your next night</div>
+            <div style="display:flex;gap:14px;align-items:center;border:1px solid rgba(201,169,106,.2);border-radius:8px;padding:14px"><div style="text-align:center;border-right:1px solid rgba(201,169,106,.18);padding-right:14px"><div style="font-family:'Playfair Display';font-size:22px;color:#C9A96A;line-height:1">12</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.5)">Jul</div></div><div style="flex:1"><div style="font-family:'Playfair Display';font-size:16px">Midnight at Maison Rouge</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:3px">Doors 11PM · Bairro Alto</div></div><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:#C9A96A">arrow_forward</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Settings</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;overflow:hidden">
+          <div style="padding:60px 24px 18px;display:flex;align-items:center;gap:14px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:22px;color:rgba(244,239,230,.6)">arrow_back</span><h1 style="font-family:'Playfair Display';font-weight:400;font-size:26px;margin:0">Settings</h1></div>
+          <div style="padding:8px 24px">
+            <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:6px">Notifications</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid rgba(201,169,106,.12)"><div><div style="font:500 14px 'Helvetica Neue'">Push notifications</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:2px">New nights, RSVPs, door reminders</div></div><div style="width:46px;height:26px;border-radius:100px;background:#C9A96A;position:relative"><div style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#0E0E10"></div></div></div>
+            <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin:26px 0 6px">Account</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid rgba(201,169,106,.12);font:400 14px 'Helvetica Neue'"><span>Edit profile</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:rgba(244,239,230,.4)">chevron_right</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid rgba(201,169,106,.12);font:400 14px 'Helvetica Neue'"><span>Change password</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:rgba(244,239,230,.4)">chevron_right</span></div>
+            <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin:26px 0 6px">Legal</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid rgba(201,169,106,.12);font:400 14px 'Helvetica Neue'"><span>Privacy Policy</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:rgba(244,239,230,.4)">north_east</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid rgba(201,169,106,.12);font:400 14px 'Helvetica Neue'"><span>Terms of Service</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:rgba(244,239,230,.4)">north_east</span></div>
+            <div style="margin-top:30px;display:flex;flex-direction:column;gap:14px">
+              <div style="text-align:center;font:600 11px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.6)">Sign out</div>
+              <div style="text-align:center;font:600 11px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:#C97a7a">Delete account</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE ACCOUNT (2-step) -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Delete account · step 2 confirm</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="position:absolute;inset:0;background:#0B0B0D;opacity:.5"></div>
+        <div style="position:absolute;inset:0;background:rgba(11,11,13,.75)"></div>
+        <div style="position:absolute;bottom:0;left:0;right:0;background:#17121A;border:1px solid rgba(201,122,122,.3);border-bottom:none;border-radius:22px 22px 0 0;padding:16px 26px 34px">
+          <div style="width:40px;height:4px;border-radius:100px;background:rgba(244,239,230,.25);margin:0 auto 24px"></div>
+          <div style="width:56px;height:56px;border-radius:50%;border:1px solid rgba(201,122,122,.5);display:flex;align-items:center;justify-content:center;margin-bottom:22px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:28px;color:#C97a7a">warning</span></div>
+          <div style="font:600 9px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:#C97a7a;margin-bottom:12px">Final step · this is permanent</div>
+          <h2 style="font-family:'Playfair Display';font-weight:400;font-size:26px;line-height:1.1;margin:0 0 14px">Leave Nocturne for good?</h2>
+          <p style="font:400 13px/1.7 'Helvetica Neue';color:rgba(244,239,230,.55);margin:0 0 22px">Your membership, RSVPs, saved nights and collections will be erased within 30 days. This cannot be undone.</p>
+          <div style="margin-bottom:24px"><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:10px">Type DELETE to confirm</div><div style="border-bottom:1px solid rgba(201,122,122,.5);padding-bottom:10px;font-size:16px;letter-spacing:.1em">DELETE<span style="border-left:1px solid #C97a7a;margin-left:1px;animation:ncBreathe 1.2s infinite"></span></div></div>
+          <button style="width:100%;background:transparent;color:#C97a7a;border:1px solid #C97a7a;border-radius:2px;padding:16px;font:600 12px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;margin-bottom:12px">Delete my account</button>
+          <div style="text-align:center;font:600 11px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.6)">Keep my membership</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<section style="background:#0B0B0D;background-image:radial-gradient(1100px 700px at 90% 0%, rgba(58,18,32,.42), transparent 60%),radial-gradient(900px 600px at 0% 60%, rgba(18,37,28,.4), transparent 55%);color:#F4EFE6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;padding:120px 72px 140px;position:relative">
+  <div style="display:flex;align-items:baseline;gap:28px;margin-bottom:16px;max-width:1180px">
+    <span style="font:600 12px/1 'Helvetica Neue';letter-spacing:.32em;text-transform:uppercase;color:#C9A96A">04 — The Promoter</span>
+    <h2 style="font-family:'Playfair Display';font-weight:500;font-size:48px;margin:0;letter-spacing:-.5px">Promoter</h2>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(201,169,106,.5),transparent)"></div>
+  </div>
+  <p style="font:400 15px/1.7 'Helvetica Neue';color:rgba(244,239,230,.5);max-width:520px;margin:0 0 64px">Promoters fill rooms and build standing — measured in RSVPs driven, never money. A referral code is their signature.</p>
+
+  <div style="display:flex;flex-wrap:wrap;gap:56px 48px">
+
+    <!-- PROMOTER HOME -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Dashboard · Home</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;display:flex;flex-direction:column">
+          <div style="padding:60px 24px 6px;display:flex;justify-content:space-between;align-items:center"><div><div style="font:600 9px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:rgba(244,239,230,.4)">Good evening</div><div style="font-family:'Playfair Display';font-size:24px;margin-top:2px">Marco Devlin</div></div><div style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(201,169,106,.35);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-size:17px;color:#C9A96A">M</div></div>
+          <div style="flex:1;overflow:hidden;padding:16px 24px 90px">
+            <!-- referral hero -->
+            <div style="background:linear-gradient(135deg,rgba(201,169,106,.16),rgba(58,18,32,.4));border:1px solid rgba(201,169,106,.35);border-radius:10px;padding:24px;position:relative;overflow:hidden">
+              <svg width="140" height="140" viewBox="0 0 140 140" style="position:absolute;top:-30px;right:-30px;opacity:.25"><g stroke="#C9A96A" fill="none" stroke-width=".8"><circle cx="70" cy="70" r="60"></circle><path d="M70 10 L70 130 M10 70 L130 70 M28 28 L112 112 M112 28 L28 112"></path></g></svg>
+              <div style="font:600 9px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:rgba(244,239,230,.55);margin-bottom:14px">Your referral code</div>
+              <div style="font-family:'Playfair Display';font-size:34px;letter-spacing:.12em;color:#C9A96A;margin-bottom:16px">MARCO·NOX</div>
+              <div style="display:flex;gap:10px"><button style="flex:1;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:13px;font:600 10px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:7px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px">share</span>Share code</button><span style="width:44px;background:transparent;border:1px solid #C9A96A;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">content_copy</span></div>
+            </div>
+            <!-- stats -->
+            <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin:26px 0 14px">RSVPs you've driven</div>
+            <div style="display:flex;gap:14px">
+              <div style="flex:1;border:1px solid rgba(201,169,106,.16);border-radius:8px;padding:18px"><div style="font-family:'Playfair Display';font-size:34px;color:#C9A96A;line-height:1">247</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;color:rgba(244,239,230,.5);margin-top:8px">All time</div></div>
+              <div style="flex:1;border:1px solid rgba(201,169,106,.16);border-radius:8px;padding:18px"><div style="font-family:'Playfair Display';font-size:34px;color:#C9A96A;line-height:1">38</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;color:rgba(244,239,230,.5);margin-top:8px">This week</div></div>
+            </div>
+            <div style="display:flex;gap:14px;margin-top:14px">
+              <div style="flex:1;border:1px solid rgba(201,169,106,.16);border-radius:8px;padding:18px"><div style="font-family:'Playfair Display';font-size:34px;color:#C9A96A;line-height:1">9</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;color:rgba(244,239,230,.5);margin-top:8px">Active nights</div></div>
+              <div style="flex:1;border:1px solid rgba(201,169,106,.16);border-radius:8px;padding:18px"><div style="font-family:'Playfair Display';font-size:34px;color:#C9A96A;line-height:1">#4</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;color:rgba(244,239,230,.5);margin-top:8px">City rank</div></div>
+            </div>
+          </div>
+          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,transparent,#0B0B0D 30%);padding:14px 8px 26px;display:flex;justify-content:space-around;border-top:1px solid rgba(201,169,106,.12)">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#C9A96A"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:24px">dashboard</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Home</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">local_activity</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Events</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">bolt</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Activity</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">person</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Profile</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMOTER EVENTS -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Events · share links</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;display:flex;flex-direction:column">
+          <div style="padding:60px 24px 12px"><h1 style="font-family:'Playfair Display';font-weight:400;font-size:28px;margin:0 0 16px">Active Nights</h1>
+            <div style="display:flex;align-items:center;gap:10px;border:1px solid rgba(244,239,230,.15);border-radius:100px;padding:10px 15px;color:rgba(244,239,230,.4);margin-bottom:12px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px">search</span><span style="font:400 12px 'Helvetica Neue'">Search title or venue</span></div>
+            <div style="display:flex;gap:8px"><span style="background:#C9A96A;color:#0E0E10;border-radius:100px;padding:6px 13px;font:600 9px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Lisbon</span><span style="border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.6);border-radius:100px;padding:6px 13px;font:600 9px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Porto</span><span style="border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.6);border-radius:100px;padding:6px 13px;font:600 9px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Madrid</span></div>
+          </div>
+          <div style="flex:1;overflow:hidden;padding:14px 24px;display:flex;flex-direction:column;gap:16px">
+            <div style="border:1px solid rgba(201,169,106,.16);border-radius:8px;overflow:hidden">
+              <div style="display:flex;gap:14px;padding:14px"><div style="width:64px;height:64px;flex:0 0 64px;border-radius:5px;background:radial-gradient(120% 90% at 30% 20%, rgba(201,169,106,.35), transparent 55%),linear-gradient(160deg,#3A1220,#0E0E10)"></div><div style="flex:1"><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:#C9A96A;margin-bottom:4px">Fri · Techno</div><div style="font-family:'Playfair Display';font-size:17px;line-height:1.05">Midnight at Maison Rouge</div><div style="font:400 10px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:3px">Bairro Alto · Lisbon</div></div></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(201,169,106,.06);border-top:1px solid rgba(201,169,106,.12);padding:11px 14px"><span style="font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.55)">18 RSVPs via your code</span><span style="display:flex;align-items:center;gap:6px;color:#C9A96A;font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px">share</span>Share link</span></div>
+            </div>
+            <div style="border:1px solid rgba(201,169,106,.16);border-radius:8px;overflow:hidden">
+              <div style="display:flex;gap:14px;padding:14px"><div style="width:64px;height:64px;flex:0 0 64px;border-radius:5px;background:radial-gradient(120% 90% at 70% 20%, rgba(18,37,28,.7), transparent 55%),linear-gradient(160deg,#12251C,#0E0E10)"></div><div style="flex:1"><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:#C9A96A;margin-bottom:4px">Sat · Deep House</div><div style="font-family:'Playfair Display';font-size:17px;line-height:1.05">The Emerald Room</div><div style="font:400 10px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:3px">Chiado · Lisbon</div></div></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(201,169,106,.06);border-top:1px solid rgba(201,169,106,.12);padding:11px 14px"><span style="font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.55)">11 RSVPs via your code</span><span style="display:flex;align-items:center;gap:6px;color:#C9A96A;font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px">share</span>Share link</span></div>
+            </div>
+            <div style="border:1px solid rgba(201,169,106,.16);border-radius:8px;overflow:hidden">
+              <div style="display:flex;gap:14px;padding:14px"><div style="width:64px;height:64px;flex:0 0 64px;border-radius:5px;background:radial-gradient(120% 90% at 40% 30%, rgba(201,169,106,.28), transparent 55%),linear-gradient(160deg,#1A1210,#0E0E10)"></div><div style="flex:1"><div style="font:600 8px 'Helvetica Neue';letter-spacing:.2em;text-transform:uppercase;color:#C9A96A;margin-bottom:4px">Sat · Jazz</div><div style="font-family:'Playfair Display';font-size:17px;line-height:1.05">Blue Serpent</div><div style="font:400 10px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:3px">Cais do Sodré · Lisbon</div></div></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(201,169,106,.06);border-top:1px solid rgba(201,169,106,.12);padding:11px 14px"><span style="font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.55)">9 RSVPs via your code</span><span style="display:flex;align-items:center;gap:6px;color:#C9A96A;font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px">share</span>Share link</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMOTER ACTIVITY (empty) -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Activity · feed</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;display:flex;flex-direction:column">
+          <div style="padding:60px 24px 12px"><h1 style="font-family:'Playfair Display';font-weight:400;font-size:28px;margin:0">Activity</h1></div>
+          <div style="flex:1;overflow:hidden;padding:8px 24px">
+            <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin-bottom:18px">Today</div>
+            <div style="display:flex;flex-direction:column;gap:0">
+              <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid rgba(201,169,106,.1)"><div style="width:38px;height:38px;border-radius:50%;background:rgba(201,169,106,.12);border:1px solid rgba(201,169,106,.3);display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">person_add</div><div style="flex:1"><div style="font:400 13px 'Helvetica Neue'"><span style="color:#F4EFE6">A new guest</span> <span style="color:rgba(244,239,230,.55)">RSVP'd to</span> <span style="color:#F4EFE6">Maison Rouge</span></div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:3px">via MARCO·NOX · 12 min ago</div></div></div>
+              <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid rgba(201,169,106,.1)"><div style="width:38px;height:38px;border-radius:50%;background:rgba(201,169,106,.12);border:1px solid rgba(201,169,106,.3);display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">person_add</div><div style="flex:1"><div style="font:400 13px 'Helvetica Neue'"><span style="color:#F4EFE6">2 guests</span> <span style="color:rgba(244,239,230,.55)">RSVP'd to</span> <span style="color:#F4EFE6">The Emerald Room</span></div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:3px">via MARCO·NOX · 1 hr ago</div></div></div>
+              <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid rgba(201,169,106,.1)"><div style="width:38px;height:38px;border-radius:50%;background:rgba(201,169,106,.12);border:1px solid rgba(201,169,106,.3);display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">person_add</div><div style="flex:1"><div style="font:400 13px 'Helvetica Neue'"><span style="color:#F4EFE6">A new guest</span> <span style="color:rgba(244,239,230,.55)">RSVP'd to</span> <span style="color:#F4EFE6">Blue Serpent</span></div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:3px">via MARCO·NOX · 3 hr ago</div></div></div>
+            </div>
+            <div style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4);margin:24px 0 18px">Yesterday</div>
+            <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid rgba(201,169,106,.1)"><div style="width:38px;height:38px;border-radius:50%;background:rgba(201,169,106,.12);border:1px solid rgba(201,169,106,.3);display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">person_add</div><div style="flex:1"><div style="font:400 13px 'Helvetica Neue'"><span style="color:#F4EFE6">4 guests</span> <span style="color:rgba(244,239,230,.55)">RSVP'd to</span> <span style="color:#F4EFE6">Maison Rouge</span></div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.4);margin-top:3px">via MARCO·NOX · Yesterday</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMOTER ACTIVITY EMPTY STATE -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Activity · empty state</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;display:flex;flex-direction:column">
+          <div style="padding:60px 24px 12px"><h1 style="font-family:'Playfair Display';font-weight:400;font-size:28px;margin:0">Activity</h1></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 44px">
+            <svg width="76" height="76" viewBox="0 0 76 76" fill="none" style="margin-bottom:28px"><circle cx="38" cy="38" r="36" stroke="#C9A96A" stroke-opacity=".3"></circle><path d="M38 20 L42 34 L56 34 L45 43 L49 57 L38 48 L27 57 L31 43 L20 34 L34 34 Z" stroke="#C9A96A" stroke-opacity=".55" stroke-width="1" fill="none"></path></svg>
+            <div style="font:600 10px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:#C9A96A;margin-bottom:16px">No activity yet</div>
+            <h2 style="font-family:'Playfair Display';font-weight:400;font-size:26px;line-height:1.15;margin:0 0 14px">Your code is<br>ready to work.</h2>
+            <p style="font:400 13px/1.7 'Helvetica Neue';color:rgba(244,239,230,.5);margin:0 0 30px">The moment someone RSVPs with <span style="color:#C9A96A">MARCO·NOX</span>, it lands here. Share it and watch the room fill.</p>
+            <button style="background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:14px 28px;font:600 11px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:17px">share</span>Share your code</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMOTER PROFILE -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Profile · metrics</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;overflow:hidden">
+          <div style="height:180px;position:relative;background:radial-gradient(120% 90% at 30% 10%, rgba(58,18,32,.7), transparent 55%),linear-gradient(160deg,#3A1220,#0E0E10)"><div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,#0E0E10)"></div></div>
+          <div style="padding:0 24px;margin-top:-46px;position:relative">
+            <div style="width:88px;height:88px;border-radius:50%;border:1px solid #C9A96A;background:linear-gradient(135deg,#1A1210,#0E0E10);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-size:34px;color:#C9A96A">M</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:14px"><h1 style="font-family:'Playfair Display';font-weight:400;font-size:26px;margin:0">Marco Devlin</h1><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:18px;color:#C9A96A">verified</span></div>
+            <div style="font:400 12px 'Helvetica Neue';color:rgba(244,239,230,.5);margin-top:4px">Promoter · Lisbon · Devlin Presents</div>
+            <div style="display:flex;margin-top:26px;border-top:1px solid rgba(201,169,106,.15);border-bottom:1px solid rgba(201,169,106,.15)">
+              <div style="flex:1;padding:18px 0;text-align:center;border-right:1px solid rgba(201,169,106,.12)"><div style="font-family:'Playfair Display';font-size:26px;color:#C9A96A">247</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:4px">RSVPs driven</div></div>
+              <div style="flex:1;padding:18px 0;text-align:center;border-right:1px solid rgba(201,169,106,.12)"><div style="font-family:'Playfair Display';font-size:26px;color:#C9A96A">9</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:4px">Active nights</div></div>
+              <div style="flex:1;padding:18px 0;text-align:center"><div style="font-family:'Playfair Display';font-size:26px;color:#C9A96A">#4</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:4px">City rank</div></div>
+            </div>
+            <div style="background:linear-gradient(135deg,rgba(201,169,106,.14),rgba(58,18,32,.35));border:1px solid rgba(201,169,106,.3);border-radius:8px;padding:20px;margin-top:24px;text-align:center">
+              <div style="font:600 9px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:rgba(244,239,230,.55);margin-bottom:10px">Your code</div>
+              <div style="font-family:'Playfair Display';font-size:28px;letter-spacing:.12em;color:#C9A96A;margin-bottom:14px">MARCO·NOX</div>
+              <button style="width:100%;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:13px;font:600 10px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase">Share code</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<section style="background:#0B0B0D;background-image:radial-gradient(1100px 700px at 10% 0%, rgba(18,37,28,.45), transparent 60%),radial-gradient(900px 600px at 100% 50%, rgba(58,18,32,.4), transparent 55%);color:#F4EFE6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;padding:120px 72px 140px;position:relative">
+  <div style="display:flex;align-items:baseline;gap:28px;margin-bottom:16px;max-width:1180px">
+    <span style="font:600 12px/1 'Helvetica Neue';letter-spacing:.32em;text-transform:uppercase;color:#C9A96A">05 — The House</span>
+    <h2 style="font-family:'Playfair Display';font-weight:500;font-size:48px;margin:0;letter-spacing:-.5px">Club / Venue Admin</h2>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(201,169,106,.5),transparent)"></div>
+  </div>
+  <p style="font:400 15px/1.7 'Helvetica Neue';color:rgba(244,239,230,.5);max-width:520px;margin:0 0 64px">The venue's private control room. Curate the house, publish nights, and read the door.</p>
+
+  <div style="display:flex;flex-wrap:wrap;gap:56px 48px">
+
+    <!-- ADMIN DASHBOARD -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Dashboard · overview</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;display:flex;flex-direction:column">
+          <div style="padding:60px 24px 6px;display:flex;justify-content:space-between;align-items:center"><div><div style="font:600 9px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:rgba(244,239,230,.4)">The House</div><div style="display:flex;align-items:center;gap:7px;margin-top:3px"><span style="font-family:'Playfair Display';font-size:24px">Maison Rouge</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:16px;color:#C9A96A">verified</span></div></div><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px;color:rgba(244,239,230,.6)">notifications</span></div>
+          <div style="flex:1;overflow:hidden;padding:16px 24px 90px">
+            <div style="display:flex;gap:14px">
+              <div style="flex:1;border:1px solid rgba(201,169,106,.16);border-radius:8px;padding:18px"><div style="font-family:'Playfair Display';font-size:32px;color:#C9A96A;line-height:1">3</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.5);margin-top:8px">Live nights</div></div>
+              <div style="flex:1;border:1px solid rgba(201,169,106,.16);border-radius:8px;padding:18px"><div style="font-family:'Playfair Display';font-size:32px;color:#C9A96A;line-height:1">184</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.5);margin-top:8px">RSVPs this week</div></div>
+            </div>
+            <div style="background:linear-gradient(120deg,rgba(201,169,106,.14),rgba(58,18,32,.35));border:1px solid rgba(201,169,106,.3);border-radius:8px;padding:18px 20px;margin-top:14px;display:flex;align-items:center;gap:14px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:26px;color:#C9A96A">add_circle</span><div style="flex:1"><div style="font-family:'Playfair Display';font-size:17px">Publish a night</div><div style="font:400 11px 'Helvetica Neue';color:rgba(244,239,230,.5)">Put a new event on the map</div></div><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:#C9A96A">arrow_forward</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:26px 0 14px"><span style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4)">Tonight at the door</span></div>
+            <div style="border:1px solid rgba(201,169,106,.16);border-radius:8px;overflow:hidden">
+              <div style="display:flex;gap:14px;padding:14px"><div style="width:56px;height:56px;flex:0 0 56px;border-radius:5px;background:radial-gradient(120% 90% at 30% 20%, rgba(201,169,106,.35), transparent 55%),linear-gradient(160deg,#3A1220,#0E0E10)"></div><div style="flex:1"><div style="font-family:'Playfair Display';font-size:16px">Midnight at Maison Rouge</div><div style="font:400 10px 'Helvetica Neue';color:rgba(244,239,230,.45);margin-top:3px">Doors 11PM · Techno</div></div></div>
+              <div style="display:flex;border-top:1px solid rgba(201,169,106,.12)"><div style="flex:1;padding:12px;text-align:center;border-right:1px solid rgba(201,169,106,.12)"><div style="font-family:'Playfair Display';font-size:20px;color:#C9A96A">96</div><div style="font:600 7px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:3px">On the list</div></div><div style="flex:1;padding:12px;text-align:center;border-right:1px solid rgba(201,169,106,.12)"><div style="font-family:'Playfair Display';font-size:20px;color:#C9A96A">42</div><div style="font:600 7px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:3px">Via promoters</div></div><div style="flex:1;padding:12px;text-align:center"><div style="font-family:'Playfair Display';font-size:20px;color:#C9A96A">86%</div><div style="font:600 7px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:3px">Capacity</div></div></div>
+            </div>
+          </div>
+          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,transparent,#0B0B0D 30%);padding:14px 8px 26px;display:flex;justify-content:space-around;border-top:1px solid rgba(201,169,106,.12)">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:#C9A96A"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:24px">dashboard</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Overview</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">local_activity</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Events</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">add_box</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">Create</span></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;color:rgba(244,239,230,.4)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:24px">domain</span><span style="font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase">House</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREATE / EDIT EVENT -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Create / Edit event</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;display:flex;flex-direction:column">
+          <div style="padding:58px 24px 14px;display:flex;align-items:center;gap:14px;border-bottom:1px solid rgba(201,169,106,.12)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:22px;color:rgba(244,239,230,.6)">close</span><h1 style="font-family:'Playfair Display';font-weight:400;font-size:22px;margin:0;flex:1">New Night</h1><span style="font:600 10px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.4)">Draft</span></div>
+          <div style="flex:1;overflow:hidden;padding:20px 24px 90px;display:flex;flex-direction:column;gap:22px">
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Title</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:15px">Midnight at Maison Rouge</div></div>
+            <!-- poster upload -->
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:10px">Poster</div><div style="height:120px;border-radius:6px;position:relative;overflow:hidden;background:radial-gradient(120% 90% at 30% 20%, rgba(201,169,106,.35), transparent 55%),linear-gradient(160deg,#3A1220,#0E0E10)"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(11,11,13,.35)"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:22px;color:#F4EFE6">photo_camera</span><span style="font:600 10px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase;color:#F4EFE6">Replace</span></div></div></div>
+            <div style="display:flex;gap:20px">
+              <div style="flex:1"><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Date</div><div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:14px"><span>Fri 12 Jul</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:17px;color:#C9A96A">calendar_month</span></div></div>
+              <div style="flex:1"><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Doors</div><div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:14px"><span>11:00 PM</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:17px;color:#C9A96A">schedule</span></div></div>
+            </div>
+            <div style="display:flex;gap:20px">
+              <div style="flex:1"><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Music</div><div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:14px"><span>Techno</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">expand_more</span></div></div>
+              <div style="flex:1"><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Crowd</div><div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:14px"><span>Intimate</span><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">expand_more</span></div></div>
+            </div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Entry rules</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:14px;color:rgba(244,239,230,.8)">18+ · Smart dress · Phones down</div></div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Description</div><div style="border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:14px;color:rgba(244,239,230,.7);line-height:1.6">A single room, low light, sound built for those who stay late…</div></div>
+            <div><div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-bottom:9px">Map link</div><div style="display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(244,239,230,.25);padding-bottom:9px;font-size:14px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px;color:#C9A96A">link</span><span style="color:rgba(244,239,230,.7)">maps.app/maisonrouge</span></div></div>
+          </div>
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:14px 24px 26px;background:linear-gradient(180deg,transparent,#0B0B0D 40%);display:flex;gap:12px"><span style="flex:0 0 auto;padding:16px 22px;border:1px solid rgba(244,239,230,.2);border-radius:2px;font:600 11px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.7)">Save draft</span><button style="flex:1;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:16px;font:600 11px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase">Publish night</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN EVENTS + RSVP LIST -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Event · RSVP list</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;display:flex;flex-direction:column">
+          <div style="padding:58px 24px 16px;background:radial-gradient(120% 100% at 30% 0%, rgba(58,18,32,.5), transparent 60%)">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:22px;color:rgba(244,239,230,.6)">arrow_back</span><div style="flex:1"></div><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:20px;color:#C9A96A">edit</span></div>
+            <div style="font:600 9px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:8px">Fri 12 Jul · Techno</div>
+            <h1 style="font-family:'Playfair Display';font-weight:400;font-size:26px;line-height:1.05;margin:0 0 16px">Midnight at Maison Rouge</h1>
+            <div style="display:flex;gap:26px"><div><div style="font-family:'Playfair Display';font-size:22px;color:#C9A96A">96</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:3px">RSVPs</div></div><div style="width:1px;background:rgba(201,169,106,.2)"></div><div><div style="font-family:'Playfair Display';font-size:22px;color:#C9A96A">42</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:3px">Promoted</div></div><div style="width:1px;background:rgba(201,169,106,.2)"></div><div><div style="font-family:'Playfair Display';font-size:22px;color:#C9A96A">86%</div><div style="font:600 8px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.45);margin-top:3px">Capacity</div></div></div>
+          </div>
+          <div style="padding:16px 24px 8px;display:flex;justify-content:space-between;align-items:center"><span style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4)">Door list · 96</span><span style="display:flex;align-items:center;gap:6px;font:600 9px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase;color:#C9A96A"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px">download</span>Export</span></div>
+          <div style="flex:1;overflow:hidden;padding:4px 24px">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(201,169,106,.1)"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#3A1220,#0E0E10);border:1px solid rgba(201,169,106,.25);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-size:15px;color:#C9A96A">A</div><div style="flex:1"><div style="font:500 13px 'Helvetica Neue'">Amelia Vance</div><div style="font:400 10px 'Helvetica Neue';color:rgba(244,239,230,.4)">+1 guest · via MARCO·NOX</div></div><span style="font:600 8px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase;color:#C9A96A;border:1px solid rgba(201,169,106,.4);border-radius:100px;padding:4px 9px">Promoted</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(201,169,106,.1)"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#12251C,#0E0E10);border:1px solid rgba(201,169,106,.25);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-size:15px;color:#C9A96A">J</div><div style="flex:1"><div style="font:500 13px 'Helvetica Neue'">João Ferreira</div><div style="font:400 10px 'Helvetica Neue';color:rgba(244,239,230,.4)">Solo · direct</div></div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(201,169,106,.1)"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1A1210,#0E0E10);border:1px solid rgba(201,169,106,.25);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-size:15px;color:#C9A96A">S</div><div style="flex:1"><div style="font:500 13px 'Helvetica Neue'">Sofia Reis</div><div style="font:400 10px 'Helvetica Neue';color:rgba(244,239,230,.4)">+2 guests · direct</div></div></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(201,169,106,.1)"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#3A1220,#0E0E10);border:1px solid rgba(201,169,106,.25);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-size:15px;color:#C9A96A">L</div><div style="flex:1"><div style="font:500 13px 'Helvetica Neue'">Liam Costa</div><div style="font:400 10px 'Helvetica Neue';color:rgba(244,239,230,.4)">Solo · via MARCO·NOX</div></div><span style="font:600 8px 'Helvetica Neue';letter-spacing:.14em;text-transform:uppercase;color:#C9A96A;border:1px solid rgba(201,169,106,.4);border-radius:100px;padding:4px 9px">Promoted</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#12251C,#0E0E10);border:1px solid rgba(201,169,106,.25);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-size:15px;color:#C9A96A">M</div><div style="flex:1"><div style="font:500 13px 'Helvetica Neue'">Mara Antunes</div><div style="font:400 10px 'Helvetica Neue';color:rgba(244,239,230,.4)">+1 guest · direct</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLUB PROFILE -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Club Profile · house</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="height:100%;overflow:hidden">
+          <div style="height:210px;position:relative;background:radial-gradient(130% 90% at 30% 10%, rgba(201,169,106,.4), transparent 55%),linear-gradient(160deg,#3A1220,#0E0E10)">
+            <svg width="100%" height="100%" viewBox="0 0 300 210" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;opacity:.3"><g stroke="#C9A96A" stroke-width=".6" fill="none"><path d="M150 -20 L60 120 L240 120 Z"></path><circle cx="150" cy="110" r="70"></circle><path d="M40 150 H260 M40 165 H260"></path></g></svg>
+            <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,#0E0E10)"></div>
+            <div style="position:absolute;top:56px;left:20px;right:20px;display:flex;justify-content:space-between"><span style="width:36px;height:36px;border-radius:50%;background:rgba(14,14,16,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:19px;color:#F4EFE6">arrow_back</span><span style="padding:9px 16px;border-radius:100px;background:rgba(14,14,16,.55);backdrop-filter:blur(6px);border:1px solid rgba(201,169,106,.4);font:600 9px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:#C9A96A">Edit house</span></div>
+          </div>
+          <div style="padding:0 24px;margin-top:-44px;position:relative">
+            <div style="width:84px;height:84px;border-radius:14px;border:1px solid #C9A96A;background:linear-gradient(135deg,#1A1210,#0E0E10);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-size:34px;color:#C9A96A">M</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:14px"><h1 style="font-family:'Playfair Display';font-weight:400;font-size:26px;margin:0">Maison Rouge</h1><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100,'FILL' 1;font-size:18px;color:#C9A96A">verified</span></div>
+            <div style="font:400 12px 'Helvetica Neue';color:rgba(244,239,230,.5);margin-top:5px;display:flex;align-items:center;gap:6px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:15px">location_on</span>Rua da Rosa 214, Bairro Alto · Lisbon</div>
+            <div style="display:flex;gap:10px;margin-top:14px"><span style="border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.7);border-radius:100px;padding:6px 14px;font:600 9px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Techno</span><span style="border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.7);border-radius:100px;padding:6px 14px;font:600 9px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase">Intimate</span><span style="display:flex;align-items:center;gap:5px;border:1px solid rgba(244,239,230,.2);color:rgba(244,239,230,.7);border-radius:100px;padding:6px 14px;font:600 9px 'Helvetica Neue';letter-spacing:.12em;text-transform:uppercase"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:14px">alternate_email</span>maisonrouge.lx</span></div>
+            <p style="font:400 13px/1.7 'Helvetica Neue';color:rgba(244,239,230,.6);margin:20px 0 0;border-top:1px solid rgba(201,169,106,.12);padding-top:20px">A discreet room off a Bairro Alto side street. Red velvet, low ceilings, and a sound system that has outlasted three curfews. Members and their guests only.</p>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:22px 0 14px"><span style="font:600 10px 'Helvetica Neue';letter-spacing:.26em;text-transform:uppercase;color:rgba(244,239,230,.4)">Upcoming nights · 3</span></div>
+            <div style="display:flex;gap:14px"><div style="flex:1"><div style="height:90px;border-radius:5px;background:radial-gradient(120% 90% at 30% 20%, rgba(201,169,106,.35), transparent 55%),linear-gradient(160deg,#3A1220,#0E0E10)"></div><div style="font-family:'Playfair Display';font-size:14px;margin-top:8px">Midnight</div></div><div style="flex:1"><div style="height:90px;border-radius:5px;background:radial-gradient(120% 90% at 70% 20%, rgba(18,37,28,.7), transparent 55%),linear-gradient(160deg,#12251C,#0E0E10)"></div><div style="font-family:'Playfair Display';font-size:14px;margin-top:8px">Cellar Sessions</div></div><div style="flex:1"><div style="height:90px;border-radius:5px;background:radial-gradient(120% 90% at 40% 30%, rgba(201,169,106,.28), transparent 55%),linear-gradient(160deg,#1A1210,#0E0E10)"></div><div style="font-family:'Playfair Display';font-size:14px;margin-top:8px">Red Hour</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<section style="background:#0B0B0D;background-image:radial-gradient(1100px 700px at 50% 0%, rgba(58,18,32,.4), transparent 60%);color:#F4EFE6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;padding:120px 72px 160px;position:relative">
+  <div style="display:flex;align-items:baseline;gap:28px;margin-bottom:16px;max-width:1180px">
+    <span style="font:600 12px/1 'Helvetica Neue';letter-spacing:.32em;text-transform:uppercase;color:#C9A96A">06 — The System</span>
+    <h2 style="font-family:'Playfair Display';font-weight:500;font-size:48px;margin:0;letter-spacing:-.5px">System &amp; Edge States</h2>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(201,169,106,.5),transparent)"></div>
+  </div>
+  <p style="font:400 15px/1.7 'Helvetica Neue';color:rgba(244,239,230,.5);max-width:520px;margin:0 0 64px">Even the rough edges stay in black tie. Nothing breaks the spell.</p>
+
+  <div style="display:flex;flex-wrap:wrap;gap:56px 48px">
+
+    <!-- MAINTENANCE -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Maintenance mode</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="position:absolute;inset:0;background:radial-gradient(100% 55% at 50% 32%, rgba(58,18,32,.5), transparent 60%),#0B0B0D"></div>
+        <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 44px">
+          <svg width="96" height="96" viewBox="0 0 96 96" fill="none" style="margin-bottom:36px"><circle cx="48" cy="48" r="46" stroke="#C9A96A" stroke-opacity=".3"></circle><g stroke="#C9A96A" stroke-width="1"><circle cx="48" cy="48" r="16"></circle><path d="M48 20 V30 M48 66 V76 M20 48 H30 M66 48 H76 M28 28 L35 35 M61 61 L68 68 M68 28 L61 35 M35 61 L28 68"></path></g></svg>
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:#C9A96A;margin-bottom:18px">Closed for the evening</div>
+          <h1 style="font-family:'Playfair Display';font-weight:400;font-size:34px;line-height:1.1;margin:0 0 16px">We're polishing<br>the silver.</h1>
+          <p style="font:400 14px/1.7 'Helvetica Neue';color:rgba(244,239,230,.55);margin:0 0 34px;max-width:270px">Nocturne is briefly closed for maintenance. Doors reopen shortly — the night will keep.</p>
+          <div style="display:flex;align-items:center;gap:10px;border:1px solid rgba(201,169,106,.25);border-radius:100px;padding:11px 20px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px;color:#C9A96A">schedule</span><span style="font:500 12px 'Helvetica Neue';color:rgba(244,239,230,.7)">Back by 9:00 PM WEST</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORCE UPDATE -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Force update</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="position:absolute;inset:0;background:radial-gradient(100% 55% at 50% 30%, rgba(18,37,28,.45), transparent 60%),#0B0B0D"></div>
+        <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 40px">
+          <div style="width:100px;height:100px;border-radius:50%;border:1px solid rgba(201,169,106,.35);display:flex;align-items:center;justify-content:center;margin-bottom:36px;position:relative"><div style="position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(201,169,106,.15)"></div><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:46px;color:#C9A96A">auto_awesome</span></div>
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:#C9A96A;margin-bottom:18px">A new edition</div>
+          <h1 style="font-family:'Playfair Display';font-weight:400;font-size:34px;line-height:1.1;margin:0 0 16px">Time to refresh<br>your invitation.</h1>
+          <p style="font:400 14px/1.7 'Helvetica Neue';color:rgba(244,239,230,.55);margin:0 0 40px;max-width:280px">This version has retired. Update Nocturne to keep discovering the city's finest rooms.</p>
+          <button style="width:100%;max-width:290px;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:17px;font:600 12px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase">Update now</button>
+          <div style="position:absolute;bottom:56px;font:400 12px 'Helvetica Neue';color:rgba(244,239,230,.35)">Version 3.0 · required</div>
+          <div style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:130px;height:5px;border-radius:100px;background:rgba(244,239,230,.3)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOCATION PERMISSION DIALOG -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Location rationale · pre-prompt</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <!-- explore behind, dimmed -->
+        <div style="position:absolute;inset:0;background:#0B0B0D"></div>
+        <div style="position:absolute;top:64px;left:24px;right:24px;opacity:.25"><div style="font-family:'Playfair Display';font-size:30px">Explore</div><div style="height:44px;border:1px solid rgba(244,239,230,.15);border-radius:100px;margin-top:16px"></div><div style="height:70px;border:1px solid rgba(201,169,106,.2);border-radius:8px;margin-top:16px"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(11,11,13,.78)"></div>
+        <!-- dialog -->
+        <div style="position:absolute;left:24px;right:24px;top:50%;transform:translateY(-50%);background:#17121A;border:1px solid rgba(201,169,106,.25);border-radius:16px;padding:30px 26px;text-align:center">
+          <div style="width:72px;height:72px;border-radius:50%;border:1px solid rgba(201,169,106,.4);display:flex;align-items:center;justify-content:center;margin:0 auto 22px;position:relative"><div style="position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(201,169,106,.15)"></div><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:34px;color:#C9A96A">near_me</span></div>
+          <div style="font:600 9px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:#C9A96A;margin-bottom:12px">Before we ask</div>
+          <h2 style="font-family:'Playfair Display';font-weight:400;font-size:25px;line-height:1.1;margin:0 0 14px">Show me nights<br>near me.</h2>
+          <p style="font:400 13px/1.7 'Helvetica Neue';color:rgba(244,239,230,.6);margin:0 0 18px">We use your location only while the app is open, to surface rooms within reach and give accurate directions. We never track you in the background, and never share it.</p>
+          <div style="display:flex;align-items:center;gap:8px;justify-content:center;background:rgba(18,37,28,.4);border-radius:6px;padding:10px 14px;margin-bottom:22px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:16px;color:#C9A96A">visibility_off</span><span style="font:500 11px 'Helvetica Neue';color:rgba(244,239,230,.6)">Foreground only · never sold</span></div>
+          <button style="width:100%;background:#F4EFE6;color:#0E0E10;border:none;border-radius:2px;padding:15px;font:600 11px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;margin-bottom:12px">Continue</button>
+          <div style="font:600 11px 'Helvetica Neue';letter-spacing:.16em;text-transform:uppercase;color:rgba(244,239,230,.5)">Not now</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GLOBAL LOADING -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Global loading</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="position:absolute;inset:0;background:radial-gradient(90% 50% at 50% 40%, rgba(201,169,106,.08), transparent 60%),#0B0B0D"></div>
+        <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div style="width:56px;height:56px;border:1.5px solid rgba(201,169,106,.25);border-top-color:#C9A96A;border-radius:50%;animation:ncSpin 1s linear infinite;margin-bottom:30px"></div>
+          <div style="font-family:'Playfair Display';font-style:italic;font-size:19px;color:rgba(201,169,106,.85);animation:ncBreathe 2s ease-in-out infinite">Setting the room…</div>
+          <div style="position:absolute;bottom:64px;font:600 9px 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:rgba(244,239,230,.3)">Nocturne</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GLOBAL ERROR -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Global error</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="position:absolute;inset:0;background:#0B0B0D"></div>
+        <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 44px">
+          <svg width="84" height="84" viewBox="0 0 84 84" fill="none" style="margin-bottom:30px"><circle cx="42" cy="42" r="40" stroke="rgba(201,122,122,.4)"></circle><path d="M42 26 V46 M42 56 V58" stroke="#C97a7a" stroke-width="1.5" stroke-linecap="round"></path></svg>
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.3em;text-transform:uppercase;color:#C97a7a;margin-bottom:16px">Something went dark</div>
+          <h1 style="font-family:'Playfair Display';font-weight:400;font-size:30px;line-height:1.12;margin:0 0 14px">We lost the room<br>for a moment.</h1>
+          <p style="font:400 14px/1.7 'Helvetica Neue';color:rgba(244,239,230,.55);margin:0 0 32px;max-width:270px">The connection slipped. Catch your breath and try again.</p>
+          <button style="background:transparent;color:#C9A96A;border:1px solid #C9A96A;border-radius:2px;padding:15px 34px;font:600 11px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase;display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Outlined';font-variation-settings:'wght' 100;font-size:18px">refresh</span>Try again</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GLOBAL EMPTY (home no events) -->
+    <div style="flex:0 0 auto">
+      <div style="font:600 10px 'Helvetica Neue';letter-spacing:.24em;text-transform:uppercase;color:#C9A96A;margin-bottom:14px">Global empty · no nights</div>
+      <div style="width:390px;height:844px;background:#0E0E10;border-radius:46px;border:1px solid rgba(201,169,106,.22);overflow:hidden;position:relative;box-shadow:0 50px 90px -35px rgba(0,0,0,.95)">
+        <div style="position:absolute;top:22px;left:50%;transform:translateX(-50%);width:112px;height:30px;background:#000;border-radius:100px;z-index:6"></div>
+        <div style="position:absolute;inset:0;background:#0B0B0D"></div>
+        <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 44px">
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none" style="margin-bottom:28px"><circle cx="40" cy="40" r="38" stroke="#C9A96A" stroke-opacity=".3"></circle><g stroke="#C9A96A" stroke-opacity=".6" stroke-width="1" fill="none"><path d="M28 34 Q40 24 52 34 M40 34 V52"></path><circle cx="34" cy="52" r="5"></circle><circle cx="46" cy="49" r="5"></circle></g></svg>
+          <div style="font:600 10px 'Helvetica Neue';letter-spacing:.28em;text-transform:uppercase;color:#C9A96A;margin-bottom:16px">All quiet</div>
+          <h2 style="font-family:'Playfair Display';font-weight:400;font-size:28px;line-height:1.14;margin:0 0 14px">No nights here<br>just yet.</h2>
+          <p style="font:400 13px/1.7 'Helvetica Neue';color:rgba(244,239,230,.5);margin:0 0 30px">Widen your filters or change the city — the best rooms open on their own schedule.</p>
+          <button style="background:transparent;color:#C9A96A;border:1px solid #C9A96A;border-radius:2px;padding:14px 30px;font:600 11px 'Helvetica Neue';letter-spacing:.18em;text-transform:uppercase">Adjust filters</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- closing colophon -->
+  <div style="max-width:1180px;margin-top:130px;border-top:1px solid rgba(201,169,106,.2);padding-top:40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px">
+    <div style="display:flex;align-items:center;gap:14px"><div style="width:38px;height:38px;border-radius:50%;border:1px solid #C9A96A;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display';font-size:18px;color:#C9A96A">N</div><span style="font:600 11px 'Helvetica Neue';letter-spacing:.4em;text-transform:uppercase;color:#C9A96A">Nocturne</span></div>
+    <div style="font:400 12px 'Helvetica Neue';color:rgba(244,239,230,.4)">Complete design system &amp; screen library · 42 screens · 3 roles · one language</div>
+  </div>
+</section>
+
+</x-dc>
+
+
+</body></html>

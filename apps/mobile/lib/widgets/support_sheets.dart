@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import '../services/firestore_service.dart';
 import 'state_views.dart';
 
@@ -35,32 +36,36 @@ Future<void> _showFormSheet({
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppTheme.surface,
+    // Nocturne sheet surface + strong scrim (DESIGN_TOKENS.md §10). Top corners
+    // 22px, bottom crisp — flush to the screen edge.
+    backgroundColor: AppColors.surfaceEspresso,
+    barrierColor: AppColors.scrim,
+    clipBehavior: Clip.antiAlias,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
     ),
     builder: (context) => Padding(
       padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        left: 22,
+        right: 22,
+        top: 14,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 22,
       ),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const _SheetGrabHandle(),
             Row(
               children: [
-                Icon(icon, color: AppTheme.accentPink),
+                Icon(icon, color: AppColors.champagne, size: 22),
                 const SizedBox(width: 10),
                 Expanded(
+                  // Playfair sheet title (design bottom-sheet heading).
                   child: Text(
                     title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+                    style: AppTypography.headlineMedium.copyWith(fontSize: 20),
                   ),
                 ),
               ],
@@ -72,6 +77,27 @@ Future<void> _showFormSheet({
       ),
     ),
   );
+}
+
+/// Centered low-emphasis grab handle at the top of every bottom sheet
+/// (DESIGN_TOKENS.md §10 — 40×4 pill, ivory .25).
+class _SheetGrabHandle extends StatelessWidget {
+  const _SheetGrabHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 4,
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: AppColors.textDisabled,
+          borderRadius: BorderRadius.circular(100),
+        ),
+      ),
+    );
+  }
 }
 
 class _ReportEventForm extends StatefulWidget {
@@ -289,7 +315,11 @@ class _SubmitButton extends StatelessWidget {
             ? const SizedBox(
                 height: 18,
                 width: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                // Obsidian on the ivory primary fill for contrast.
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.obsidian,
+                ),
               )
             : Text(label),
       ),

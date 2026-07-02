@@ -101,6 +101,8 @@ class _NightlifePlatformAppState extends State<NightlifePlatformApp> {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.dark,
       navigatorKey: _navigatorKey,
       navigatorObservers: [AnalyticsService.instance.observer],
       home: const SplashScreen(),

@@ -2,8 +2,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 
+/// Nocturne loading indicator (DESIGN_TOKENS.md §"Feedback states"): a thin
+/// champagne ring on a faint gold track — no neon glow. [PremiumLoader.compact]
+/// is the inline spinner used inside buttons; the full form adds the espresso
+/// card with a Playfair line + tracked caption.
 class PremiumLoader extends StatefulWidget {
   const PremiumLoader({
     super.key,
@@ -33,7 +38,7 @@ class _PremiumLoaderState extends State<PremiumLoader>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 1000),
     )..repeat();
   }
 
@@ -48,23 +53,11 @@ class _PremiumLoaderState extends State<PremiumLoader>
     final ring = AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        final pulse = 0.94 + (math.sin(_controller.value * math.pi * 2) * 0.04);
-        return Transform.scale(
-          scale: pulse,
-          child: CustomPaint(
-            size: Size.square(widget.size),
-            painter: _PremiumLoaderPainter(progress: _controller.value),
-            child: SizedBox.square(dimension: widget.size, child: child),
-          ),
+        return CustomPaint(
+          size: Size.square(widget.size),
+          painter: _PremiumLoaderPainter(progress: _controller.value),
         );
       },
-      child: Center(
-        child: Icon(
-          Icons.nightlife,
-          size: widget.size * 0.34,
-          color: Colors.white,
-        ),
-      ),
     );
 
     if (widget.compact) {
@@ -79,45 +72,33 @@ class _PremiumLoaderState extends State<PremiumLoader>
       child: Container(
         margin: const EdgeInsets.all(16),
         constraints: const BoxConstraints(maxWidth: 280),
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
         decoration: BoxDecoration(
-          color: AppTheme.glassSurface.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.24),
-              blurRadius: 22,
-              offset: const Offset(0, 14),
-            ),
-          ],
+          color: AppColors.surfaceEspresso,
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: AppColors.goldBorder, width: 1),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ring,
-            const SizedBox(height: 14),
-            const Text(
+            const SizedBox(height: 16),
+            // Playfair brand line (app name stays "Nightlife").
+            Text(
               'Nightlife',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-              ),
+              style: AppTypography.headlineMedium.copyWith(fontSize: 18),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
-              message,
+              message.toUpperCase(),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 12,
-                height: 1.3,
-                fontWeight: FontWeight.w700,
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.textBodyDim,
+                letterSpacing: 0.2 * 11,
               ),
             ),
           ],
@@ -136,59 +117,25 @@ class _PremiumLoaderPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
     final radius = size.shortestSide / 2;
-    final ringRect = Rect.fromCircle(center: center, radius: radius - 4);
+    final stroke = (size.shortestSide * 0.09).clamp(1.5, 3.0);
+    final ringRect = Rect.fromCircle(center: center, radius: radius - stroke);
 
-    final glowPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
-      ..shader = SweepGradient(
-        startAngle: 0,
-        endAngle: math.pi * 2,
-        transform: GradientRotation(progress * math.pi * 2),
-        colors: [
-          AppTheme.accentPink.withValues(alpha: 0),
-          AppTheme.accentPink.withValues(alpha: 0.36),
-          AppTheme.neonViolet.withValues(alpha: 0.28),
-          AppTheme.accentPink.withValues(alpha: 0),
-        ],
-      ).createShader(ringRect);
-
+    // Faint champagne track (design: 1.5px gold @ .3 alpha).
     final trackPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..color = Colors.white.withValues(alpha: 0.11);
+      ..strokeWidth = stroke
+      ..color = AppColors.champagne.withValues(alpha: 0.3);
 
-    final ringPaint = Paint()
+    // Solid champagne leading arc that sweeps (design: border-top-color gold).
+    final arcPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4
+      ..strokeWidth = stroke
       ..strokeCap = StrokeCap.round
-      ..shader = SweepGradient(
-        startAngle: 0,
-        endAngle: math.pi * 2,
-        transform: GradientRotation(progress * math.pi * 2),
-        colors: const [
-          Colors.transparent,
-          AppTheme.accentPink,
-          AppTheme.neonViolet,
-          Colors.transparent,
-        ],
-      ).createShader(ringRect);
+      ..color = AppColors.champagne;
 
-    canvas.drawCircle(center, radius - 4, trackPaint);
-    canvas.drawArc(ringRect, -math.pi / 2, math.pi * 1.55, false, glowPaint);
-    canvas.drawArc(ringRect, -math.pi / 2, math.pi * 1.45, false, ringPaint);
-
-    final corePaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          AppTheme.accentPink.withValues(alpha: 0.18),
-          AppTheme.neonViolet.withValues(alpha: 0.08),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromCircle(center: center, radius: radius * 0.76));
-    canvas.drawCircle(center, radius * 0.62, corePaint);
+    canvas.drawCircle(center, radius - stroke, trackPaint);
+    final start = progress * math.pi * 2 - math.pi / 2;
+    canvas.drawArc(ringRect, start, math.pi * 0.55, false, arcPaint);
   }
 
   @override
