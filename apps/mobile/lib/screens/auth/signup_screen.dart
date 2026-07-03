@@ -10,7 +10,13 @@ import '../../services/storage_service.dart';
 import '../../widgets/premium_loader.dart';
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+  const SignupScreen({super.key, this.initialRole});
+
+  /// Optional role to pre-select in the in-screen role picker (e.g. when
+  /// arriving from the welcome screen's role cards). Validated against
+  /// [AppConstants.roles]; an unknown value falls back to 'user'. The user can
+  /// still change the role with the existing picker.
+  final String? initialRole;
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -35,7 +41,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _businessAddress = TextEditingController();
   final _businessInstagram = TextEditingController();
 
-  String _selectedRole = 'user';
+  late String _selectedRole;
   String _selectedTitle = 'Mr';
   // Gender dropdown selection. 'Male'/'Female' are saved as-is; 'Other' reveals
   // the _gender text field and the typed value is saved instead (falling back to
@@ -55,6 +61,16 @@ class _SignupScreenState extends State<SignupScreen> {
     {'label': 'Promoter', 'value': 'promoter'},
     {'label': 'Venue', 'value': 'clubAdmin'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-select the role passed in (e.g. from the welcome role cards), but only
+    // if it is a real, requestable role; otherwise default to 'user'. The
+    // in-screen role picker can still override this.
+    final requested = widget.initialRole;
+    _selectedRole = AppConstants.roles.contains(requested) ? requested! : 'user';
+  }
 
   @override
   void dispose() {

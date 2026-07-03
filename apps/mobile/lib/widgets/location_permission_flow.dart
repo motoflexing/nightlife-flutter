@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_typography.dart';
 import '../services/location_service.dart';
 
 /// Outcome of [ensureLocationPermissionWithRationale].
@@ -33,32 +34,29 @@ Future<bool> showLocationRationaleDialog(BuildContext context) async {
     context: context,
     barrierDismissible: true,
     builder: (context) => AlertDialog(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppColors.surfaceEspresso,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppTheme.borderMid),
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: AppColors.goldBorder, width: 1),
       ),
       title: Row(
         children: [
-          const Icon(Icons.location_on_outlined, color: AppTheme.gold),
+          const Icon(Icons.location_on_outlined, color: AppColors.champagne),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Allow location access?',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textHigh,
-              ),
+              style: AppTypography.headlineMedium.copyWith(fontSize: 20),
             ),
           ),
         ],
       ),
-      content: const Text(
+      content: Text(
         'We use your device location (approximate or precise) to show events '
         'and venues near you and to calculate distances.\n\n'
         'Your location is only used while you\'re using the app — never in the '
         'background.',
-        style: TextStyle(color: AppTheme.textMuted, height: 1.45),
+        style: AppTypography.bodyMedium.copyWith(color: AppColors.textBodyDim),
       ),
       actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       actions: [
@@ -66,17 +64,14 @@ Future<bool> showLocationRationaleDialog(BuildContext context) async {
           onPressed: () => Navigator.of(context).pop(false),
           child: const Text(
             'Not now',
-            style: TextStyle(color: AppTheme.textMid),
+            style: TextStyle(color: AppColors.textSecondary),
           ),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(true),
           child: const Text(
             'Continue',
-            style: TextStyle(
-              color: AppTheme.gold,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: AppColors.champagne),
           ),
         ),
       ],

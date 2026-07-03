@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_colors.dart';
 import '../models/event.dart';
 import '../services/event_image_service.dart';
 
@@ -26,25 +26,18 @@ class EventPoster extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           _PosterImage(source: source, event: event, showTitle: showTitle),
-          const DecoratedBox(
+          // Bottom-up obsidian legibility scrim (DESIGN_TOKENS.md §9).
+          DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Color(0x99050509)],
-                stops: [0.35, 1],
-              ),
-            ),
-          ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
                 colors: [
-                  Colors.black.withValues(alpha: 0.2),
                   Colors.transparent,
+                  AppColors.obsidianDeep.withValues(alpha: 0.6),
+                  AppColors.obsidianDeep,
                 ],
+                stops: const [0.35, 0.75, 1],
               ),
             ),
           ),
@@ -57,9 +50,9 @@ class EventPoster extends StatelessWidget {
                 event.title.isEmpty ? 'Nightlife Event' : event.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
+                // Playfair title, bottom-anchored over the scrim (design card).
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: AppColors.ivory,
                   shadows: const [
                     Shadow(color: Colors.black87, blurRadius: 14),
                   ],
@@ -114,17 +107,12 @@ class _ImageLoadingPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
+    return const DecoratedBox(
       decoration: BoxDecoration(
-        color: AppTheme.elevated,
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppTheme.surface,
-            AppTheme.elevated,
-            AppTheme.deepPurple.withValues(alpha: 0.6),
-          ],
+          colors: [AppColors.surfaceEspresso, AppColors.obsidian],
         ),
       ),
     );
@@ -136,18 +124,41 @@ class _FallbackPosterAsset extends StatelessWidget {
 
   final NightlifeEvent event;
 
+  /// The Nocturne card tint gradient (DESIGN_TOKENS.md §9): a tint ∈ {oxblood,
+  /// espresso, emerald} fading into obsidian, plus a soft gold radial glow —
+  /// used as the poster when there's no photo. The tint is chosen per-event
+  /// (stable by id) so a grid of cards shows the design's colour variety.
+  Color get _tint {
+    const tints = [AppColors.oxblood, AppColors.espresso, AppColors.emerald];
+    final index = event.id.hashCode.abs() % tints.length;
+    return tints[index];
+  }
+
   @override
   Widget build(BuildContext context) {
     final path = EventImageService.instance.fallbackPosterFor(event);
     return Image.asset(
       path,
       fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => const DecoratedBox(
+      errorBuilder: (_, _, _) => DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF14141D), Color(0xFF050509)],
+            colors: [_tint, AppColors.obsidian],
+          ),
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: const Alignment(-0.4, -0.6),
+              radius: 1.1,
+              colors: [
+                AppColors.champagne.withValues(alpha: 0.28),
+                Colors.transparent,
+              ],
+              stops: const [0, 0.55],
+            ),
           ),
         ),
       ),

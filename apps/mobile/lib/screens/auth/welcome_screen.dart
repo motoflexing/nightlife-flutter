@@ -3,312 +3,162 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../services/referral_service.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
 
-class WelcomeScreen extends StatefulWidget {
+/// The entry screen: role selection (Guest / Promoter / Club·Venue) leading to
+/// signup, plus an existing-member login path and legal links. Matches the
+/// Nocturne "Welcome · role selection" design. (App name stays "Nightlife".)
+class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
-
-  @override
-  State<WelcomeScreen> createState() => _WelcomeScreenState();
-}
-
-class _WelcomeScreenState extends State<WelcomeScreen> {
-  final TextEditingController _codeController = TextEditingController();
-
-  @override
-  void dispose() {
-    _codeController.dispose();
-    super.dispose();
-  }
-
-  void _claimCode() {
-    final code = _codeController.text.trim();
-    if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'PLEASE ENTER A VALID INVITATION CODE',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
-              color: Color(0xFF0E0E10),
-            ),
-          ),
-          backgroundColor: const Color(0xFFCFAC4F), // Champagne gold
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
-      return;
-    }
-
-    // Capture the invite code in our ReferralService
-    ReferralService.instance.setCode(code);
-
-    // Show premium confirmation
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          'INVITATION CODE ACCEPTED. WELCOME TO THE ENTRY.',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.5,
-            color: Color(0xFF0E0E10),
-          ),
-        ),
-        backgroundColor: const Color(0xFFF3EFE6), // Warm Ivory
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-    );
-
-    // Navigate to registration
-    _open(context, const SignupScreen());
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0E0E10), // Base Background: Deep Obsidian
+      backgroundColor: AppColors.obsidianDeep,
       body: Stack(
         children: [
-          // Soft radial vignette layer that darkens the outer edges
+          // Design canvas: oxblood wash from the top + soft gold glow at the base.
           Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.center,
-                  radius: 1.2,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.center,
                   colors: [
+                    AppColors.oxblood.withValues(alpha: 0.55),
                     Colors.transparent,
-                    Color(0xFF0E0E10),
                   ],
-                  stops: [0.15, 1.0],
                 ),
               ),
             ),
           ),
-          // Main layout content
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0, 1.1),
+                  radius: 1.0,
+                  colors: [
+                    AppColors.champagne.withValues(alpha: 0.1),
+                    Colors.transparent,
+                  ],
+                  stops: const [0, 0.6],
+                ),
+              ),
+            ),
+          ),
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-                      child: IntrinsicHeight(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(32, 40, 32, 24),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Spacer(flex: 2),
-                            
-                            // Top Branding: Center a minimal, geometric thin-line Art Deco circular "N" monogram
-                            Center(
-                              child: Container(
-                                width: 56,
-                                height: 56,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
+                            // "N" monogram medallion — thin gold ring, Playfair N.
+                            const _MonogramMedallion(),
+                            const SizedBox(height: 40),
+
+                            // Playfair hero.
+                            Text.rich(
+                              TextSpan(
+                                style: AppTypography.displayMedium.copyWith(
+                                  fontSize: 42,
+                                  height: 1.05,
                                 ),
-                                child: CustomPaint(
-                                  painter: const _ArtDecoMonogramPainter(),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 18),
-                            
-                            // Eyebrow line flanked by thin gold rules reading "01 · THE ENTRY"
-                            Row(
-                              children: [
-                                const Expanded(
-                                  child: Divider(
-                                    color: Color(0x4DCFAC4F), // Semi-transparent Champagne gold
-                                    thickness: 0.75,
-                                    endIndent: 12,
-                                  ),
-                                ),
-                                const Text(
-                                  '01 · THE ENTRY',
-                                  style: TextStyle(
-                                    color: Color(0xFFCFAC4F), // Champagne gold
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 3.0,
-                                  ),
-                                ),
-                                const Expanded(
-                                  child: Divider(
-                                    color: Color(0x4DCFAC4F), // Semi-transparent Champagne gold
-                                    thickness: 0.75,
-                                    indent: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            
-                            const Spacer(flex: 3),
-                            
-                            // Hero Typography: Display "After dark, by invitation."
-                            const Center(
-                              child: Text.rich(
-                                TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: 'After dark,\n',
-                                      style: TextStyle(
-                                        fontFamily: 'Georgia',
-                                        fontSize: 34,
-                                        fontWeight: FontWeight.w300,
-                                        color: Color(0xFFF3EFE6), // Warm Ivory
-                                        height: 1.25,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: 'by invitation.',
-                                      style: TextStyle(
-                                        fontFamily: 'Georgia',
-                                        fontStyle: FontStyle.italic,
-                                        fontSize: 34,
-                                        fontWeight: FontWeight.w300,
-                                        color: Color(0xFFF3EFE6), // Warm Ivory
-                                        height: 1.25,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            
-                            const Spacer(flex: 3),
-                            
-                            // Interactive Card utilizing the Espresso background token
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF1A1210), // Card Surfaces: Espresso
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: const Color(0xFFCFAC4F), // 1px hairline border in Champagne gold
-                                  width: 1.0,
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  // Tracked, uppercase small-caps label above the input
-                                  const Text(
-                                    'ENTER YOUR CODE',
-                                    style: TextStyle(
-                                      color: Color(0x99F3EFE6), // faint warm-grey
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 2.0,
-                                    ),
-                                    textAlign: TextAlign.center,
+                                  const TextSpan(
+                                    text: 'The city keeps\nits best rooms\n',
                                   ),
-                                  const SizedBox(height: 8),
-                                  
-                                  // Underline-only input field (no box, no background fill)
-                                  TextField(
-                                    controller: _codeController,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Color(0xFFF3EFE6), // Warm Ivory
-                                      fontSize: 16,
-                                      letterSpacing: 4.0,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    cursorColor: const Color(0xFFCFAC4F), // Champagne cursor
-                                    decoration: const InputDecoration(
-                                      filled: false,
-                                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                                      border: UnderlineInputBorder(
-                                        borderSide: BorderSide(color: Color(0x33F3EFE6), width: 1.0), // Faint warm-grey
-                                      ),
-                                      enabledBorder: UnderlineInputBorder(
-                                        borderSide: BorderSide(color: Color(0x33F3EFE6), width: 1.0), // Faint warm-grey
-                                      ),
-                                      focusedBorder: UnderlineInputBorder(
-                                        borderSide: BorderSide(color: Color(0xFFCFAC4F), width: 1.5), // Brilliant Champagne gold on focus
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
-                                  
-                                  // Primary Action Button: "CLAIM INVITATION"
-                                  SizedBox(
-                                    height: 52,
-                                    child: ElevatedButton(
-                                      onPressed: _claimCode,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFFF3EFE6), // Solid Ivory fill
-                                        foregroundColor: const Color(0xFF0E0E10), // Obsidian text
-                                        elevation: 0,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8), // Moderately rounded corners (8px)
-                                        ),
-                                      ),
-                                      child: const Text(
-                                        'CLAIM INVITATION',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 1.5,
-                                        ),
-                                      ),
+                                  TextSpan(
+                                    text: 'quiet.',
+                                    style: AppTypography.italic(
+                                      AppTypography.displayMedium,
+                                    ).copyWith(
+                                      fontSize: 42,
+                                      height: 1.05,
+                                      color: AppColors.champagne,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            
                             const SizedBox(height: 16),
-                            
-                            // Secondary Action Button: A ghost button labeled "EXISTING MEMBER LOGIN"
-                            SizedBox(
-                              height: 52,
-                              child: OutlinedButton(
-                                onPressed: () => _open(context, const LoginScreen()),
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: Colors.transparent,
-                                  foregroundColor: const Color(0xFFCFAC4F), // Champagne gold text
-                                  side: const BorderSide(
-                                    color: Color(0xFFCFAC4F), // Thin 1px Champagne gold outline
-                                    width: 1.0,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 300),
+                              child: Text(
+                                'Find them. An invitation-led guide to '
+                                'after-hours culture. Choose how you\'ll enter.',
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: AppColors.textBodyDim,
+                                  height: 1.7,
                                 ),
-                                child: const Text(
-                                  'EXISTING MEMBER LOGIN',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 40),
+
+                            // Tracked eyebrow.
+                            Text(
+                              'I am a…'.toUpperCase(),
+                              style: AppTypography.labelSmall.copyWith(
+                                letterSpacing: 0.26 * 10,
+                                color: AppColors.textCaption,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Role cards → signup, each pre-selecting its role.
+                            _RoleCard(
+                              icon: Icons.local_bar,
+                              title: 'Guest',
+                              subtitle: 'Discover & reserve the night',
+                              highlighted: true,
+                              onTap: () => _openSignup(context, 'user'),
+                            ),
+                            const SizedBox(height: 12),
+                            _RoleCard(
+                              icon: Icons.campaign,
+                              title: 'Promoter',
+                              subtitle: 'Fill rooms, earn your standing',
+                              onTap: () => _openSignup(context, 'promoter'),
+                            ),
+                            const SizedBox(height: 12),
+                            _RoleCard(
+                              icon: Icons.domain,
+                              title: 'Club / Venue',
+                              subtitle: 'Host & manage your house',
+                              onTap: () => _openSignup(context, 'clubAdmin'),
+                            ),
+                            const SizedBox(height: 28),
+
+                            // Existing-member login path.
+                            Center(
+                              child: TextButton(
+                                onPressed: () =>
+                                    _open(context, const LoginScreen()),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: AppColors.champagne,
+                                ),
+                                child: Text(
+                                  'Existing member · Sign in'.toUpperCase(),
+                                  style: AppTypography.labelMedium.copyWith(
+                                    color: AppColors.champagne,
                                   ),
                                 ),
                               ),
                             ),
-                            
-                            const Spacer(flex: 3),
-                            
-                            // Footer Legal Links
+
+                            const Spacer(),
+                            const SizedBox(height: 24),
                             const Center(child: _LegalLinksText()),
-                            const Spacer(flex: 1),
                           ],
                         ),
                       ),
@@ -321,6 +171,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         ],
       ),
     );
+  }
+
+  /// Opens signup with the tapped role pre-selected. The role string maps
+  /// directly to the app's real role values ('user'/'promoter'/'clubAdmin').
+  void _openSignup(BuildContext context, String role) {
+    _open(context, SignupScreen(initialRole: role));
   }
 
   void _open(BuildContext context, Widget screen) {
@@ -342,62 +198,106 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 }
 
-/// Circular, geometric thin-line Art Deco monogram painter drawing a custom 'N'
-class _ArtDecoMonogramPainter extends CustomPainter {
-  const _ArtDecoMonogramPainter();
+// ─── "N" monogram medallion ────────────────────────────────────────────────────
+
+class _MonogramMedallion extends StatelessWidget {
+  const _MonogramMedallion();
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final double width = size.width;
-    final double height = size.height;
-    final center = Offset(width / 2, height / 2);
-    final radius = width / 2;
-
-    final outerPaint = Paint()
-      ..color = const Color(0xFFCFAC4F) // Champagne gold
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
-      ..isAntiAlias = true;
-
-    // Outer circle
-    canvas.drawCircle(center, radius, outerPaint);
-
-    final innerPaint = Paint()
-      ..color = const Color(0xFFCFAC4F).withValues(alpha: 0.5) // Faint inner circle
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5
-      ..isAntiAlias = true;
-
-    // Concentric inner circle
-    canvas.drawCircle(center, radius - 4, innerPaint);
-
-    final nPaint = Paint()
-      ..color = const Color(0xFFCFAC4F)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.square
-      ..isAntiAlias = true;
-
-    // Art Deco geometric dimensions for the "N"
-    final double nWidth = radius * 0.7;
-    final double nHeight = radius * 0.85;
-    
-    final double leftX = center.dx - nWidth / 2;
-    final double rightX = center.dx + nWidth / 2;
-    final double topY = center.dy - nHeight / 2;
-    final double bottomY = center.dy + nHeight / 2;
-
-    // Left vertical stem
-    canvas.drawLine(Offset(leftX, topY), Offset(leftX, bottomY), nPaint);
-    // Right vertical stem
-    canvas.drawLine(Offset(rightX, topY), Offset(rightX, bottomY), nPaint);
-    // Connecting diagonal
-    canvas.drawLine(Offset(leftX, topY), Offset(rightX, bottomY), nPaint);
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.champagne, width: 1),
+      ),
+      child: Text(
+        'N',
+        style: AppTypography.headlineMedium.copyWith(
+          fontSize: 20,
+          color: AppColors.champagne,
+        ),
+      ),
+    );
   }
+}
+
+// ─── Role card ─────────────────────────────────────────────────────────────────
+
+class _RoleCard extends StatelessWidget {
+  const _RoleCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.highlighted = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool highlighted;
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget build(BuildContext context) {
+    // The primary (Guest) card gets the gold outline + wash; the rest are faint.
+    final borderColor =
+        highlighted ? AppColors.champagne : AppColors.textDisabled;
+    final iconColor = highlighted ? AppColors.champagne : AppColors.textBody;
+    final arrowColor =
+        highlighted ? AppColors.champagne : AppColors.textSecondary;
+
+    return Material(
+      color: highlighted ? AppColors.goldWash : Colors.transparent,
+      borderRadius: BorderRadius.circular(4),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(4),
+        splashColor: AppColors.goldWash,
+        highlightColor: AppColors.goldWash,
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: borderColor, width: 1),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 24, color: iconColor),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTypography.titleMedium.copyWith(fontSize: 17),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textBodyDim,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Icon(Icons.arrow_forward, size: 20, color: arrowColor),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
+
+// ─── Legal links (Privacy / Terms — wired to AppConstants) ─────────────────────
 
 class _LegalLinksText extends StatefulWidget {
   const _LegalLinksText();
@@ -431,10 +331,7 @@ class _LegalLinksTextState extends State<_LegalLinksText> {
     var launched = false;
     if (uri != null) {
       try {
-        launched = await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       } catch (_) {
         launched = false;
       }
@@ -448,36 +345,32 @@ class _LegalLinksTextState extends State<_LegalLinksText> {
 
   @override
   Widget build(BuildContext context) {
-    const baseStyle = TextStyle(
-      fontSize: 10,
-      color: Color(0x66F3EFE6), // Warm Ivory with low opacity
-      height: 1.5,
-      letterSpacing: 0.5,
+    final baseStyle = AppTypography.bodySmall.copyWith(
+      fontSize: 11,
+      height: 1.7,
+      color: AppColors.textCaption,
     );
-    const linkStyle = TextStyle(
-      fontSize: 10,
-      color: Color(0xFFCFAC4F), // Champagne gold
-      height: 1.5,
-      letterSpacing: 0.5,
+    final linkStyle = baseStyle.copyWith(
+      color: AppColors.champagne,
       decoration: TextDecoration.underline,
-      decorationColor: Color(0xFFCFAC4F),
+      decorationColor: AppColors.champagne,
     );
 
     return Text.rich(
       TextSpan(
         style: baseStyle,
         children: [
-          const TextSpan(text: 'By continuing you agree to our '),
-          TextSpan(
-            text: 'Terms',
-            style: linkStyle,
-            recognizer: _termsRecognizer,
-          ),
-          const TextSpan(text: ' & '),
+          const TextSpan(text: 'By entering you accept our\n'),
           TextSpan(
             text: 'Privacy Policy',
             style: linkStyle,
             recognizer: _privacyRecognizer,
+          ),
+          const TextSpan(text: ' & '),
+          TextSpan(
+            text: 'Terms of Service',
+            style: linkStyle,
+            recognizer: _termsRecognizer,
           ),
         ],
       ),

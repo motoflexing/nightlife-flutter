@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_colors.dart';
 
 /// Shared two-step "Delete account" flow used by the user, promoter, and club
 /// profile screens.
@@ -32,7 +32,7 @@ Future<bool?> _confirmDeleteAccount(
       title: const Text('Delete account?'),
       content: Text(
         message,
-        style: const TextStyle(color: AppTheme.textMuted, height: 1.4),
+        style: const TextStyle(color: AppColors.textCaption, height: 1.4),
       ),
       actions: [
         TextButton(
@@ -43,7 +43,7 @@ Future<bool?> _confirmDeleteAccount(
           onPressed: () => Navigator.of(context).pop(true),
           child: const Text(
             'Continue',
-            style: TextStyle(color: AppTheme.error),
+            style: TextStyle(color: AppColors.destructive),
           ),
         ),
       ],
@@ -64,7 +64,7 @@ Future<String?> _requestDeletePassword(BuildContext context) async {
           const Text(
             'Enter your password to deactivate this account and schedule it '
             'for deletion.',
-            style: TextStyle(color: AppTheme.textMuted),
+            style: TextStyle(color: AppColors.textCaption),
           ),
           const SizedBox(height: 14),
           TextField(
@@ -96,7 +96,7 @@ Future<String?> _requestDeletePassword(BuildContext context) async {
           },
           child: const Text(
             'Delete',
-            style: TextStyle(color: AppTheme.error),
+            style: TextStyle(color: AppColors.destructive),
           ),
         ),
       ],

@@ -3,6 +3,8 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../services/analytics_service.dart';
 import '../../services/auth_service.dart';
 import 'signup_screen.dart';
@@ -73,8 +75,11 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.red.shade800,
-        content: Text(message),
+        backgroundColor: AppColors.destructive,
+        content: Text(
+          message,
+          style: const TextStyle(color: AppColors.obsidian),
+        ),
       ),
     );
   }
@@ -91,8 +96,11 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF1C1C22),
-        content: Text(message, style: const TextStyle(color: Color(0xFFF5F5F0))),
+        backgroundColor: AppColors.espresso,
+        content: Text(
+          message,
+          style: const TextStyle(color: AppColors.textHigh),
+        ),
       ),
     );
   }
@@ -122,19 +130,15 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF0D0D0F),
+          backgroundColor: AppColors.surfaceEspresso,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: const BorderSide(color: Color(0x1FFFFFFF)),
+            borderRadius: BorderRadius.circular(14),
+            side: const BorderSide(color: AppColors.goldBorder, width: 1),
           ),
-          title: const Text(
+          title: Text(
             'Reset Password',
-            style: TextStyle(
-              color: Color(0xFFF5F5F0),
-              fontWeight: FontWeight.w400,
-              fontSize: 16,
-            ),
+            style: AppTypography.headlineMedium.copyWith(fontSize: 20),
           ),
           content: Form(
             key: formKey,
@@ -142,8 +146,8 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: emailController,
               autofocus: true,
               keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(fontSize: 14, color: Color(0xFFF5F5F0)),
-              decoration: _inputDecoration(hint: 'Email address'),
+              style: AppTypography.bodyMedium.copyWith(color: AppColors.textHigh),
+              decoration: const InputDecoration(labelText: 'Email address'),
               validator: (value) {
                 final email = value?.trim() ?? '';
                 if (email.isEmpty) return 'Email is required';
@@ -159,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0x59FFFFFF),
+                foregroundColor: AppColors.textSecondary,
               ),
               child: const Text('Cancel'),
             ),
@@ -169,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Navigator.of(dialogContext).pop(emailController.text.trim());
               },
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFF59E0B),
+                foregroundColor: AppColors.champagne,
               ),
               child: const Text('Send'),
             ),
@@ -179,65 +183,30 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  InputDecoration _inputDecoration({required String hint, Widget? suffixIcon}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(fontSize: 14, color: Color(0x33FFFFFF)),
-      filled: true,
-      fillColor: const Color(0xFF1C1C22),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: Color(0x14FFFFFF)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: Color(0x14FFFFFF)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: Color(0xFFF59E0B)),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: Colors.red),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      suffixIcon: suffixIcon,
-    );
-  }
-
+  /// Tracked uppercase field label (design underline-input label).
   Widget _fieldLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         text.toUpperCase(),
-        style: const TextStyle(
-          fontSize: 11,
-          letterSpacing: 0.8,
-          color: Color(0x59FFFFFF),
+        style: AppTypography.labelSmall.copyWith(
+          fontSize: 10,
+          letterSpacing: 0.24 * 10,
+          color: AppColors.textCaption,
         ),
       ),
     );
   }
 
   Widget _buildRoleSelector() {
-    return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141418),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0x12FFFFFF)),
-      ),
-      child: Row(
-        children: _roles.map((role) {
-          final value = role['value']!;
-          final isSelected = _selectedRole == value;
-          return Expanded(
+    // Pill segmented control — champagne fill on the selected role.
+    return Row(
+      children: _roles.map((role) {
+        final value = role['value']!;
+        final isSelected = _selectedRole == value;
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: _loading
@@ -245,134 +214,132 @@ class _LoginScreenState extends State<LoginScreen> {
                   : () => setState(() => _selectedRole = value),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFFF59E0B)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                ),
+                height: 40,
                 alignment: Alignment.center,
-                child: Text(
-                  role['label']!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight:
-                        isSelected ? FontWeight.w500 : FontWeight.w400,
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.champagne : Colors.transparent,
+                  borderRadius: BorderRadius.circular(100),
+                  border: Border.all(
                     color: isSelected
-                        ? const Color(0xFF080809)
-                        : const Color(0x59FFFFFF),
+                        ? AppColors.champagne
+                        : AppColors.textDisabled,
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  role['label']!.toUpperCase(),
+                  style: AppTypography.labelSmall.copyWith(
+                    fontSize: 11,
+                    letterSpacing: 0.14 * 11,
+                    color: isSelected
+                        ? AppColors.obsidian
+                        : AppColors.textBody,
                   ),
                 ),
               ),
             ),
-          );
-        }).toList(),
-      ),
+          ),
+        );
+      }).toList(),
     );
   }
 
-  Widget _buildFormContainer() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141418),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0x12FFFFFF)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _fieldLabel('Email'),
-          TextFormField(
-            controller: _email,
-            enabled: !_loading,
-            keyboardType: TextInputType.emailAddress,
-            style: const TextStyle(fontSize: 14, color: Color(0xFFF5F5F0)),
-            decoration: _inputDecoration(hint: 'you@example.com'),
-            validator: (value) {
-              final email = value?.trim() ?? '';
-              if (email.isEmpty) return 'Email is required';
-              final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-              if (!emailRegex.hasMatch(email)) {
-                return 'Enter a valid email address';
-              }
-              return null;
-            },
-          ),
-          const SizedBox(height: 16),
-          _fieldLabel('Password'),
-          TextFormField(
-            controller: _password,
-            enabled: !_loading,
-            obscureText: _hidePassword,
-            style: const TextStyle(fontSize: 14, color: Color(0xFFF5F5F0)),
-            decoration: _inputDecoration(
-              hint: '••••••••',
-              suffixIcon: IconButton(
-                onPressed: () =>
-                    setState(() => _hidePassword = !_hidePassword),
-                icon: Icon(
-                  _hidePassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  size: 18,
-                  color: const Color(0x59FFFFFF),
-                ),
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) return 'Password is required';
-              if (value.length < 8) {
-                return 'Password must be at least 8 characters';
-              }
-              if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                return 'Include at least one uppercase letter';
-              }
-              if (!RegExp(r'[0-9]').hasMatch(value)) {
-                return 'Include at least one number';
-              }
-              return null;
-            },
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              onPressed: _loading ? null : _forgotPassword,
-              child: const Text(
-                'Forgot password?',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0x59FFFFFF),
-                  letterSpacing: 0.2,
-                ),
+  Widget _buildFormFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _fieldLabel('Email'),
+        TextFormField(
+          controller: _email,
+          enabled: !_loading,
+          keyboardType: TextInputType.emailAddress,
+          style: AppTypography.bodyLarge.copyWith(color: AppColors.textHigh),
+          decoration: const InputDecoration(hintText: 'you@example.com'),
+          validator: (value) {
+            final email = value?.trim() ?? '';
+            if (email.isEmpty) return 'Email is required';
+            final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+            if (!emailRegex.hasMatch(email)) {
+              return 'Enter a valid email address';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 24),
+        _fieldLabel('Password'),
+        TextFormField(
+          controller: _password,
+          enabled: !_loading,
+          obscureText: _hidePassword,
+          style: AppTypography.bodyLarge.copyWith(color: AppColors.textHigh),
+          decoration: InputDecoration(
+            hintText: '••••••••',
+            suffixIcon: IconButton(
+              onPressed: () => setState(() => _hidePassword = !_hidePassword),
+              icon: Icon(
+                _hidePassword
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                size: 18,
+                color: AppColors.textSecondary,
               ),
             ),
           ),
-        ],
-      ),
+          validator: (value) {
+            if (value == null || value.isEmpty) return 'Password is required';
+            if (value.length < 8) {
+              return 'Password must be at least 8 characters';
+            }
+            if (!RegExp(r'[A-Z]').hasMatch(value)) {
+              return 'Include at least one uppercase letter';
+            }
+            if (!RegExp(r'[0-9]').hasMatch(value)) {
+              return 'Include at least one number';
+            }
+            return null;
+          },
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.only(top: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              foregroundColor: AppColors.textSecondary,
+            ),
+            onPressed: _loading ? null : _forgotPassword,
+            child: Text(
+              'Forgot password?',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildSubmitButton() {
+    // Ivory primary CTA, obsidian tracked-uppercase label (design §7).
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: _loading
-              ? const Color(0x4DF59E0B)
-              : const Color(0xFFF59E0B),
-          borderRadius: BorderRadius.circular(6),
+              ? AppColors.ivory.withValues(alpha: 0.5)
+              : AppColors.ivory,
+          borderRadius: BorderRadius.circular(4),
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(4),
+            splashColor: Colors.transparent,
+            highlightColor: AppColors.obsidian.withValues(alpha: 0.08),
             onTap: _loading ? null : _submit,
             child: Center(
               child: _loading
@@ -380,17 +347,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                        color: Color(0xFF080809),
+                        color: AppColors.obsidian,
                         strokeWidth: 2,
                       ),
                     )
-                  : const Text(
-                      'SIGN IN',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 1.2,
-                        color: Color(0xFF080809),
+                  : Text(
+                      'Sign In'.toUpperCase(),
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.obsidian,
+                        letterSpacing: 0.16 * 12,
                       ),
                     ),
             ),
@@ -403,65 +368,73 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080809),
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Color(0xFFF5F5F0)),
-        title: const Text(
-          'Sign In',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            letterSpacing: 0.5,
-            color: Color(0xB3FFFFFF),
-          ),
-        ),
+        iconTheme: const IconThemeData(color: AppColors.textHigh),
       ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+          padding: const EdgeInsets.fromLTRB(32, 8, 32, 40),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 16),
-              const Text(
-                'Welcome\nBack',
-                style: TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w300,
-                  color: Color(0xFFF5F5F0),
-                  letterSpacing: -0.5,
-                  height: 1.2,
-                ),
+              // Tracked eyebrow + gold hairline (design section intro).
+              Row(
+                children: [
+                  Text(
+                    'Sign In'.toUpperCase(),
+                    style: AppTypography.labelLarge.copyWith(
+                      color: AppColors.champagne,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.champagne.withValues(alpha: 0.5),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Sign in to your account',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Color(0x59FFFFFF),
-                  letterSpacing: 0.2,
-                ),
-              ),
-              const SizedBox(height: 36),
-              _buildRoleSelector(),
-              const SizedBox(height: 16),
-              _buildFormContainer(),
               const SizedBox(height: 24),
+              // Playfair hero.
+              Text(
+                'Welcome\nBack',
+                style: AppTypography.displayMedium.copyWith(height: 1.05),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Sign in to your account',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.textBodyDim,
+                ),
+              ),
+              const SizedBox(height: 40),
+              _buildRoleSelector(),
+              const SizedBox(height: 32),
+              _buildFormFields(),
+              const SizedBox(height: 32),
               _buildSubmitButton(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     "Don't have an account? ",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0x4DFFFFFF),
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   GestureDetector(
@@ -470,12 +443,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         builder: (_) => const SignupScreen(),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Sign Up',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFFF59E0B),
-                        fontWeight: FontWeight.w500,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.champagne,
                       ),
                     ),
                   ),

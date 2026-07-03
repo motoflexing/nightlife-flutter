@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import '../core/theme/app_theme.dart';
+import '../core/theme/app_colors.dart';
 import '../models/event.dart';
 import '../services/location_service.dart';
 import '../services/maps_availability.dart';
@@ -46,9 +46,9 @@ class _VenueLocationPickerState extends State<VenueLocationPicker> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.elevated.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
+        color: AppColors.surfaceEspresso,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -63,8 +63,8 @@ class _VenueLocationPickerState extends State<VenueLocationPicker> {
                       ? 'No venue pin saved yet'
                       : '${latitude.toStringAsFixed(5)}, ${longitude.toStringAsFixed(5)}',
                   style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    fontWeight: FontWeight.w700,
+                    color: AppColors.textCaption,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -329,22 +329,22 @@ class _PickerMapUnavailable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppTheme.surface.withValues(alpha: 0.9),
+      color: AppColors.surfaceEspresso,
       padding: const EdgeInsets.all(16),
       child: const Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.map_outlined, color: AppTheme.neonCyan),
+          Icon(Icons.map_outlined, color: AppColors.champagne),
           SizedBox(height: 10),
           Text(
             'Maps unavailable',
-            style: TextStyle(fontWeight: FontWeight.w900),
+            style: TextStyle(color: AppColors.textHigh, fontWeight: FontWeight.w500),
           ),
           SizedBox(height: 6),
           Text(
             'Interactive map will be available after Google Maps API configuration',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.textMuted, height: 1.35),
+            style: TextStyle(color: AppColors.textCaption, height: 1.35),
           ),
         ],
       ),

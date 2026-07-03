@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../models/app_user.dart';
 import '../../models/event.dart';
 import '../../services/app_preferences_service.dart';
@@ -428,6 +429,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadFirstPage,
+      color: AppColors.champagne,
+      backgroundColor: AppColors.surfaceEspresso,
       child: CustomScrollView(
         controller: _scrollController,
         physics: const BouncingScrollPhysics(
@@ -598,6 +601,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
 }
 
+// ─── Home header (design: "Tonight in" eyebrow → city + chevron, actions) ──────
+
 class _HomeTopBar extends StatelessWidget {
   const _HomeTopBar({
     required this.city,
@@ -616,61 +621,35 @@ class _HomeTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 14),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: AppTheme.goldSubtle,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.goldBorder, width: 0.5),
-            ),
-            child: const Icon(
-              Icons.nightlife,
-              size: 19,
-              color: AppTheme.gold,
-            ),
-          ),
-          const SizedBox(width: 9),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Nightlife',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.3,
-                    color: AppTheme.textHigh,
+                // Tracked eyebrow.
+                Text(
+                  'Tonight in'.toUpperCase(),
+                  style: AppTypography.labelSmall.copyWith(
+                    fontSize: 9,
+                    letterSpacing: 0.3 * 9,
+                    color: AppColors.textCaption,
                   ),
                 ),
-                Text(
-                  city,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.textLow,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
-                  ),
+                const SizedBox(height: 4),
+                // City selector — Playfair city name + chevron (design header).
+                _CityMenu(
+                  selectedCity: selectedCity,
+                  cityLabel: city,
+                  onCityChanged: onCityChanged,
                 ),
               ],
             ),
           ),
-          _CompactSelector<String>(
-            tooltip: 'Select city',
-            icon: Icons.location_on_outlined,
-            label: selectedCity,
-            values: AppConstants.cities,
-            labelFor: (value) => value,
-            onSelected: onCityChanged,
-          ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
+          // Date filter lives here as a thin-line action (keeps existing flow).
           _DatePickerButton(
             tooltip: 'Select date',
             icon: Icons.calendar_today_outlined,
@@ -683,9 +662,54 @@ class _HomeTopBar extends StatelessWidget {
   }
 }
 
-// ignore: unused_element
-class _FeaturedEventCard extends StatelessWidget {
-  const _FeaturedEventCard({required this.event, required this.onOpen});
+/// City picker rendered as the design's Playfair city name + gold chevron.
+class _CityMenu extends StatelessWidget {
+  const _CityMenu({
+    required this.selectedCity,
+    required this.cityLabel,
+    required this.onCityChanged,
+  });
+
+  final String selectedCity;
+  final String cityLabel;
+  final ValueChanged<String> onCityChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      tooltip: 'Select city',
+      onSelected: onCityChanged,
+      color: AppColors.surfaceEspresso,
+      itemBuilder: (context) => AppConstants.cities
+          .map((value) => PopupMenuItem<String>(value: value, child: Text(value)))
+          .toList(),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              cityLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.headlineMedium.copyWith(fontSize: 24),
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Icon(
+            Icons.expand_more,
+            size: 20,
+            color: AppColors.champagne,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Featured hero (design: 400px hero — badge, favorite, eyebrow, title) ──────
+
+class _FeaturedHero extends StatelessWidget {
+  const _FeaturedHero({required this.event, required this.onOpen});
 
   final NightlifeEvent event;
   final VoidCallback onOpen;
@@ -693,81 +717,97 @@ class _FeaturedEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final venue = event.venueName.trim().isEmpty ? event.city : event.venueName;
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: onOpen,
-      child: Container(
-        height: 132,
-        decoration: BoxDecoration(
-          color: AppTheme.elevated,
+    final location = event.address.trim().isEmpty ? event.city : event.address;
+    final eyebrow = _heroEyebrow(event);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onOpen,
+        child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            EventPoster(event: event, borderRadius: 8),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.08),
-                    Colors.black.withValues(alpha: 0.78),
-                  ],
+          child: SizedBox(
+            height: 400,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Reuses the Nocturne poster (tint gradient / photo + scrim).
+                EventPoster(event: event, borderRadius: 8),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, AppColors.obsidianDeep],
+                      stops: [0.4, 1],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Positioned(
-              left: 12,
-              top: 12,
-              child: _SmallHeroBadge(label: _heroBadgeLabel(event)),
-            ),
-            Positioned(
-              left: 12,
-              right: 12,
-              bottom: 12,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
+                // Featured badge — gold pill (design "✦ Editor's pick" slot; we
+                // use the event's own badge label, no invented flag).
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  child: _HeroBadge(label: _heroBadgeLabel(event)),
+                ),
+                const Positioned(
+                  top: 16,
+                  right: 16,
+                  child: Icon(
+                    Icons.favorite_border,
+                    size: 24,
+                    color: AppColors.ivory,
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(
+                          eyebrow.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.labelSmall.copyWith(
+                            fontSize: 9,
+                            letterSpacing: 0.24 * 9,
+                            color: AppColors.champagne,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
                         Text(
                           event.title.trim().isEmpty
                               ? 'Featured Night'
                               : event.title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            height: 1.05,
-                            fontWeight: FontWeight.w900,
+                          style: AppTypography.displayMedium.copyWith(
+                            fontSize: 34,
+                            height: 1.02,
                           ),
                         ),
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
                             const Icon(
-                              Icons.place_outlined,
-                              size: 13,
-                              color: AppTheme.textMuted,
+                              Icons.location_on,
+                              size: 15,
+                              color: AppColors.textBodyDim,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                venue,
+                                '$venue · $location',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: AppTheme.textMuted,
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.textBodyDim,
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
@@ -776,61 +816,27 @@ class _FeaturedEventCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  const _HeroArrow(),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
-}
 
-// ignore: unused_element
-class _HeroFallback extends StatelessWidget {
-  const _HeroFallback({required this.city});
-
-  final String city;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: AppTheme.elevated,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.search, color: AppTheme.accentPink, size: 21),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              city == 'All'
-                  ? 'Choose a city or filter to find tonight\'s mood.'
-                  : 'Fresh nights in $city will appear here.',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 12.5,
-                height: 1.35,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  /// Tracked eyebrow for the hero — day · doors · genre when available.
+  String _heroEyebrow(NightlifeEvent event) {
+    final music = event.musicType.trim();
+    if (music.isNotEmpty) return music;
+    final vibe = event.crowdType.trim();
+    if (vibe.isNotEmpty) return vibe;
+    return _heroBadgeLabel(event);
   }
 }
 
-class _SmallHeroBadge extends StatelessWidget {
-  const _SmallHeroBadge({required this.label});
+class _HeroBadge extends StatelessWidget {
+  const _HeroBadge({required this.label});
 
   final String label;
 
@@ -838,17 +844,21 @@ class _SmallHeroBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: AppTheme.premiumGradient,
-        borderRadius: BorderRadius.circular(999),
+        color: AppColors.obsidian.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(
+          color: AppColors.champagne.withValues(alpha: 0.5),
+          width: 1,
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         child: Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10.5,
-            fontWeight: FontWeight.w900,
+          label.toUpperCase(),
+          style: AppTypography.labelSmall.copyWith(
+            fontSize: 9,
+            letterSpacing: 0.2 * 9,
+            color: AppColors.champagne,
           ),
         ),
       ),
@@ -856,153 +866,7 @@ class _SmallHeroBadge extends StatelessWidget {
   }
 }
 
-class _HeroArrow extends StatelessWidget {
-  const _HeroArrow();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
-      child: const Icon(Icons.arrow_forward, size: 18, color: Colors.white),
-    );
-  }
-}
-
-class _CompactSelector<T> extends StatelessWidget {
-  const _CompactSelector({
-    required this.tooltip,
-    required this.icon,
-    required this.label,
-    required this.values,
-    required this.labelFor,
-    required this.onSelected,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final String label;
-  final List<T> values;
-  final String Function(T value) labelFor;
-  final ValueChanged<T> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton<T>(
-      tooltip: tooltip,
-      onSelected: onSelected,
-      color: AppTheme.card,
-      itemBuilder: (context) {
-        return values
-            .map(
-              (value) =>
-                  PopupMenuItem<T>(value: value, child: Text(labelFor(value))),
-            )
-            .toList();
-      },
-      child: Container(
-        height: 32,
-        constraints: const BoxConstraints(maxWidth: 100),
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: AppTheme.elevated,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 13, color: AppTheme.textLow),
-            const SizedBox(width: 5),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppTheme.textMid,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DatePickerButton extends StatelessWidget {
-  const _DatePickerButton({
-    required this.tooltip,
-    required this.icon,
-    required this.label,
-    required this.onSelected,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final String label;
-  final ValueChanged<_DateFilterOption> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton<_DateFilterOption>(
-      tooltip: tooltip,
-      onSelected: onSelected,
-      color: AppTheme.card,
-      itemBuilder: (context) => _DateFilterOption.values
-          .map(
-            (option) => PopupMenuItem<_DateFilterOption>(
-              value: option,
-              child: Text(option.label),
-            ),
-          )
-          .toList(),
-      child: Container(
-        height: 32,
-        constraints: const BoxConstraints(maxWidth: 132),
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: AppTheme.elevated,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 13, color: AppTheme.textLow),
-            const SizedBox(width: 5),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppTheme.textMid,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-            const SizedBox(width: 3),
-            const Icon(
-              Icons.keyboard_arrow_down,
-              size: 13,
-              color: AppTheme.textLow,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// ─── Section header (design: tracked eyebrow + trailing gold hairline) ─────────
 
 class _DiscoveryControls extends StatelessWidget {
   const _DiscoveryControls({
@@ -1022,86 +886,40 @@ class _DiscoveryControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Tracked uppercase eyebrow + fading gold hairline (design rail label).
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w400,
-                        color: AppTheme.textHigh,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppTheme.textLow,
-                        fontSize: 12,
-                        letterSpacing: 0.1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              PopupMenuButton<_DiscoveryFilter>(
-                tooltip: 'Filter events',
-                onSelected: onFilterSelected,
-                color: AppTheme.card,
-                itemBuilder: (context) => _DiscoveryFilter.values
-                    .map(
-                      (filter) => PopupMenuItem<_DiscoveryFilter>(
-                        value: filter,
-                        child: Text(filter.label),
-                      ),
-                    )
-                    .toList(),
-                child: Container(
-                  height: 36,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.elevated,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: AppTheme.borderSubtle,
-                      width: 0.5,
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.tune, size: 14, color: AppTheme.textLow),
-                      SizedBox(width: 6),
-                      Text(
-                        'Filters',
-                        style: TextStyle(
-                          color: AppTheme.textMid,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
+              Flexible(
+                child: Text(
+                  title.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.textHigh,
+                    letterSpacing: 0.28 * 14,
                   ),
                 ),
               ),
+              const SizedBox(width: 14),
+              const Expanded(child: _GoldHairline()),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textCaption,
+            ),
+          ),
+          const SizedBox(height: 16),
           SizedBox(
-            height: 31,
+            height: 34,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
@@ -1125,6 +943,28 @@ class _DiscoveryControls extends StatelessWidget {
   }
 }
 
+/// The signature champagne hairline that fades to transparent.
+class _GoldHairline extends StatelessWidget {
+  const _GoldHairline();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 1,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.champagne.withValues(alpha: 0.5),
+            Colors.transparent,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Filter chip — pill, gold-selected (design filter chips) ───────────────────
+
 class _FilterChipButton extends StatelessWidget {
   const _FilterChipButton({
     required this.label,
@@ -1141,18 +981,19 @@ class _FilterChipButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(100),
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        height: 31,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        height: 34,
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? AppTheme.goldSubtle : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
+          color: selected ? AppColors.champagne : Colors.transparent,
+          borderRadius: BorderRadius.circular(100),
           border: Border.all(
-            color: selected ? AppTheme.gold : AppTheme.borderSubtle,
-            width: 0.5,
+            color: selected ? AppColors.champagne : AppColors.textDisabled,
+            width: 1,
           ),
         ),
         child: Row(
@@ -1163,11 +1004,11 @@ class _FilterChipButton extends StatelessWidget {
               const SizedBox(width: 7),
             ],
             Text(
-              label,
-              style: TextStyle(
-                color: selected ? AppTheme.gold : AppTheme.textLow,
+              label.toUpperCase(),
+              style: AppTypography.labelSmall.copyWith(
                 fontSize: 11,
-                fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+                letterSpacing: 0.14 * 11,
+                color: selected ? AppColors.obsidian : AppColors.textBody,
               ),
             ),
           ],
@@ -1176,6 +1017,8 @@ class _FilterChipButton extends StatelessWidget {
     );
   }
 }
+
+// ─── Events content: hero (first) + list, using the Nocturne EventCard ─────────
 
 class _EventsContent extends StatelessWidget {
   const _EventsContent({
@@ -1196,8 +1039,8 @@ class _EventsContent extends StatelessWidget {
   Widget build(BuildContext context) {
     if (events.isEmpty) {
       return const _InlineEmptyFilterState(
-        title: 'No events found',
-        message: 'Try changing your filters or city.',
+        title: 'Nothing yet',
+        message: 'Try changing your filters or city. The night is young.',
       );
     }
 
@@ -1249,30 +1092,58 @@ class _VerticalEventsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
-      itemCount: events.length + (loadingMore ? 1 : 0),
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        if (index == events.length) {
-          return const Padding(
-            padding: EdgeInsets.only(top: 4),
-            child: Center(
-              child: PremiumLoader(message: 'Curating more nights...'),
+    // The first event gets the design's large featured-hero treatment; the rest
+    // render as the standard Nocturne EventCard. Same data, no extra query.
+    final hero = events.first;
+    final rest = events.skip(1).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _FeaturedHero(event: hero, onOpen: () => onOpen(hero)),
+        if (rest.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 6),
+            child: Row(
+              children: [
+                Text(
+                  'More Nights'.toUpperCase(),
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.textHigh,
+                    letterSpacing: 0.28 * 14,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(child: _GoldHairline()),
+              ],
             ),
-          );
-        }
-        final event = events[index];
-        return EventCard(
-          event: event,
-          compact: true,
-          distanceKm: nearbyEnabled ? distanceFor(event) : null,
-          onTap: () => onOpen(event),
-          onRsvp: () => onOpen(event),
-        );
-      },
+          ),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 112),
+          itemCount: rest.length + (loadingMore ? 1 : 0),
+          separatorBuilder: (_, _) => const SizedBox(height: 14),
+          itemBuilder: (context, index) {
+            if (index == rest.length) {
+              return const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: Center(
+                  child: PremiumLoader(message: 'Curating more nights...'),
+                ),
+              );
+            }
+            final event = rest[index];
+            return EventCard(
+              event: event,
+              compact: true,
+              distanceKm: nearbyEnabled ? distanceFor(event) : null,
+              onTap: () => onOpen(event),
+              onRsvp: () => onOpen(event),
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -1300,13 +1171,13 @@ class _ResponsiveEventsGrid extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 112),
       itemCount: itemCount,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
         mainAxisExtent: 214,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
+        crossAxisSpacing: 14,
+        mainAxisSpacing: 14,
       ),
       itemBuilder: (context, index) {
         if (index == events.length) {
@@ -1333,15 +1204,31 @@ class _LoadingFeedSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.fromLTRB(16, 6, 16, 112),
+      padding: EdgeInsets.fromLTRB(24, 6, 24, 112),
       child: Column(
         children: [
+          _SkeletonHero(),
+          SizedBox(height: 24),
           _SkeletonEventCard(),
-          SizedBox(height: 12),
+          SizedBox(height: 14),
           _SkeletonEventCard(),
-          SizedBox(height: 18),
-          PremiumLoader(message: 'Curating your night...'),
         ],
+      ),
+    );
+  }
+}
+
+class _SkeletonHero extends StatelessWidget {
+  const _SkeletonHero();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 400,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceEspresso,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
       ),
     );
   }
@@ -1355,22 +1242,19 @@ class _SkeletonEventCard extends StatelessWidget {
     return Container(
       height: 164,
       decoration: BoxDecoration(
-        color: AppTheme.elevated,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
+        color: AppColors.surfaceEspresso,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
       ),
       child: Row(
         children: [
           Container(
             width: 118,
-            decoration: BoxDecoration(
-              color: AppTheme.card,
-              borderRadius: BorderRadius.circular(8),
-            ),
+            decoration: const BoxDecoration(color: AppColors.espresso),
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1409,8 +1293,8 @@ class _SkeletonLine extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: const Color(0x0DFFFFFF),
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.goldWash,
+        borderRadius: BorderRadius.circular(2),
       ),
     );
   }
@@ -1425,36 +1309,102 @@ class _InlineEmptyFilterState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 112),
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 112),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          color: AppTheme.elevated,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: AppColors.goldBorder, width: 1),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.search_off_outlined, color: AppTheme.gold, size: 28),
-            const SizedBox(height: 10),
+            Icon(
+              Icons.nightlife,
+              color: AppColors.champagne.withValues(alpha: 0.5),
+              size: 34,
+            ),
+            const SizedBox(height: 14),
+            // Playfair title + tracked caption (design empty state).
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.textHigh,
-              ),
+              style: AppTypography.headlineMedium.copyWith(fontSize: 18),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
             Text(
               message,
-              style: const TextStyle(
-                color: AppTheme.textLow,
-                fontSize: 13,
-                height: 1.5,
+              textAlign: TextAlign.center,
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textCaption,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Date filter — thin-line action button (keeps existing selector flow) ──────
+
+class _DatePickerButton extends StatelessWidget {
+  const _DatePickerButton({
+    required this.tooltip,
+    required this.icon,
+    required this.label,
+    required this.onSelected,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final String label;
+  final ValueChanged<_DateFilterOption> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<_DateFilterOption>(
+      tooltip: tooltip,
+      onSelected: onSelected,
+      color: AppColors.surfaceEspresso,
+      itemBuilder: (context) => _DateFilterOption.values
+          .map(
+            (option) => PopupMenuItem<_DateFilterOption>(
+              value: option,
+              child: Text(option.label),
+            ),
+          )
+          .toList(),
+      child: Container(
+        height: 34,
+        constraints: const BoxConstraints(maxWidth: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: AppColors.goldBorder, width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: AppColors.champagne),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(
+                label.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.labelSmall.copyWith(
+                  fontSize: 10,
+                  letterSpacing: 0.14 * 10,
+                  color: AppColors.textBody,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              size: 14,
+              color: AppColors.textSecondary,
             ),
           ],
         ),
