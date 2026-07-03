@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../widgets/support_sheets.dart';
 
 /// Static Help & Support surface (no backend): honest FAQ answers, a support
@@ -93,123 +94,60 @@ class HelpSupportScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
       children: [
-        _SupportSection(
-          title: 'FAQ',
-          child: Column(
-            children: [
-              for (final faq in _faqs) _FaqTile(faq: faq),
-            ],
-          ),
+        Text(
+          'Help',
+          style: AppTypography.displayMedium.copyWith(fontSize: 30),
         ),
-        const SizedBox(height: 14),
-        _SupportSection(
-          title: 'CONTACT',
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-            leading: const Icon(Icons.mail_outline, color: AppTheme.accentPink),
-            title: const Text(
-              'Email us',
-              style: TextStyle(fontWeight: FontWeight.w800),
-            ),
-            subtitle: const Text(
-              'Account, RSVP, and event help.',
-              style: TextStyle(color: AppTheme.textMuted),
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _emailSupport(context),
-          ),
+        const SizedBox(height: 28),
+
+        // ── FAQ ──────────────────────────────────────────────────────────
+        const _SectionEyebrow('FAQ'),
+        for (final faq in _faqs) _FaqTile(faq: faq),
+        const SizedBox(height: 26),
+
+        // ── Contact ──────────────────────────────────────────────────────
+        const _SectionEyebrow('Contact'),
+        _SupportTile(
+          icon: Icons.mail_outline,
+          title: 'Email us',
+          subtitle: 'Account, RSVP, and event help.',
+          onTap: () => _emailSupport(context),
         ),
-        const SizedBox(height: 14),
-        _SupportSection(
-          title: 'EVENT ISSUES',
-          child: Column(
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                leading: const Icon(
-                  Icons.report_gmailerrorred_outlined,
-                  color: AppTheme.accentPink,
-                ),
-                title: const Text(
-                  'Report an event',
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-                subtitle: const Text(
-                  'Flag inaccurate, misleading, or unsafe listings.',
-                  style: TextStyle(color: AppTheme.textMuted),
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => showReportEventSheet(context),
-              ),
-              Divider(
-                height: 1,
-                indent: 56,
-                endIndent: 14,
-                color: AppTheme.glassBorder.withValues(alpha: 0.75),
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                leading: const Icon(
-                  Icons.confirmation_number_outlined,
-                  color: AppTheme.accentPink,
-                ),
-                title: const Text(
-                  'RSVP problem',
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-                subtitle: const Text(
-                  'Get help with pending, duplicate, or missing RSVPs.',
-                  style: TextStyle(color: AppTheme.textMuted),
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => showRsvpProblemSheet(context),
-              ),
-            ],
-          ),
+        const SizedBox(height: 26),
+
+        // ── Event issues ─────────────────────────────────────────────────
+        const _SectionEyebrow('Event Issues'),
+        _SupportTile(
+          icon: Icons.report_gmailerrorred_outlined,
+          title: 'Report an event',
+          subtitle: 'Flag inaccurate, misleading, or unsafe listings.',
+          onTap: () => showReportEventSheet(context),
         ),
-        const SizedBox(height: 14),
-        _SupportSection(
-          title: 'LEGAL',
-          child: Column(
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                leading: const Icon(
-                  Icons.privacy_tip_outlined,
-                  color: AppTheme.accentPink,
-                ),
-                title: const Text(
-                  'Privacy Policy',
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () =>
-                    _openLegalUrl(context, AppConstants.privacyPolicyUrl),
-              ),
-              Divider(
-                height: 1,
-                indent: 56,
-                endIndent: 14,
-                color: AppTheme.glassBorder.withValues(alpha: 0.75),
-              ),
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                leading: const Icon(
-                  Icons.description_outlined,
-                  color: AppTheme.accentPink,
-                ),
-                title: const Text(
-                  'Terms of Service',
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () =>
-                    _openLegalUrl(context, AppConstants.termsOfServiceUrl),
-              ),
-            ],
-          ),
+        const _RowHairline(),
+        _SupportTile(
+          icon: Icons.confirmation_number_outlined,
+          title: 'RSVP problem',
+          subtitle: 'Get help with pending, duplicate, or missing RSVPs.',
+          onTap: () => showRsvpProblemSheet(context),
+        ),
+        const SizedBox(height: 26),
+
+        // ── Legal ────────────────────────────────────────────────────────
+        const _SectionEyebrow('Legal'),
+        _SupportTile(
+          icon: Icons.privacy_tip_outlined,
+          title: 'Privacy Policy',
+          trailingIcon: Icons.north_east,
+          onTap: () => _openLegalUrl(context, AppConstants.privacyPolicyUrl),
+        ),
+        const _RowHairline(),
+        _SupportTile(
+          icon: Icons.description_outlined,
+          title: 'Terms of Service',
+          trailingIcon: Icons.north_east,
+          onTap: () => _openLegalUrl(context, AppConstants.termsOfServiceUrl),
         ),
       ],
     );
@@ -231,22 +169,25 @@ class _FaqTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      data: Theme.of(context).copyWith(dividerColor: AppColors.goldBorder),
       child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 14),
-        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-        iconColor: AppTheme.accentPink,
-        collapsedIconColor: AppTheme.textMuted,
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(bottom: 14),
+        iconColor: AppColors.champagne,
+        collapsedIconColor: AppColors.textSecondary,
         title: Text(
           faq.question,
-          style: const TextStyle(fontWeight: FontWeight.w800),
+          style: AppTypography.bodyMedium.copyWith(color: AppColors.textHigh),
         ),
         children: [
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
               faq.answer,
-              style: const TextStyle(color: AppTheme.textMuted, height: 1.4),
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textBodyDim,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -255,35 +196,88 @@ class _FaqTile extends StatelessWidget {
   }
 }
 
-class _SupportSection extends StatelessWidget {
-  const _SupportSection({required this.title, required this.child});
+class _SupportTile extends StatelessWidget {
+  const _SupportTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+    this.trailingIcon,
+  });
 
+  final IconData icon;
   final String title;
-  final Widget child;
+  final String? subtitle;
+  final VoidCallback onTap;
+  final IconData? trailingIcon;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.elevated.withValues(alpha: 0.62),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: AppColors.champagne),
+      title: Text(
+        title,
+        style: AppTypography.bodyMedium.copyWith(color: AppColors.textHigh),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      subtitle: subtitle == null
+          ? null
+          : Text(
+              subtitle!,
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textCaption,
+              ),
+            ),
+      trailing: Icon(
+        trailingIcon ?? Icons.chevron_right,
+        color: AppColors.textSecondary,
+        size: trailingIcon == null ? 18 : 18,
+      ),
+      onTap: onTap,
+    );
+  }
+}
+
+class _RowHairline extends StatelessWidget {
+  const _RowHairline();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Divider(height: 1, thickness: 1, color: AppColors.goldBorder);
+  }
+}
+
+class _SectionEyebrow extends StatelessWidget {
+  const _SectionEyebrow(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 13, 14, 8),
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: AppTheme.neonLime,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
+          Text(
+            label.toUpperCase(),
+            style: AppTypography.labelLarge.copyWith(
+              color: AppColors.champagne,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.champagne.withValues(alpha: 0.5),
+                    Colors.transparent,
+                  ],
+                ),
               ),
             ),
           ),
-          child,
         ],
       ),
     );

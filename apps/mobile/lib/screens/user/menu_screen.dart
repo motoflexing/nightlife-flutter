@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 
@@ -30,60 +32,32 @@ class MenuScreen extends StatelessWidget {
 
     return Drawer(
       elevation: 0,
-      backgroundColor: const Color(0xFF0D0D0F),
-      child: Container(
+      backgroundColor: AppColors.obsidianDeep,
+      child: DecoratedBox(
         decoration: const BoxDecoration(
-          color: Color(0xFF0D0D0F),
+          color: AppColors.obsidianDeep,
           border: Border(
-            right: BorderSide(color: Color(0x12FFFFFF), width: 0.5),
+            right: BorderSide(color: AppColors.goldBorder, width: 1),
           ),
         ),
         child: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
             children: [
               _DrawerHeader(currentUser: currentUser),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0x1AF59E0B),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: const Color(0x33F59E0B),
-                    width: 0.5,
-                  ),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.auto_awesome, color: Color(0xFFF59E0B)),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Guestlists, saved nights, and profile tools in one place.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xCCFFFFFF),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 28),
               for (final item in items)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _DrawerItem(
-                    item: item,
-                    selected: selectedIndex == item.index,
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      onSelect(item.index);
-                    },
-                  ),
+                _DrawerItem(
+                  item: item,
+                  selected: selectedIndex == item.index,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    onSelect(item.index);
+                  },
                 ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
+              const Divider(height: 1, color: AppColors.goldBorder),
+              const SizedBox(height: 16),
               _DrawerItem(
                 item: const _MenuItem(Icons.logout, 'Logout', -1),
                 selected: false,
@@ -120,47 +94,31 @@ class _DrawerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141418),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0x12FFFFFF), width: 0.5),
-      ),
-      child: Row(
-        children: [
-          _DrawerAvatar(currentUser: currentUser),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  currentUser.name.isEmpty
-                      ? 'Nightlife Member'
-                      : currentUser.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFFF5F5F0),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _roleLabel(currentUser.role).toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0x40FFFFFF),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
+    return Row(
+      children: [
+        _DrawerAvatar(currentUser: currentUser),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                currentUser.name.isEmpty
+                    ? 'Nightlife Member'
+                    : currentUser.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.titleMedium.copyWith(fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _roleLabel(currentUser.role).toUpperCase(),
+                style: AppTypography.labelSmall.copyWith(fontSize: 9),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -190,8 +148,8 @@ class _DrawerAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0x1AF59E0B),
-        border: Border.all(color: const Color(0xFFF59E0B)),
+        color: AppColors.surfaceEspresso,
+        border: Border.all(color: AppColors.champagne, width: 1),
       ),
       clipBehavior: Clip.antiAlias,
       child: photoUrl.isNotEmpty
@@ -215,11 +173,11 @@ class _DrawerInitials extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
+        // Playfair monogram.
         _initials(name),
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFFF59E0B),
+        style: AppTypography.headlineMedium.copyWith(
+          fontSize: 20,
+          color: AppColors.champagne,
         ),
       ),
     );
@@ -243,63 +201,24 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color bgColor;
     final Color itemColor;
-
     if (destructive) {
-      bgColor = const Color(0x0DFF5252);
-      itemColor = Colors.redAccent;
+      itemColor = AppColors.destructive;
     } else if (selected) {
-      bgColor = const Color(0x1AF59E0B);
-      itemColor = const Color(0xFFF59E0B);
+      itemColor = AppColors.champagne;
     } else {
-      bgColor = Colors.transparent;
-      itemColor = const Color(0x66FFFFFF);
+      itemColor = AppColors.textBody;
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        color: bgColor,
-        child: Stack(
-          children: [
-            ListTile(
-              dense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 2,
-              ),
-              leading: Icon(item.icon, color: itemColor, size: 20),
-              title: Text(
-                item.label,
-                style: TextStyle(
-                  color: itemColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.2,
-                ),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-              onTap: onTap,
-            ),
-            Positioned(
-              left: 0,
-              top: 0,
-              bottom: 0,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOutCubic,
-                width: selected ? 2 : 0,
-                color: const Color(0xFFF59E0B),
-              ),
-            ),
-          ],
-        ),
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(item.icon, color: itemColor, size: 20),
+      title: Text(
+        item.label,
+        style: AppTypography.bodyMedium.copyWith(color: itemColor),
       ),
+      onTap: onTap,
     );
   }
 }

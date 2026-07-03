@@ -6,13 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../models/app_user.dart';
+import '../../models/event.dart';
 import '../../models/rsvp.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/storage_service.dart';
-import '../../widgets/compact_ui.dart';
 import '../../widgets/state_views.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -37,70 +38,62 @@ class ProfileScreen extends StatelessWidget {
             final attended = rsvps
                 .where((rsvp) => rsvp.status.toLowerCase() == 'attended')
                 .length;
-            final city = profile.lastKnownCity.trim().isEmpty
-                ? 'City not set'
-                : profile.lastKnownCity.trim();
+            final city = profile.lastKnownCity.trim();
 
-            return ListView(
-              padding: compactScreenPadding(context, bottom: 28),
-              children: [
-                _ProfileHero(
-                  currentUser: profile,
-                  city: city,
-                  upcoming: upcoming,
-                  attended: attended,
-                  onEdit: () => _showEditProfileSheet(context, profile),
-                  onSettings: () => _showSettingsSheet(context, profile),
-                ),
-                const SizedBox(height: 12),
-                _Section(
-                  title: 'Upcoming RSVPs',
-                  child: rsvps.isEmpty
-                      ? const _EmptyPanel(
-                          icon: Icons.confirmation_number_outlined,
-                          text:
-                              'Your RSVPs will appear here once you join a guestlist.',
-                        )
-                      : Column(
-                          children: rsvps
-                              .take(3)
-                              .map((rsvp) => _RsvpTile(rsvp: rsvp))
-                              .toList(),
-                        ),
-                ),
-                const SizedBox(height: 12),
-                const _Section(
-                  title: 'Saved Events',
-                  child: _EmptyPanel(
-                    icon: Icons.favorite_border,
-                    text: 'Favorite clubs and events will live here.',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _Section(
-                  title: 'Account',
-                  child: Column(
-                    children: [
-                      _ActionTile(
-                        icon: Icons.security_outlined,
-                        title: 'Privacy and settings',
-                        onTap: () => _showSettingsSheet(context, profile),
-                      ),
-                      _ActionTile(
-                        icon: Icons.help_outline,
-                        title: 'Help & Support',
-                        onTap: () => _showHelpSheet(context),
-                      ),
-                      _ActionTile(
-                        icon: Icons.logout,
-                        title: 'Logout',
-                        destructive: true,
-                        onTap: () => _confirmAndLogout(context),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            // Saved count comes from the REAL saved-events stream (no hardcode).
+            return StreamBuilder<List<NightlifeEvent>>(
+              stream: FirestoreService.instance.savedEventsStream(),
+              builder: (context, savedSnapshot) {
+                final saved = savedSnapshot.data?.length ?? 0;
+                return ListView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+                  children: [
+                    _ProfileHeader(
+                      currentUser: profile,
+                      city: city,
+                      onEdit: () => _showEditProfileSheet(context, profile),
+                      onSettings: () => _showSettingsSheet(context, profile),
+                    ),
+                    const SizedBox(height: 24),
+                    // Real-data stat cards (Attended / Upcoming / Saved).
+                    _StatRow(
+                      attended: attended,
+                      upcoming: upcoming,
+                      saved: saved,
+                    ),
+                    const SizedBox(height: 30),
+                    _SectionEyebrow('Your Next Nights'),
+                    if (rsvps.isEmpty)
+                      const _EmptyPanel(
+                        icon: Icons.confirmation_number_outlined,
+                        text:
+                            'Your RSVPs will appear here once you join a '
+                            'guestlist.',
+                      )
+                    else
+                      ...rsvps.take(3).map((rsvp) => _RsvpTile(rsvp: rsvp)),
+                    const SizedBox(height: 26),
+                    _SectionEyebrow('Account'),
+                    _ActionTile(
+                      icon: Icons.security_outlined,
+                      title: 'Privacy and settings',
+                      onTap: () => _showSettingsSheet(context, profile),
+                    ),
+                    _ActionTile(
+                      icon: Icons.help_outline,
+                      title: 'Help & Support',
+                      onTap: () => _showHelpSheet(context),
+                    ),
+                    _ActionTile(
+                      icon: Icons.logout,
+                      title: 'Logout',
+                      destructive: true,
+                      onTap: () => _confirmAndLogout(context),
+                    ),
+                  ],
+                );
+              },
             );
           },
         );
@@ -109,140 +102,94 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-class _ProfileHero extends StatelessWidget {
-  const _ProfileHero({
+// ─── Profile header: avatar, name, "member since", edit ────────────────────────
+
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader({
     required this.currentUser,
     required this.city,
-    required this.upcoming,
-    required this.attended,
     required this.onEdit,
     required this.onSettings,
   });
 
   final AppUser currentUser;
   final String city;
-  final int upcoming;
-  final int attended;
   final VoidCallback onEdit;
   final VoidCallback onSettings;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeOutCubic,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _ProfileAvatar(user: currentUser, radius: 30),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      currentUser.name.isEmpty
-                          ? 'Nightlife Member'
-                          : currentUser.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: AppTheme.textHigh,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _Badge(label: _roleLabel(currentUser.role)),
-                        _Badge(
-                          label: currentUser.isApproved
-                              ? 'Verified'
-                              : currentUser.status,
-                          highlighted: currentUser.isApproved,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ProfileAvatar(user: currentUser, radius: 44),
+            const Spacer(),
+            IconButton(
+              tooltip: 'Settings',
+              onPressed: onSettings,
+              icon: const Icon(
+                Icons.settings_outlined,
+                color: AppColors.textSecondary,
+                size: 22,
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _InfoTile(icon: Icons.location_on_outlined, label: city),
-          _InfoTile(icon: Icons.mail_outline, label: currentUser.email),
-          if (currentUser.phone.trim().isNotEmpty)
-            _InfoTile(icon: Icons.call_outlined, label: currentUser.phone),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _Stat(label: 'Upcoming', value: upcoming.toString()),
-              Container(width: 0.5, height: 30, color: AppTheme.borderSubtle),
-              const _Stat(label: 'Saved', value: '0'),
-              Container(width: 0.5, height: 30, color: AppTheme.borderSubtle),
-              _Stat(label: 'Attended', value: attended.toString()),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onEdit,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(
-                      color: AppTheme.borderMid,
-                      width: 0.5,
-                    ),
-                    foregroundColor: AppTheme.textHigh,
-                    textStyle: const TextStyle(
-                      fontSize: 12,
-                      letterSpacing: 0.3,
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    currentUser.name.isEmpty
+                        ? 'Nightlife Member'
+                        : currentUser.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.displayMedium.copyWith(fontSize: 28),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _memberLine(currentUser, city),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textBodyDim,
                     ),
                   ),
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: const Text('Edit profile'),
-                ),
+                ],
               ),
-              const SizedBox(width: 10),
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppTheme.elevated,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: AppTheme.borderSubtle,
-                    width: 0.5,
-                  ),
-                ),
-                child: IconButton(
-                  tooltip: 'Settings',
-                  onPressed: onSettings,
-                  icon: const Icon(
-                    Icons.settings_outlined,
-                    color: AppTheme.textMid,
-                    size: 18,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+            const SizedBox(width: 12),
+            // Ghost-gold "Edit".
+            OutlinedButton(
+              onPressed: onEdit,
+              child: const Text('Edit'),
+            ),
+          ],
+        ),
+      ],
     );
+  }
+
+  /// "Member since {year} · {city}" — only includes the year when a real
+  /// createdAt exists (epoch-0 means unknown → omitted), and the city only when
+  /// set. Never fabricates a join date.
+  String _memberLine(AppUser user, String city) {
+    final year = user.createdAt.millisecondsSinceEpoch > 0
+        ? user.createdAt.year
+        : null;
+    final parts = <String>[
+      if (year != null) 'Member since $year',
+      if (city.isNotEmpty) city,
+    ];
+    return parts.isEmpty ? _roleLabel(user.role) : parts.join(' · ');
   }
 }
 
@@ -261,6 +208,89 @@ class _ProfileAvatar extends StatelessWidget {
     );
   }
 }
+
+// ─── Real-data stat row (Attended / Upcoming / Saved) ──────────────────────────
+
+class _StatRow extends StatelessWidget {
+  const _StatRow({
+    required this.attended,
+    required this.upcoming,
+    required this.saved,
+  });
+
+  final int attended;
+  final int upcoming;
+  final int saved;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AppColors.goldBorder, width: 1),
+          bottom: BorderSide(color: AppColors.goldBorder, width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          _Stat(label: 'Attended', value: attended.toString()),
+          const _StatDivider(),
+          _Stat(label: 'Upcoming', value: upcoming.toString()),
+          const _StatDivider(),
+          _Stat(label: 'Saved', value: saved.toString()),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatDivider extends StatelessWidget {
+  const _StatDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(width: 1, height: 44, color: AppColors.goldBorder);
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          children: [
+            // Playfair figure.
+            Text(
+              value,
+              style: AppTypography.headlineMedium.copyWith(
+                fontSize: 24,
+                color: AppColors.champagne,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: AppTypography.labelSmall.copyWith(
+                fontSize: 8,
+                letterSpacing: 0.18 * 8,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Edit profile sheet (logic preserved verbatim) ─────────────────────────────
 
 class _EditProfileSheet extends StatefulWidget {
   const _EditProfileSheet({required this.user});
@@ -473,7 +503,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       child: Form(
         key: _formKey,
         child: ListView(
-          padding: EdgeInsets.fromLTRB(16, 12, 16, bottomInset + 18),
+          padding: EdgeInsets.fromLTRB(22, 14, 22, bottomInset + 22),
           shrinkWrap: true,
           children: [
             Row(
@@ -481,12 +511,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 Expanded(
                   child: Text(
                     'Edit profile',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w400,
-                      color: AppTheme.textHigh,
-                      letterSpacing: -0.3,
-                    ),
+                    style: AppTypography.headlineMedium.copyWith(fontSize: 20),
                   ),
                 ),
                 IconButton(
@@ -496,7 +521,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -508,20 +533,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                     uploadProgress: _photoUploadProgress,
                     uploading: _uploadingPhoto,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: _uploadingPhoto || _saving ? null : _pickPhoto,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(
-                        color: AppTheme.borderMid,
-                        width: 0.5,
-                      ),
-                      foregroundColor: AppTheme.textMid,
-                      textStyle: const TextStyle(
-                        fontSize: 12,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
                     icon: _uploadingPhoto
                         ? const SizedBox(
                             width: 16,
@@ -538,14 +552,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 20),
             TextFormField(
               controller: _name,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Full name',
-                prefixIcon: Icon(Icons.person_outline),
-              ),
+              decoration: const InputDecoration(labelText: 'Full name'),
               onChanged: (_) => setState(() {}),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -554,33 +565,26 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 return null;
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
             TextFormField(
               initialValue: widget.user.email,
               enabled: false,
               decoration: const InputDecoration(
                 labelText: 'Email',
-                prefixIcon: Icon(Icons.mail_outline),
                 helperText: 'Email is managed by your sign-in account.',
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
             TextFormField(
               controller: _phone,
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.done,
-              decoration: const InputDecoration(
-                labelText: 'Phone number',
-                prefixIcon: Icon(Icons.call_outlined),
-              ),
+              decoration: const InputDecoration(labelText: 'Phone number'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
             DropdownButtonFormField<String>(
               initialValue: _city,
-              decoration: const InputDecoration(
-                labelText: 'City',
-                prefixIcon: Icon(Icons.location_city_outlined),
-              ),
+              decoration: const InputDecoration(labelText: 'City'),
               items: AppConstants.cities
                   .map(
                     (city) => DropdownMenuItem(value: city, child: Text(city)),
@@ -590,30 +594,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   ? null
                   : (value) => setState(() => _city = value ?? _city),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _saving || _uploadingPhoto ? null : _save,
-                child: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          color: AppTheme.background,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Text(
-                        'SAVE PROFILE',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-              ),
+            const SizedBox(height: 24),
+            _PrimaryButton(
+              label: 'Save profile',
+              loading: _saving,
+              onPressed: _saving || _uploadingPhoto ? null : _save,
             ),
           ],
         ),
@@ -677,8 +662,8 @@ class _SafeInitialsAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppTheme.goldSubtle,
-        border: Border.all(color: AppTheme.goldBorder, width: 1),
+        color: AppColors.surfaceEspresso,
+        border: Border.all(color: AppColors.champagne, width: 1),
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -690,7 +675,7 @@ class _SafeInitialsAvatar extends StatelessWidget {
               key: ValueKey(previewBytes!.lengthInBytes),
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) =>
-                  _InitialsFallback(name: name, fontSize: radius * 0.72),
+                  _InitialsFallback(name: name, fontSize: radius * 0.82),
             )
           else if (cleanUrl.isNotEmpty)
             Image.network(
@@ -698,13 +683,13 @@ class _SafeInitialsAvatar extends StatelessWidget {
               key: ValueKey(cleanUrl),
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) =>
-                  _InitialsFallback(name: name, fontSize: radius * 0.72),
+                  _InitialsFallback(name: name, fontSize: radius * 0.82),
             )
           else
-            _InitialsFallback(name: name, fontSize: radius * 0.72),
+            _InitialsFallback(name: name, fontSize: radius * 0.82),
           if (uploading)
             ColoredBox(
-              color: Colors.black.withValues(alpha: 0.42),
+              color: AppColors.obsidian.withValues(alpha: 0.5),
               child: Center(
                 child: SizedBox(
                   width: 28,
@@ -712,8 +697,8 @@ class _SafeInitialsAvatar extends StatelessWidget {
                   child: CircularProgressIndicator(
                     value: uploadProgress,
                     strokeWidth: 2.6,
-                    color: Colors.white,
-                    backgroundColor: Colors.white.withValues(alpha: 0.16),
+                    color: AppColors.champagne,
+                    backgroundColor: AppColors.goldWash,
                   ),
                 ),
               ),
@@ -736,11 +721,11 @@ class _InitialsFallback extends StatelessWidget {
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Text(
+          // Playfair monogram (design avatar).
           _initials(name),
-          style: TextStyle(
+          style: AppTypography.headlineMedium.copyWith(
             fontSize: fontSize,
-            fontWeight: FontWeight.w500,
-            color: AppTheme.gold,
+            color: AppColors.champagne,
           ),
         ),
       ),
@@ -748,95 +733,37 @@ class _InitialsFallback extends StatelessWidget {
   }
 }
 
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child});
+// ─── Section eyebrow ───────────────────────────────────────────────────────────
 
-  final String title;
-  final Widget child;
+class _SectionEyebrow extends StatelessWidget {
+  const _SectionEyebrow(this.label);
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title.toUpperCase(),
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: AppTheme.textLow,
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppTheme.card,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
-          ),
-          child: child,
-        ),
-      ],
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({required this.label, this.highlighted = false});
-
-  final String label;
-  final bool highlighted;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: highlighted
-            ? AppTheme.goldSubtle
-            : const Color(0x0DFFFFFF),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: highlighted ? AppTheme.goldBorder : AppTheme.borderSubtle,
-          width: 0.5,
-        ),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: TextStyle(
-          color: highlighted ? AppTheme.gold : AppTheme.textMid,
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({required this.icon, required this.label});
-
-  final IconData icon;
   final String label;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 14),
       child: Row(
         children: [
-          Icon(icon, color: AppTheme.textLow, size: 16),
-          const SizedBox(width: 9),
+          Text(
+            label.toUpperCase(),
+            style: AppTypography.labelLarge.copyWith(
+              color: AppColors.champagne,
+            ),
+          ),
+          const SizedBox(width: 14),
           Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppTheme.textMid, fontSize: 13),
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.champagne.withValues(alpha: 0.5),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -852,33 +779,40 @@ class _RsvpTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: AppTheme.goldSubtle,
-        child: const Icon(
-          Icons.local_activity_outlined,
-          color: AppTheme.gold,
-          size: 18,
-        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
       ),
-      title: Text(
-        rsvp.eventTitle,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: AppTheme.textHigh,
-        ),
-      ),
-      subtitle: Text(
-        rsvp.status.toUpperCase(),
-        style: const TextStyle(
-          fontSize: 11,
-          color: AppTheme.textLow,
-          letterSpacing: 0.5,
-        ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.local_activity_outlined,
+            color: AppColors.champagne,
+            size: 18,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  rsvp.eventTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.titleMedium.copyWith(fontSize: 16),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  rsvp.status.toUpperCase(),
+                  style: AppTypography.labelSmall.copyWith(fontSize: 9),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -892,17 +826,26 @@ class _EmptyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: AppTheme.textLow, size: 18),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(color: AppTheme.textLow, fontSize: 13),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.textSecondary, size: 18),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textCaption,
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -922,58 +865,77 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconColor = destructive ? AppTheme.error : AppTheme.textMid;
-    final titleColor = destructive ? AppTheme.error : AppTheme.textHigh;
+    final color = destructive ? AppColors.destructive : AppColors.textBody;
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: iconColor),
+      leading: Icon(icon, color: color),
       title: Text(
         title,
-        style: TextStyle(
-          color: titleColor,
-          fontSize: 13,
-          fontWeight: FontWeight.w400,
-        ),
+        style: AppTypography.bodyMedium.copyWith(color: color),
       ),
       trailing: destructive
           ? null
-          : const Icon(Icons.chevron_right, color: AppTheme.textLow, size: 16),
+          : const Icon(
+              Icons.chevron_right,
+              color: AppColors.textSecondary,
+              size: 18,
+            ),
       onTap: onTap,
     );
   }
 }
 
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value});
+/// Ivory primary button (design §7).
+class _PrimaryButton extends StatelessWidget {
+  const _PrimaryButton({
+    required this.label,
+    required this.loading,
+    required this.onPressed,
+  });
 
   final String label;
-  final String value;
+  final bool loading;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w300,
-              color: AppTheme.textHigh,
-              letterSpacing: -0.5,
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: onPressed == null
+              ? AppColors.ivory.withValues(alpha: 0.5)
+              : AppColors.ivory,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(4),
+            splashColor: Colors.transparent,
+            highlightColor: AppColors.obsidian.withValues(alpha: 0.08),
+            onTap: onPressed,
+            child: Center(
+              child: loading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: AppColors.obsidian,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      label.toUpperCase(),
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.obsidian,
+                        letterSpacing: 0.16 * 12,
+                      ),
+                    ),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            label.toUpperCase(),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppTheme.textLow,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -1093,7 +1055,11 @@ void _showEditProfileSheet(BuildContext context, AppUser user) {
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: AppTheme.surface,
+    backgroundColor: AppColors.surfaceEspresso,
+    barrierColor: AppColors.scrim,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+    ),
     builder: (_) => _EditProfileSheet(user: user),
   );
 }
@@ -1106,9 +1072,12 @@ Future<void> _confirmAndLogout(BuildContext context) async {
     context: context,
     builder: (context) => AlertDialog(
       title: const Text('Log out?'),
-      content: const Text(
+      content: Text(
         "You'll need to sign in again to access your account.",
-        style: TextStyle(color: AppTheme.textMuted, height: 1.4),
+        style: AppTypography.bodyMedium.copyWith(
+          color: AppColors.textBodyDim,
+          height: 1.4,
+        ),
       ),
       actions: [
         TextButton(
@@ -1119,7 +1088,7 @@ Future<void> _confirmAndLogout(BuildContext context) async {
           onPressed: () => Navigator.of(context).pop(true),
           child: const Text(
             'Log out',
-            style: TextStyle(color: AppTheme.error),
+            style: TextStyle(color: AppColors.destructive),
           ),
         ),
       ],
@@ -1134,39 +1103,44 @@ void _showSettingsSheet(BuildContext context, AppUser user) {
   showModalBottomSheet<void>(
     context: context,
     useSafeArea: true,
-    backgroundColor: AppTheme.surface,
+    backgroundColor: AppColors.surfaceEspresso,
+    barrierColor: AppColors.scrim,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+    ),
     builder: (context) => SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+        padding: const EdgeInsets.fromLTRB(22, 14, 22, 22),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Profile settings',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              style: AppTypography.headlineMedium.copyWith(fontSize: 20),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             _SettingsRow(label: 'Email', value: user.email),
             _SettingsRow(label: 'Role', value: _roleLabel(user.role)),
             _SettingsRow(
               label: 'Status',
               value: user.isApproved ? 'Verified' : user.status,
             ),
-            const SizedBox(height: 12),
-            const Text(
-              'Email changes are managed by your sign-in provider. Profile name, phone, city, and avatar can be changed from Edit profile.',
-              style: TextStyle(color: AppTheme.textMuted, height: 1.35),
+            const SizedBox(height: 16),
+            Text(
+              'Email changes are managed by your sign-in provider. Profile '
+              'name, phone, city, and avatar can be changed from Edit profile.',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textCaption,
+                height: 1.4,
+              ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton.icon(
+              child: OutlinedButton(
                 onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.check),
-                label: const Text('Done'),
+                child: const Text('Done'),
               ),
             ),
           ],
@@ -1180,34 +1154,38 @@ void _showHelpSheet(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
     useSafeArea: true,
-    backgroundColor: AppTheme.surface,
+    backgroundColor: AppColors.surfaceEspresso,
+    barrierColor: AppColors.scrim,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+    ),
     builder: (context) => SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+        padding: const EdgeInsets.fromLTRB(22, 14, 22, 22),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Help & Support',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              style: AppTypography.headlineMedium.copyWith(fontSize: 20),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               'For RSVP, event, or account issues, email us at '
               '${AppConstants.supportEmail} from your registered email address '
               'and the team will help you out.',
-              style: const TextStyle(color: AppTheme.textMuted, height: 1.35),
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textBodyDim,
+                height: 1.4,
+              ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton.icon(
+              child: OutlinedButton(
                 onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.check),
-                label: const Text('Got it'),
+                child: const Text('Got it'),
               ),
             ),
           ],
@@ -1226,17 +1204,14 @@ class _SettingsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
           SizedBox(
             width: 82,
             child: Text(
-              label,
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontWeight: FontWeight.w700,
-              ),
+              label.toUpperCase(),
+              style: AppTypography.labelSmall.copyWith(fontSize: 10),
             ),
           ),
           Expanded(
@@ -1244,7 +1219,9 @@ class _SettingsRow extends StatelessWidget {
               value.trim().isEmpty ? '-' : value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w900),
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textHigh,
+              ),
             ),
           ),
         ],

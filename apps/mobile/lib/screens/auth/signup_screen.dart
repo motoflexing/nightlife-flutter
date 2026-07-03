@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../services/analytics_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/storage_service.dart';
@@ -108,6 +109,9 @@ class _SignupScreenState extends State<SignupScreen> {
     if (picked != null) {
       _dob.text =
           '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+      // Refresh so the "age confirmed" chip reflects the new value. This is a
+      // cosmetic rebuild only — the real gate stays in the DOB validator.
+      setState(() {});
     }
   }
 
@@ -139,6 +143,15 @@ class _SignupScreenState extends State<SignupScreen> {
       age--;
     }
     return age;
+  }
+
+  /// True only when the entered DOB is a real date AND the person is 18+.
+  /// Drives the cosmetic "Age confirmed" chip. The authoritative gate remains
+  /// the DOB field validator (which blocks submit); this never bypasses it.
+  bool get _ageConfirmed {
+    final dob = _parseDob(_dob.text.trim());
+    if (dob == null) return false;
+    return _ageOnDate(dob, DateTime.now()) >= 18;
   }
 
   /// The gender value to persist: the dropdown choice for Male/Female, or the
@@ -313,7 +326,7 @@ class _SignupScreenState extends State<SignupScreen> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Widget _gap() => const SizedBox(height: 10);
+  Widget _gap() => const SizedBox(height: 20);
 
   /// Gender dropdown (Male / Female / Other) shared by User and Promoter. When
   /// "Other" is selected, a text field is revealed for a custom value. Required:
@@ -324,10 +337,7 @@ class _SignupScreenState extends State<SignupScreen> {
       children: [
         DropdownButtonFormField<String>(
           initialValue: _selectedGender,
-          decoration: const InputDecoration(
-            labelText: 'Gender',
-            prefixIcon: Icon(Icons.wc_outlined),
-          ),
+          decoration: const InputDecoration(labelText: 'Gender'),
           items: const [
             DropdownMenuItem(value: 'Male', child: Text('Male')),
             DropdownMenuItem(value: 'Female', child: Text('Female')),
@@ -348,7 +358,6 @@ class _SignupScreenState extends State<SignupScreen> {
             textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
               labelText: 'Your gender',
-              prefixIcon: Icon(Icons.edit_outlined),
               hintText: 'Type your gender',
             ),
             validator: (value) {
@@ -368,70 +377,90 @@ class _SignupScreenState extends State<SignupScreen> {
   /// and Promoter. Reuses _pickDob (lastDate = 18 years ago) and the existing
   /// _parseDob / _ageOnDate helpers — no duplicated age logic.
   Widget _dobField() {
-    return TextFormField(
-      controller: _dob,
-      readOnly: true,
-      onTap: _loading ? null : _pickDob,
-      decoration: const InputDecoration(
-        labelText: 'Date of birth',
-        prefixIcon: Icon(Icons.calendar_month_outlined),
-      ),
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return 'Select your date of birth';
-        }
-        final dob = _parseDob(value.trim());
-        if (dob == null) {
-          return 'Select a valid date of birth';
-        }
-        if (_ageOnDate(dob, DateTime.now()) < 18) {
-          return 'You must be at least 18 years old to use this app.';
-        }
-        return null;
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextFormField(
+          controller: _dob,
+          readOnly: true,
+          onTap: _loading ? null : _pickDob,
+          decoration: const InputDecoration(
+            labelText: 'Date of birth',
+            suffixIcon: Icon(
+              Icons.calendar_month_outlined,
+              color: AppColors.champagne,
+              size: 18,
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Select your date of birth';
+            }
+            final dob = _parseDob(value.trim());
+            if (dob == null) {
+              return 'Select a valid date of birth';
+            }
+            if (_ageOnDate(dob, DateTime.now()) < 18) {
+              return 'You must be at least 18 years old to use this app.';
+            }
+            return null;
+          },
+        ),
+        // Design's "Age confirmed — you must be 18 or over." chip. Shown only
+        // when the real 18+ check passes; the DOB validator still gates submit.
+        if (_ageConfirmed) ...[
+          const SizedBox(height: 12),
+          const _AgeConfirmedChip(),
+        ],
+      ],
     );
   }
 
+  /// Segmented role picker — pill tabs, champagne-selected (design chips).
   Widget _roleSelector() {
-    return Container(
-      height: 46,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AppTheme.elevated,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
-      ),
-      child: Row(
-        children: _roles.map((role) {
-          final isSelected = _selectedRole == role['value'];
-          return Expanded(
+    return Row(
+      children: _roles.map((role) {
+        final isSelected = _selectedRole == role['value'];
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
               onTap: _loading
                   ? null
                   : () => setState(() => _selectedRole = role['value']!),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
+                height: 40,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.goldSubtle : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
+                  color: isSelected
+                      ? AppColors.champagne
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(100),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppColors.champagne
+                        : AppColors.textDisabled,
+                    width: 1,
+                  ),
                 ),
                 child: Text(
-                  role['label']!,
+                  role['label']!.toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight:
-                        isSelected ? FontWeight.w500 : FontWeight.w400,
-                    color: isSelected ? AppTheme.gold : AppTheme.textLow,
+                  style: AppTypography.labelSmall.copyWith(
+                    fontSize: 11,
+                    letterSpacing: 0.14 * 11,
+                    color: isSelected
+                        ? AppColors.obsidian
+                        : AppColors.textBody,
                   ),
                 ),
               ),
             ),
-          );
-        }).toList(),
-      ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -439,31 +468,34 @@ class _SignupScreenState extends State<SignupScreen> {
 
   bool get _isPromoterRole => _selectedRole == 'promoter';
 
+  /// Tracked uppercase section eyebrow + trailing gold hairline (design).
   Widget _sectionLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 10,
-          letterSpacing: 1.2,
-          color: AppTheme.textLow,
-          fontWeight: FontWeight.w500,
-        ),
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        children: [
+          Text(
+            text.toUpperCase(),
+            style: AppTypography.labelLarge.copyWith(
+              color: AppColors.champagne,
+            ),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(child: _GoldHairline()),
+        ],
       ),
     );
   }
 
-  Widget _groupContainer({required Widget child}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.elevated,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
+  /// A titled section — eyebrow + fields, spaced generously (no boxed card;
+  /// the design uses open sections separated by hairlines, not panels).
+  Widget _section({required String label, required List<Widget> children}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [_sectionLabel(label), ...children],
       ),
-      child: child,
     );
   }
 
@@ -471,14 +503,24 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isPhone = width < 500;
+    final stepLabel = switch (_selectedRole) {
+      'promoter' => 'Promoter',
+      'clubAdmin' => 'Venue',
+      _ => 'Guest · 1 of 1',
+    };
+    final heroTitle = switch (_selectedRole) {
+      'promoter' => 'Build your\nfollowing.',
+      'clubAdmin' => 'Register your\nhouse.',
+      _ => 'Create your\nmembership.',
+    };
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppColors.obsidianDeep,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(
-              horizontal: isPhone ? 20 : 28,
+              horizontal: isPhone ? 24 : 32,
               vertical: 24,
             ),
             child: ConstrainedBox(
@@ -488,335 +530,175 @@ class _SignupScreenState extends State<SignupScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-
-                    // ── Header ────────────────────────────────────────────
-                    Align(
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppTheme.goldSubtle,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: AppTheme.goldBorder,
-                            width: 0.5,
+                    // ── Header: back · hairline · step indicator ─────────────
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: _loading
+                              ? null
+                              : () => Navigator.of(context).maybePop(),
+                          behavior: HitTestBehavior.opaque,
+                          child: const Icon(
+                            Icons.arrow_back,
+                            size: 22,
+                            color: AppColors.champagne,
                           ),
                         ),
-                        child: const Icon(
-                          Icons.nightlife,
-                          size: 22,
-                          color: AppTheme.gold,
+                        const SizedBox(width: 14),
+                        const Expanded(child: _GoldHairline()),
+                        const SizedBox(width: 14),
+                        Text(
+                          stepLabel.toUpperCase(),
+                          style: AppTypography.labelSmall.copyWith(
+                            fontSize: 9,
+                            letterSpacing: 0.24 * 9,
+                            color: AppColors.textCaption,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                     const SizedBox(height: 20),
-                    const Text(
-                      'Create Account',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w300,
-                        color: AppTheme.textHigh,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Complete your profile to start your nightlife journey.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textLow,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
 
-                    // ── Role selector ──────────────────────────────────────
+                    // ── Playfair hero title ──────────────────────────────────
+                    Text(
+                      heroTitle,
+                      style: AppTypography.displayMedium.copyWith(
+                        fontSize: 32,
+                        height: 1.05,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // ── Role selector ────────────────────────────────────────
                     _roleSelector(),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 32),
 
-                    // ── Personal Info group ───────────────────────────────
-                    _groupContainer(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _sectionLabel('PERSONAL INFO'),
-                          if (!_isPromoterRole) ...[
-                            DropdownButtonFormField<String>(
-                              initialValue: _selectedTitle,
-                              decoration: const InputDecoration(
-                                labelText: 'Title',
-                                prefixIcon: Icon(Icons.badge_outlined),
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'Mr',
-                                  child: Text('Mr'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Mrs',
-                                  child: Text('Mrs'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Miss',
-                                  child: Text('Miss'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Ms',
-                                  child: Text('Ms'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Dr',
-                                  child: Text('Dr'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Prof',
-                                  child: Text('Prof'),
-                                ),
-                              ],
-                              onChanged: _loading
-                                  ? null
-                                  : (value) {
-                                      if (value != null) {
-                                        setState(
-                                          () => _selectedTitle = value,
-                                        );
-                                      }
-                                    },
+                    // ── Personal Info ────────────────────────────────────────
+                    _section(
+                      label: 'Personal Info',
+                      children: [
+                        if (!_isPromoterRole) ...[
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedTitle,
+                            decoration: const InputDecoration(
+                              labelText: 'Title',
                             ),
-                            _gap(),
-                          ],
+                            items: const [
+                              DropdownMenuItem(value: 'Mr', child: Text('Mr')),
+                              DropdownMenuItem(value: 'Mrs', child: Text('Mrs')),
+                              DropdownMenuItem(
+                                value: 'Miss',
+                                child: Text('Miss'),
+                              ),
+                              DropdownMenuItem(value: 'Ms', child: Text('Ms')),
+                              DropdownMenuItem(value: 'Dr', child: Text('Dr')),
+                              DropdownMenuItem(
+                                value: 'Prof',
+                                child: Text('Prof'),
+                              ),
+                            ],
+                            onChanged: _loading
+                                ? null
+                                : (value) {
+                                    if (value != null) {
+                                      setState(() => _selectedTitle = value);
+                                    }
+                                  },
+                          ),
+                          _gap(),
+                        ],
+                        TextFormField(
+                          controller: _name,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(
+                            labelText: 'Full name',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().length < 2) {
+                              return 'Enter your full name';
+                            }
+                            return null;
+                          },
+                        ),
+                        // Gender + DOB (with 18+ age gate) apply to BOTH User
+                        // and Promoter.
+                        _gap(),
+                        _genderField(),
+                        _gap(),
+                        _dobField(),
+                        if (!_isPromoterRole) ...[
+                          _gap(),
                           TextFormField(
-                            controller: _name,
+                            controller: _instagramId,
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
-                              labelText: 'Full name',
-                              prefixIcon: Icon(Icons.person_outline),
+                              labelText: 'Instagram ID (optional)',
                             ),
-                            validator: (value) {
-                              if (value == null || value.trim().length < 2) {
-                                return 'Enter your full name';
-                              }
-                              return null;
-                            },
                           ),
-                          // Gender + DOB (with 18+ age gate) apply to BOTH User
-                          // and Promoter.
                           _gap(),
-                          _genderField(),
-                          _gap(),
-                          _dobField(),
-                          if (!_isPromoterRole) ...[
-                            _gap(),
-                            TextFormField(
-                              controller: _instagramId,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Instagram ID (optional)',
-                                prefixIcon: Icon(Icons.alternate_email),
-                              ),
+                          TextFormField(
+                            controller: _snapchatId,
+                            textInputAction: TextInputAction.next,
+                            decoration: const InputDecoration(
+                              labelText: 'Snapchat ID (optional)',
                             ),
-                            _gap(),
-                            TextFormField(
-                              controller: _snapchatId,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Snapchat ID (optional)',
-                                prefixIcon: Icon(Icons.camera_alt_outlined),
-                              ),
-                            ),
-                          ],
+                          ),
                         ],
-                      ),
+                      ],
                     ),
 
-                    // ── Business Details group ─────────────────────────────
+                    // ── Business Details (clubAdmin only) ────────────────────
                     if (_isBusinessRole)
-                      _groupContainer(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _sectionLabel('BUSINESS DETAILS'),
-                            TextFormField(
-                              controller: _businessName,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Business / Venue name',
-                                prefixIcon: Icon(Icons.storefront_outlined),
-                              ),
-                              validator: (value) {
-                                if (!_isBusinessRole) return null;
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Business / Venue name is required';
-                                }
-                                return null;
-                              },
-                            ),
-                            _gap(),
-                            TextFormField(
-                              controller: _gstNumber,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'GST number',
-                                prefixIcon: Icon(Icons.receipt_long_outlined),
-                              ),
-                              validator: (value) {
-                                if (!_isBusinessRole) return null;
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'GST number is required';
-                                }
-                                final gstRegex = RegExp(
-                                  r'^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}Z[A-Z\d]{1}$',
-                                );
-                                if (!gstRegex.hasMatch(
-                                  value.trim().toUpperCase(),
-                                )) {
-                                  return 'Enter a valid GST number (e.g. 22AAAAA0000A1Z5)';
-                                }
-                                return null;
-                              },
-                            ),
-                            _gap(),
-                            TextFormField(
-                              controller: _businessPhone,
-                              keyboardType: TextInputType.phone,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Business phone',
-                                prefixIcon: Icon(Icons.call_outlined),
-                              ),
-                              validator: (value) {
-                                if (!_isBusinessRole) return null;
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Phone number is required';
-                                }
-                                final digits = value
-                                    .trim()
-                                    .replaceAll(RegExp(r'[\s\-\+\(\)]'), '');
-                                if (!RegExp(r'^\d+$').hasMatch(digits)) {
-                                  return 'Enter digits only';
-                                }
-                                if (digits.length < 8 || digits.length > 15) {
-                                  return 'Enter a valid phone number';
-                                }
-                                return null;
-                              },
-                            ),
-                            _gap(),
-                            TextFormField(
-                              controller: _businessAddress,
-                              textInputAction: TextInputAction.next,
-                              minLines: 1,
-                              maxLines: 3,
-                              decoration: const InputDecoration(
-                                labelText: 'Business address',
-                                prefixIcon: Icon(Icons.location_on_outlined),
-                              ),
-                              validator: (value) {
-                                if (!_isBusinessRole) return null;
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Business address is required';
-                                }
-                                return null;
-                              },
-                            ),
-                            _gap(),
-                            DropdownButtonFormField<String>(
-                              initialValue: _businessCity,
-                              decoration: const InputDecoration(
-                                labelText: 'City',
-                                prefixIcon: Icon(
-                                  Icons.location_city_outlined,
-                                ),
-                              ),
-                              items: AppConstants.cities
-                                  .where((city) => city != 'All')
-                                  .map(
-                                    (city) => DropdownMenuItem(
-                                      value: city,
-                                      child: Text(city),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: _loading
-                                  ? null
-                                  : (value) {
-                                      if (value != null) {
-                                        setState(
-                                          () => _businessCity = value,
-                                        );
-                                      }
-                                    },
-                            ),
-                            _gap(),
-                            TextFormField(
-                              controller: _businessInstagram,
-                              textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                labelText: 'Instagram link (optional)',
-                                prefixIcon: Icon(Icons.alternate_email),
-                              ),
-                            ),
-                            _gap(),
-                            _ValidIdUploader(
-                              file: _validIdFile,
-                              previewBytes: _validIdBytes,
-                              status: _validIdStatus,
-                              uploading: _uploadingId,
-                              onPick: _loading || _uploadingId
-                                  ? null
-                                  : _pickValidId,
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Document upload is optional right now. If skipped, your document status will be pending upload.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.textLow,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    // ── Account group ──────────────────────────────────────
-                    _groupContainer(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                      _section(
+                        label: 'Business Details',
                         children: [
-                          _sectionLabel('ACCOUNT'),
                           TextFormField(
-                            controller: _email,
-                            keyboardType: TextInputType.emailAddress,
+                            controller: _businessName,
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
-                              labelText: 'Email',
-                              prefixIcon: Icon(Icons.mail_outline),
+                              labelText: 'Business / Venue name',
                             ),
                             validator: (value) {
-                              final email = value?.trim() ?? '';
-                              if (email.isEmpty) return 'Email is required';
-                              final emailRegex = RegExp(
-                                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                              );
-                              if (!emailRegex.hasMatch(email)) {
-                                return 'Enter a valid email address';
+                              if (!_isBusinessRole) return null;
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Business / Venue name is required';
                               }
                               return null;
                             },
                           ),
                           _gap(),
                           TextFormField(
-                            controller: _phone,
+                            controller: _gstNumber,
+                            textInputAction: TextInputAction.next,
+                            decoration: const InputDecoration(
+                              labelText: 'GST number',
+                            ),
+                            validator: (value) {
+                              if (!_isBusinessRole) return null;
+                              if (value == null || value.trim().isEmpty) {
+                                return 'GST number is required';
+                              }
+                              final gstRegex = RegExp(
+                                r'^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}Z[A-Z\d]{1}$',
+                              );
+                              if (!gstRegex.hasMatch(
+                                value.trim().toUpperCase(),
+                              )) {
+                                return 'Enter a valid GST number (e.g. 22AAAAA0000A1Z5)';
+                              }
+                              return null;
+                            },
+                          ),
+                          _gap(),
+                          TextFormField(
+                            controller: _businessPhone,
                             keyboardType: TextInputType.phone,
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
-                              labelText: 'Phone',
-                              prefixIcon: Icon(Icons.call_outlined),
+                              labelText: 'Business phone',
                             ),
                             validator: (value) {
+                              if (!_isBusinessRole) return null;
                               if (value == null || value.trim().isEmpty) {
                                 return 'Phone number is required';
                               }
@@ -834,103 +716,185 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           _gap(),
                           TextFormField(
-                            controller: _password,
-                            obscureText: _hidePassword,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              prefixIcon: const Icon(Icons.lock_outline),
-                              suffixIcon: IconButton(
-                                onPressed: () {
-                                  setState(
-                                    () => _hidePassword = !_hidePassword,
-                                  );
-                                },
-                                icon: Icon(
-                                  _hidePassword
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
-                                ),
-                              ),
+                            controller: _businessAddress,
+                            textInputAction: TextInputAction.next,
+                            minLines: 1,
+                            maxLines: 3,
+                            decoration: const InputDecoration(
+                              labelText: 'Business address',
                             ),
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Password is required';
-                              }
-                              if (value.length < 8) {
-                                return 'Password must be at least 8 characters';
-                              }
-                              if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                                return 'Include at least one uppercase letter';
-                              }
-                              if (!RegExp(r'[0-9]').hasMatch(value)) {
-                                return 'Include at least one number';
+                              if (!_isBusinessRole) return null;
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Business address is required';
                               }
                               return null;
                             },
                           ),
+                          _gap(),
+                          DropdownButtonFormField<String>(
+                            initialValue: _businessCity,
+                            decoration: const InputDecoration(
+                              labelText: 'City',
+                            ),
+                            items: AppConstants.cities
+                                .where((city) => city != 'All')
+                                .map(
+                                  (city) => DropdownMenuItem(
+                                    value: city,
+                                    child: Text(city),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: _loading
+                                ? null
+                                : (value) {
+                                    if (value != null) {
+                                      setState(() => _businessCity = value);
+                                    }
+                                  },
+                          ),
+                          _gap(),
+                          TextFormField(
+                            controller: _businessInstagram,
+                            textInputAction: TextInputAction.next,
+                            decoration: const InputDecoration(
+                              labelText: 'Instagram link (optional)',
+                            ),
+                          ),
+                          _gap(),
+                          _ValidIdUploader(
+                            file: _validIdFile,
+                            previewBytes: _validIdBytes,
+                            status: _validIdStatus,
+                            uploading: _uploadingId,
+                            onPick: _loading || _uploadingId
+                                ? null
+                                : _pickValidId,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Document upload is optional right now. If skipped, '
+                            'your document status will be pending upload.',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textCaption,
+                              fontSize: 12,
+                              height: 1.4,
+                            ),
+                          ),
                         ],
                       ),
-                    ),
 
-                    // ── Submit ─────────────────────────────────────────────
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _loading ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.gold,
-                          disabledBackgroundColor: AppTheme.goldSubtle,
-                          foregroundColor: AppTheme.background,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
+                    // ── Account ──────────────────────────────────────────────
+                    _section(
+                      label: 'Account',
+                      children: [
+                        TextFormField(
+                          controller: _email,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(labelText: 'Email'),
+                          validator: (value) {
+                            final email = value?.trim() ?? '';
+                            if (email.isEmpty) return 'Email is required';
+                            final emailRegex = RegExp(
+                              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                            );
+                            if (!emailRegex.hasMatch(email)) {
+                              return 'Enter a valid email address';
+                            }
+                            return null;
+                          },
                         ),
-                        child: _loading
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFF080809),
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'CREATE ACCOUNT',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 1.0,
-                                ),
+                        _gap(),
+                        TextFormField(
+                          controller: _phone,
+                          keyboardType: TextInputType.phone,
+                          textInputAction: TextInputAction.next,
+                          decoration: const InputDecoration(labelText: 'Phone'),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Phone number is required';
+                            }
+                            final digits = value
+                                .trim()
+                                .replaceAll(RegExp(r'[\s\-\+\(\)]'), '');
+                            if (!RegExp(r'^\d+$').hasMatch(digits)) {
+                              return 'Enter digits only';
+                            }
+                            if (digits.length < 8 || digits.length > 15) {
+                              return 'Enter a valid phone number';
+                            }
+                            return null;
+                          },
+                        ),
+                        _gap(),
+                        TextFormField(
+                          controller: _password,
+                          obscureText: _hidePassword,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                setState(
+                                  () => _hidePassword = !_hidePassword,
+                                );
+                              },
+                              icon: Icon(
+                                _hidePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                size: 18,
+                                color: AppColors.textSecondary,
                               ),
-                      ),
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Password is required';
+                            }
+                            if (value.length < 8) {
+                              return 'Password must be at least 8 characters';
+                            }
+                            if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                              return 'Include at least one uppercase letter';
+                            }
+                            if (!RegExp(r'[0-9]').hasMatch(value)) {
+                              return 'Include at least one number';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
                     ),
 
-                    const SizedBox(height: 22),
+                    // ── Submit — ivory primary, tracked uppercase ────────────
+                    _PrimarySubmitButton(
+                      loading: _loading,
+                      onPressed: _loading ? null : _submit,
+                    ),
 
-                    // ── Bottom login link ──────────────────────────────────
+                    const SizedBox(height: 24),
+
+                    // ── Bottom login link ────────────────────────────────────
                     Center(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
+                          Text(
                             'Already have an account?  ',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppTheme.textLow,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
                             ),
                           ),
                           GestureDetector(
                             onTap: _loading
                                 ? null
                                 : () => Navigator.of(context).pop(),
-                            child: const Text(
+                            child: Text(
                               'Sign In',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.gold,
-                                fontWeight: FontWeight.w500,
+                              style: AppTypography.bodySmall.copyWith(
+                                color: AppColors.champagne,
                               ),
                             ),
                           ),
@@ -940,6 +904,111 @@ class _SignupScreenState extends State<SignupScreen> {
                   ],
                 ),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The signature champagne hairline that fades to transparent.
+class _GoldHairline extends StatelessWidget {
+  const _GoldHairline();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 1,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.champagne.withValues(alpha: 0.5),
+            Colors.transparent,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Design's "Age confirmed — you must be 18 or over." verified chip. Purely
+/// presentational; the real 18+ gate lives in the DOB field validator.
+class _AgeConfirmedChip extends StatelessWidget {
+  const _AgeConfirmedChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppColors.goldWash,
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.verified, size: 16, color: AppColors.champagne),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Age confirmed — you must be 18 or over.',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textBody,
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Ivory primary CTA (design §7): obsidian tracked-uppercase label, crisp
+/// corners, no gradient. Label stays "Create account".
+class _PrimarySubmitButton extends StatelessWidget {
+  const _PrimarySubmitButton({required this.loading, required this.onPressed});
+
+  final bool loading;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: loading
+              ? AppColors.ivory.withValues(alpha: 0.5)
+              : AppColors.ivory,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(4),
+            splashColor: Colors.transparent,
+            highlightColor: AppColors.obsidian.withValues(alpha: 0.08),
+            onTap: onPressed,
+            child: Center(
+              child: loading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: AppColors.obsidian,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      'Create account'.toUpperCase(),
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.obsidian,
+                        letterSpacing: 0.18 * 12,
+                      ),
+                    ),
             ),
           ),
         ),
@@ -982,18 +1051,19 @@ class _ValidIdUploader extends StatelessWidget {
       _ValidIdStatus.uploadFailed => 'Upload failed - try again',
     };
     final statusColor = switch (status) {
-      _ValidIdStatus.uploadedPendingReview => AppTheme.success,
-      _ValidIdStatus.uploadFailed => AppTheme.error,
-      _ValidIdStatus.selected || _ValidIdStatus.uploading => AppTheme.gold,
-      _ValidIdStatus.notSelected => AppTheme.textLow,
+      _ValidIdStatus.uploadedPendingReview => AppColors.champagne,
+      _ValidIdStatus.uploadFailed => AppColors.destructive,
+      _ValidIdStatus.selected || _ValidIdStatus.uploading =>
+        AppColors.champagne,
+      _ValidIdStatus.notSelected => AppColors.textSecondary,
     };
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
+        color: AppColors.surfaceEspresso,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1010,9 +1080,9 @@ class _ValidIdUploader extends StatelessWidget {
               Expanded(
                 child: Text(
                   statusText,
-                  style: const TextStyle(
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textBody,
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -1027,16 +1097,16 @@ class _ValidIdUploader extends StatelessWidget {
                   : status == _ValidIdStatus.uploadFailed
                   ? 'Upload failed. You can retry signup or replace the image.'
                   : 'Selected for upload. This image is not marked valid until reviewed.',
-              style: const TextStyle(
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textCaption,
                 fontSize: 12,
-                color: AppTheme.textLow,
                 height: 1.4,
               ),
             ),
             const SizedBox(height: 8),
             previewBytes != null
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(4),
                     child: Image.memory(
                       previewBytes!,
                       height: 126,
@@ -1049,18 +1119,13 @@ class _ValidIdUploader extends StatelessWidget {
                     child: Center(child: Icon(Icons.image_outlined)),
                   ),
           ],
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: onPick,
-            icon: const Icon(Icons.upload_file_outlined),
-            label: Text(selected ? 'Replace ID image' : 'Choose from gallery'),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppTheme.borderMid, width: 0.5),
-              foregroundColor: AppTheme.textMid,
-              textStyle: const TextStyle(
-                fontSize: 12,
-                letterSpacing: 0.3,
-              ),
+            icon: const Icon(Icons.upload_file_outlined, size: 18),
+            label: Text(
+              (selected ? 'Replace ID image' : 'Choose from gallery')
+                  .toUpperCase(),
             ),
           ),
         ],

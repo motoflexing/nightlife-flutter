@@ -3,7 +3,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
@@ -105,74 +106,82 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
 
         return ListView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
           children: [
-            _SettingsSection(
-              title: 'NOTIFICATIONS',
-              children: [
-                SwitchListTile(
-                  value: pushEnabled,
-                  onChanged: _updatingPush ? null : _togglePush,
-                  activeThumbColor: AppTheme.neonLime,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                  secondary: const Icon(
-                    Icons.notifications_active_outlined,
-                    color: AppTheme.accentPink,
-                  ),
-                  title: const Text(
-                    'Push notifications',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  subtitle: const Text(
-                    'Event reminders, RSVP confirmations, and drop alerts.',
-                    style: TextStyle(color: AppTheme.textMuted, height: 1.25),
-                  ),
-                ),
-              ],
+            Text(
+              'Settings',
+              style: AppTypography.displayMedium.copyWith(fontSize: 30),
             ),
-            const SizedBox(height: 14),
-            _SettingsSection(
-              title: 'LEGAL',
-              children: [
-                _SettingsTile(
-                  icon: Icons.privacy_tip_outlined,
-                  title: 'Privacy Policy',
-                  onTap: () => _openLegalUrl(AppConstants.privacyPolicyUrl),
+            const SizedBox(height: 28),
+
+            // ── Notifications ──────────────────────────────────────────────
+            const _GroupLabel('Notifications'),
+            SwitchListTile(
+              value: pushEnabled,
+              onChanged: _updatingPush ? null : _togglePush,
+              activeThumbColor: AppColors.obsidian,
+              activeTrackColor: AppColors.champagne,
+              inactiveThumbColor: AppColors.textSecondary,
+              inactiveTrackColor: AppColors.surfaceEspresso,
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                'Push notifications',
+                style: AppTypography.bodyLarge.copyWith(
+                  color: AppColors.textHigh,
+                  fontSize: 14,
                 ),
-                const _SettingsDivider(),
-                _SettingsTile(
-                  icon: Icons.description_outlined,
-                  title: 'Terms of Service',
-                  onTap: () => _openLegalUrl(AppConstants.termsOfServiceUrl),
+              ),
+              subtitle: Text(
+                'New nights, RSVPs, and door reminders.',
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textCaption,
+                  height: 1.25,
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 14),
-            _SettingsSection(
-              title: 'ACCOUNT',
-              children: [
-                _SettingsTile(
-                  icon: Icons.password_outlined,
-                  title: 'Change password',
-                  onTap: _changePassword,
-                ),
-                const _SettingsDivider(),
-                _SettingsTile(
-                  icon: Icons.delete_outline,
-                  title: 'Delete account',
-                  destructive: true,
-                  trailing: _deleting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : null,
-                  onTap: _deleting ? null : _deleteAccount,
-                ),
-              ],
+            const _RowHairline(),
+            const SizedBox(height: 26),
+
+            // ── Account ────────────────────────────────────────────────────
+            const _GroupLabel('Account'),
+            _SettingsTile(
+              title: 'Change password',
+              onTap: _changePassword,
             ),
-            const SizedBox(height: 20),
+            const _RowHairline(),
+            _SettingsTile(
+              title: 'Delete account',
+              destructive: true,
+              trailing: _deleting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.destructive,
+                      ),
+                    )
+                  : null,
+              onTap: _deleting ? null : _deleteAccount,
+            ),
+            const _RowHairline(),
+            const SizedBox(height: 26),
+
+            // ── Legal ──────────────────────────────────────────────────────
+            const _GroupLabel('Legal'),
+            _SettingsTile(
+              title: 'Privacy Policy',
+              trailingIcon: Icons.north_east,
+              onTap: () => _openLegalUrl(AppConstants.privacyPolicyUrl),
+            ),
+            const _RowHairline(),
+            _SettingsTile(
+              title: 'Terms of Service',
+              trailingIcon: Icons.north_east,
+              onTap: () => _openLegalUrl(AppConstants.termsOfServiceUrl),
+            ),
+            const _RowHairline(),
+            const SizedBox(height: 32),
             const _AboutFooter(),
           ],
         );
@@ -181,84 +190,69 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
   }
 }
 
-class _SettingsSection extends StatelessWidget {
-  const _SettingsSection({required this.title, required this.children});
+// ─── Tracked uppercase group label ─────────────────────────────────────────────
 
-  final String title;
-  final List<Widget> children;
+class _GroupLabel extends StatelessWidget {
+  const _GroupLabel(this.text);
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.elevated.withValues(alpha: 0.62),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 13, 14, 8),
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: AppTheme.neonLime,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          ...children,
-        ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        text.toUpperCase(),
+        style: AppTypography.labelSmall.copyWith(
+          fontSize: 10,
+          letterSpacing: 0.26 * 10,
+          color: AppColors.textCaption,
+        ),
       ),
     );
   }
 }
 
-class _SettingsDivider extends StatelessWidget {
-  const _SettingsDivider();
+class _RowHairline extends StatelessWidget {
+  const _RowHairline();
 
   @override
   Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      indent: 56,
-      endIndent: 14,
-      color: AppTheme.glassBorder.withValues(alpha: 0.75),
-    );
+    return const Divider(height: 1, thickness: 1, color: AppColors.goldBorder);
   }
 }
 
 class _SettingsTile extends StatelessWidget {
   const _SettingsTile({
-    required this.icon,
     required this.title,
     required this.onTap,
     this.destructive = false,
     this.trailing,
+    this.trailingIcon,
   });
 
-  final IconData icon;
   final String title;
   final VoidCallback? onTap;
   final bool destructive;
   final Widget? trailing;
+  final IconData? trailingIcon;
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive ? AppTheme.error : AppTheme.accentPink;
+    final color = destructive ? AppColors.destructive : AppColors.textBody;
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-      leading: Icon(icon, color: color),
+      contentPadding: EdgeInsets.zero,
       title: Text(
         title,
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          color: destructive ? AppTheme.error : null,
-        ),
+        style: AppTypography.bodyMedium.copyWith(color: color),
       ),
-      trailing: trailing ?? const Icon(Icons.chevron_right),
+      trailing:
+          trailing ??
+          Icon(
+            trailingIcon ?? Icons.chevron_right,
+            color: destructive ? AppColors.destructive : AppColors.textSecondary,
+            size: trailingIcon == null ? 20 : 18,
+          ),
       onTap: onTap,
     );
   }
@@ -279,19 +273,17 @@ class _AboutFooter extends StatelessWidget {
                 ? ''
                 : 'Version ${info.version} (${info.buildNumber})';
             return Text(
-              version,
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
+              version.toUpperCase(),
+              style: AppTypography.labelSmall.copyWith(fontSize: 10),
             );
           },
         ),
-        const SizedBox(height: 4),
-        const Text(
+        const SizedBox(height: 6),
+        Text(
           'Made with ❤️ for nightlife',
-          style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textCaption,
+          ),
         ),
       ],
     );

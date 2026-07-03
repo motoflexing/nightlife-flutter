@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/app_user.dart';
 import '../../models/rsvp.dart';
 import '../../services/firestore_service.dart';
-import '../../widgets/compact_ui.dart';
 import '../../widgets/state_views.dart';
 
 class MyRsvpsScreen extends StatelessWidget {
@@ -35,7 +35,6 @@ class MyRsvpsScreen extends StatelessWidget {
           );
         }
 
-        final approved = rsvps.where((r) => r.status == 'approved').toList();
         final upcoming = rsvps
             .where(
               (r) =>
@@ -54,13 +53,13 @@ class MyRsvpsScreen extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: _SummaryCard(
-                  total: rsvps.length,
-                  approved: approved.length,
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                child: Text(
+                  'Your RSVPs',
+                  style: AppTypography.displayMedium.copyWith(fontSize: 30),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               const _RsvpTabs(),
               Expanded(
                 child: TabBarView(
@@ -89,21 +88,25 @@ class _RsvpTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TabBar(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      indicatorColor: AppTheme.accentPink,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      indicatorColor: AppColors.champagne,
       indicatorSize: TabBarIndicatorSize.label,
-      labelColor: AppTheme.accentPink,
-      unselectedLabelColor: AppTheme.textMuted,
-      dividerColor: Colors.white.withValues(alpha: 0.08),
-      labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
-      unselectedLabelStyle: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
+      indicatorWeight: 1.5,
+      labelColor: AppColors.textHigh,
+      unselectedLabelColor: AppColors.textCaption,
+      dividerColor: AppColors.goldBorder,
+      labelStyle: AppTypography.labelSmall.copyWith(
+        fontSize: 11,
+        letterSpacing: 0.1 * 11,
+      ),
+      unselectedLabelStyle: AppTypography.labelSmall.copyWith(
+        fontSize: 11,
+        letterSpacing: 0.1 * 11,
       ),
       tabs: const [
-        Tab(text: 'Upcoming'),
-        Tab(text: 'Past'),
-        Tab(text: 'Cancelled'),
+        Tab(text: 'UPCOMING'),
+        Tab(text: 'PAST'),
+        Tab(text: 'CANCELLED'),
       ],
     );
   }
@@ -127,89 +130,10 @@ class _RsvpList extends StatelessWidget {
 
     return ListView.separated(
       physics: const BouncingScrollPhysics(),
-      padding: compactScreenPadding(context, bottom: 112).copyWith(top: 14),
-      itemCount: rsvps.length + 1,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        if (index == rsvps.length) return const _RsvpPromoCard();
-        return _RsvpTile(rsvp: rsvps[index]);
-      },
-    );
-  }
-}
-
-class _RsvpPromoCard extends StatelessWidget {
-  const _RsvpPromoCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surface.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.accentPink.withValues(alpha: 0.18)),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.workspace_premium, color: AppTheme.accentPink),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Want Faster Entry?',
-                  style: TextStyle(fontWeight: FontWeight.w900),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  'Get Premium & skip the lines',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: AppTheme.paidAccent),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.total, required this.approved});
-
-  final int total;
-  final int approved;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.glassSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.confirmation_number_outlined,
-            color: AppTheme.accentPink,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              '$total RSVPs tracked',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
-            ),
-          ),
-          _StatusChip(label: '$approved approved', status: 'approved'),
-        ],
-      ),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 112),
+      itemCount: rsvps.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 14),
+      itemBuilder: (context, index) => _RsvpTile(rsvp: rsvps[index]),
     );
   }
 }
@@ -222,30 +146,29 @@ class _RsvpTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.surface.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 74,
-            height: 74,
+            width: 72,
+            height: 72,
             decoration: BoxDecoration(
-              color: AppTheme.elevated,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              color: AppColors.surfaceEspresso,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: AppColors.goldBorder, width: 1),
             ),
             child: const Icon(
-              Icons.confirmation_number,
-              color: AppTheme.accentPink,
-              size: 28,
+              Icons.local_activity_outlined,
+              color: AppColors.champagne,
+              size: 26,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,40 +177,24 @@ class _RsvpTile extends StatelessWidget {
                   rsvp.eventTitle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+                  style: AppTypography.titleMedium.copyWith(fontSize: 16),
                 ),
-                const SizedBox(height: 5),
                 const SizedBox(height: 5),
                 Text(
                   Formatters.eventDate(rsvp.createdAt),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textCaption,
                     fontSize: 12,
-                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 _StatusChip(
                   label: Formatters.titleCase(rsvp.status),
                   status: rsvp.status,
                 ),
               ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: AppTheme.accentPink.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.local_activity,
-              color: AppTheme.accentPink,
-              size: 18,
             ),
           ),
         ],
@@ -304,25 +211,25 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (status) {
-      'approved' => AppTheme.neonLime,
-      'rejected' => AppTheme.neonPink,
-      'cancelled' => AppTheme.neonPink,
-      _ => AppTheme.neonCyan,
-    };
+    // Single-accent Nocturne palette: positive states in champagne, negative
+    // (rejected/cancelled) in destructive red.
+    final destructive = status == 'rejected' || status == 'cancelled';
+    final color = destructive ? AppColors.destructive : AppColors.champagne;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.13),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        color: destructive
+            ? AppColors.destructive.withValues(alpha: 0.12)
+            : AppColors.goldWash,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: color, width: 1),
       ),
       child: Text(
-        label,
-        style: TextStyle(
+        label.toUpperCase(),
+        style: AppTypography.labelSmall.copyWith(
+          fontSize: 10,
+          letterSpacing: 0.14 * 10,
           color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
         ),
       ),
     );

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../models/app_user.dart';
 import '../../models/event.dart';
 import '../../services/app_preferences_service.dart';
 import '../../services/event_discovery_service.dart';
 import '../../services/explore_filter_request.dart';
 import '../../services/firestore_service.dart';
-import '../../widgets/compact_ui.dart';
 import '../../widgets/event_card.dart';
 import '../../widgets/state_views.dart';
 import 'event_details_screen.dart';
@@ -163,81 +163,80 @@ class _ExploreScreenState extends State<ExploreScreen> {
           category: _genre,
         );
         final events = _filterByShortcut(filteredEvents);
+        final activeCollection = _activeCollectionLabel();
 
         return ListView(
           physics: const BouncingScrollPhysics(),
-          padding: compactScreenPadding(context, bottom: 28),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
           children: [
-            _ExploreHeader(count: events.length),
-            const SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              initialValue: _city,
-              decoration: const InputDecoration(
-                labelText: 'City',
-                prefixIcon: Icon(Icons.location_on_outlined),
-              ),
-              items: AppConstants.cities
-                  .map(
-                    (city) => DropdownMenuItem(value: city, child: Text(city)),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                if (value == null) return;
+            // Playfair screen title.
+            Text(
+              'Explore',
+              style: AppTypography.displayMedium.copyWith(fontSize: 30),
+            ),
+            const SizedBox(height: 28),
+
+            // ── City (pill row, backed by AppConstants.cities) ─────────────
+            const _FilterGroupLabel('City'),
+            _CityChips(
+              selected: _city,
+              onSelected: (value) {
                 setState(() => _city = value);
                 AppPreferencesService.instance.saveSelectedCity(value);
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 26),
+
+            // ── Music (gold pills → filterEvents category) ─────────────────
+            const _FilterGroupLabel('Music'),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 9,
+              runSpacing: 9,
               children: _genres.map((genre) {
-                return FilterChip(
+                return _GoldPillChip(
+                  label: genre,
                   selected: _genre == genre,
-                  label: Text(genre),
-                  onSelected: (_) => setState(() {
+                  onTap: () => setState(() {
                     _genre = _genre == genre ? null : genre;
                   }),
                 );
               }).toList(),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 26),
+
+            // ── Collections (shortcut filters) ─────────────────────────────
+            const _FilterGroupLabel('Collections'),
             _CollectionsStrip(
               selectedShortcut: _shortcut,
               onShortcutTap: _toggleShortcut,
             ),
-            if (_activeCollectionLabel() != null) ...[
-              const SizedBox(height: 10),
+
+            // Save the active filter as a Collection (real saveCollection path).
+            if (activeCollection != null) ...[
+              const SizedBox(height: 14),
               Align(
                 alignment: Alignment.centerLeft,
                 child: OutlinedButton.icon(
                   onPressed: _saveCurrentCollection,
                   icon: const Icon(Icons.bookmark_add_outlined, size: 18),
-                  label: Text('Save "${_activeCollectionLabel()}"'),
+                  label: Text('Save "$activeCollection"'.toUpperCase()),
                 ),
               ),
             ],
-            const SizedBox(height: 14),
-            const Text(
-              'ALL EVENTS',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.textLow,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 28),
+
+            // ── Results ────────────────────────────────────────────────────
+            _SectionEyebrow('${events.length} Nights'),
             if (events.isEmpty)
               const EmptyView(
-                title: 'No events in this filter',
-                message: 'Try another city or music vibe.',
+                title: 'Nothing yet',
+                message: 'Try another city or sound. The night is young.',
                 icon: Icons.explore_off_outlined,
               )
             else
               ...events.map(
                 (event) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: 14),
                   child: EventCard(
                     event: event,
                     compact: true,
@@ -302,56 +301,60 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 }
 
-class _ExploreHeader extends StatelessWidget {
-  const _ExploreHeader({required this.count});
+// ─── Filter group label (tracked uppercase eyebrow) ────────────────────────────
 
-  final int count;
+class _FilterGroupLabel extends StatelessWidget {
+  const _FilterGroupLabel(this.text);
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        text.toUpperCase(),
+        style: AppTypography.labelSmall.copyWith(
+          fontSize: 10,
+          letterSpacing: 0.26 * 10,
+          color: AppColors.textCaption,
+        ),
       ),
+    );
+  }
+}
+
+// ─── Section eyebrow (label + trailing gold hairline) ──────────────────────────
+
+class _SectionEyebrow extends StatelessWidget {
+  const _SectionEyebrow(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: AppTheme.goldSubtle,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.goldBorder, width: 1),
+          Text(
+            label.toUpperCase(),
+            style: AppTypography.labelLarge.copyWith(
+              color: AppColors.champagne,
             ),
-            child: const Icon(Icons.explore_outlined, color: AppTheme.gold),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$count',
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w300,
-                    color: AppTheme.textHigh,
-                    letterSpacing: -0.5,
-                  ),
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.champagne.withValues(alpha: 0.5),
+                    Colors.transparent,
+                  ],
                 ),
-                const Text(
-                  'NIGHTS MATCHING YOUR FILTERS',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppTheme.textLow,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
@@ -359,6 +362,78 @@ class _ExploreHeader extends StatelessWidget {
     );
   }
 }
+
+// ─── Gold pill chip (champagne-fill selected / gold-outline unselected) ────────
+
+class _GoldPillChip extends StatelessWidget {
+  const _GoldPillChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppColors.champagne : Colors.transparent,
+      borderRadius: BorderRadius.circular(100),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(100),
+        splashColor: AppColors.goldWash,
+        highlightColor: AppColors.goldWash,
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(100),
+            border: Border.all(
+              color: selected ? AppColors.champagne : AppColors.textDisabled,
+              width: 1,
+            ),
+          ),
+          child: Text(
+            label.toUpperCase(),
+            style: AppTypography.labelSmall.copyWith(
+              fontSize: 10,
+              letterSpacing: 0.12 * 10,
+              color: selected ? AppColors.obsidian : AppColors.textBody,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── City chips (real cities from AppConstants) ────────────────────────────────
+
+class _CityChips extends StatelessWidget {
+  const _CityChips({required this.selected, required this.onSelected});
+
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 9,
+      runSpacing: 9,
+      children: AppConstants.cities.map((city) {
+        return _GoldPillChip(
+          label: city,
+          selected: selected == city,
+          onTap: () => onSelected(city),
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ─── Collections strip (shortcut filters, unchanged logic) ─────────────────────
 
 class _CollectionsStrip extends StatelessWidget {
   const _CollectionsStrip({
@@ -372,29 +447,32 @@ class _CollectionsStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 82,
+      height: 92,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _ExploreShortcut.values.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final shortcut = _ExploreShortcut.values[index];
           final selected = selectedShortcut == shortcut;
           return Material(
-            color: Colors.transparent,
+            color: selected ? AppColors.goldWash : AppColors.surfaceEspresso,
+            borderRadius: BorderRadius.circular(4),
             child: InkWell(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(4),
+              splashColor: AppColors.goldWash,
+              highlightColor: AppColors.goldWash,
               onTap: () => onShortcutTap(shortcut),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                width: 140,
-                padding: const EdgeInsets.all(10),
+              child: Container(
+                width: 150,
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: selected ? AppTheme.goldSubtle : AppTheme.card,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(4),
                   border: Border.all(
-                    color: selected ? AppTheme.gold : AppTheme.borderSubtle,
-                    width: 0.5,
+                    color: selected
+                        ? AppColors.champagne
+                        : AppColors.goldBorder,
+                    width: 1,
                   ),
                 ),
                 child: Column(
@@ -402,16 +480,19 @@ class _CollectionsStrip extends StatelessWidget {
                   children: [
                     Icon(
                       shortcut.icon,
-                      color: selected ? AppTheme.gold : AppTheme.textMid,
+                      size: 22,
+                      color: selected
+                          ? AppColors.champagne
+                          : AppColors.textSecondary,
                     ),
                     const Spacer(),
                     Text(
                       shortcut.label,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: selected ? AppTheme.gold : AppTheme.textHigh,
-                        letterSpacing: 0.2,
+                      style: AppTypography.titleMedium.copyWith(
+                        fontSize: 14,
+                        color: selected
+                            ? AppColors.champagne
+                            : AppColors.textHigh,
                       ),
                     ),
                   ],

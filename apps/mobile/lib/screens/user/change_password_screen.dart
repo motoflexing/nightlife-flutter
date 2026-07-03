@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/neon_scaffold.dart';
 
@@ -111,8 +113,16 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
             children: [
+              Text(
+                'Change\npassword',
+                style: AppTypography.displayMedium.copyWith(
+                  fontSize: 30,
+                  height: 1.05,
+                ),
+              ),
+              const SizedBox(height: 32),
               _PasswordField(
                 controller: _current,
                 label: 'Current password',
@@ -122,7 +132,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     ? 'Enter your current password.'
                     : null,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 24),
               _PasswordField(
                 controller: _next,
                 label: 'New password',
@@ -130,7 +140,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 onToggle: () => setState(() => _hideNext = !_hideNext),
                 validator: _validateNew,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 24),
               _PasswordField(
                 controller: _confirm,
                 label: 'Confirm new password',
@@ -139,16 +149,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 validator: _validateConfirm,
                 onSubmitted: (_) => _submit(),
               ),
-              const SizedBox(height: 22),
-              ElevatedButton(
+              const SizedBox(height: 32),
+              _PrimaryButton(
+                label: 'Update password',
+                loading: _saving,
                 onPressed: _saving ? null : _submit,
-                child: _saving
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Update password'),
               ),
             ],
           ),
@@ -180,18 +185,80 @@ class _PasswordField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
+      style: AppTypography.bodyLarge.copyWith(color: AppColors.textHigh),
       textInputAction:
           onSubmitted == null ? TextInputAction.next : TextInputAction.done,
       onFieldSubmitted: onSubmitted,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: const Icon(Icons.lock_outline),
         suffixIcon: IconButton(
-          icon: Icon(obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+          icon: Icon(
+            obscure
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined,
+            size: 18,
+            color: AppColors.textSecondary,
+          ),
           onPressed: onToggle,
         ),
       ),
       validator: validator,
+    );
+  }
+}
+
+/// Ivory primary button (design §7).
+class _PrimaryButton extends StatelessWidget {
+  const _PrimaryButton({
+    required this.label,
+    required this.loading,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool loading;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: onPressed == null
+              ? AppColors.ivory.withValues(alpha: 0.5)
+              : AppColors.ivory,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(4),
+            splashColor: Colors.transparent,
+            highlightColor: AppColors.obsidian.withValues(alpha: 0.08),
+            onTap: onPressed,
+            child: Center(
+              child: loading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: AppColors.obsidian,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      label.toUpperCase(),
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.obsidian,
+                        letterSpacing: 0.16 * 12,
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
