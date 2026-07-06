@@ -1,12 +1,12 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/app_user.dart';
 import '../../models/event.dart';
@@ -19,24 +19,11 @@ import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 import 'promoter_profile_screen.dart';
 
-// --- Promoter dashboard design tokens ---------------------------------------
-// The shared AppTheme currently maps neonViolet/accentPink to gold. The new
-// promoter visual spec calls for a deep-violet primary with a restrained pink
-// accent, so these tokens are scoped locally to this screen to avoid changing
-// the global theme (which other screens depend on).
-const Color _kViolet = Color(0xFF6321D6); // primary deep violet
-const Color _kVioletBright = Color(0xFF7C3AED); // gradient highlight
-const Color _kPink = Color(0xFFF2479A); // restrained pink accent
-const Color _kActiveGreen = Color(0xFF38E1A0); // ACTIVE badge / live dot
-const Color _kBackdropTop = Color(0xFF0A0712); // dark nightlife base
-const Color _kBackdropMid = Color(0xFF120A1F);
-const Color _kPanel = Color(0xFF14101F); // glass panel fill
-
-const LinearGradient _kShareGradient = LinearGradient(
-  colors: [_kViolet, _kVioletBright, _kPink],
-  begin: Alignment.centerLeft,
-  end: Alignment.centerRight,
-);
+// --- Promoter dashboard visual language -------------------------------------
+// Nocturne (DESIGN_TOKENS.md): obsidian canvas, champagne gold as the single
+// accent, ivory text at opacity, Playfair figures, tracked uppercase labels,
+// gold hairlines. No violet/pink neon, no glass glow. All colour comes from the
+// shared AppColors tokens — no raw hex in this screen.
 
 class PromoterDashboardScreen extends StatelessWidget {
   const PromoterDashboardScreen({super.key, required this.currentUser});
@@ -165,7 +152,6 @@ class _PromoterContentState extends State<_PromoterContent> {
 
             return Stack(
               children: [
-                const Positioned.fill(child: _PremiumMobileBackdrop()),
                 SafeArea(
                   bottom: false,
                   child: IndexedStack(
@@ -230,8 +216,8 @@ class _PromoterContentState extends State<_PromoterContent> {
     bool loading,
   ) {
     return RefreshIndicator(
-      color: AppTheme.neonViolet,
-      backgroundColor: AppTheme.surface,
+      color: AppColors.champagne,
+      backgroundColor: AppColors.espresso,
       onRefresh: _refresh,
       child: CustomScrollView(
         controller: _scrollController,
@@ -243,139 +229,137 @@ class _PromoterContentState extends State<_PromoterContent> {
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 112),
             sliver: SliverList.list(
               children: [
-                              _MobileHeader(
-                                name: snapshot.promoterName,
-                                onMenu: () => _showPromoterProfile(
-                                  context,
-                                  widget.promoter,
-                                  widget.currentUser,
-                                ),
-                                onProfile: () => _showPromoterProfile(
-                                  context,
-                                  widget.promoter,
-                                  widget.currentUser,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              // Focal point: real referral code + share.
-                              if (loading)
-                                const _HeroSkeleton()
-                              else
-                                _ReferralHeroCard(
-                                  referralCode: widget.promoter.referralCode
-                                      .trim(),
-                                  referralLink: snapshot.referralLink,
-                                  isActive: widget.promoter.isActive,
-                                  onCopy: () => _copy(
-                                    context,
-                                    widget.promoter.referralCode.trim(),
-                                    message: 'Referral code copied',
-                                  ),
-                                  onShare: () =>
-                                      _shareReferral(snapshot.referralLink),
-                                ),
-                              const SizedBox(height: 14),
-                              // Real RSVP-derived counts only — no earnings.
-                              _StatCardRow(stats: stats),
-                              const SizedBox(height: 18),
-                              if (loading)
-                                const _HeroSkeleton()
-                              else
-                                _ImpactHeroCard(snapshot: snapshot),
-                              const SizedBox(height: 18),
-                              _QuickActionGrid(
-                                onReferralLinks: () => _copy(
-                                  context,
-                                  snapshot.referralLink,
-                                  message: 'Referral link copied',
-                                ),
-                                onEvents: () => _selectTab(1),
-                                onRsvps: () => _selectTab(2),
-                              ),
-                              const SizedBox(height: 22),
-                              _SectionTitle(
-                                title: "Today's Performance",
-                                trailing: 'Swipe',
-                              ),
-                              const SizedBox(height: 10),
-                              _TodayPerformanceStrip(snapshot: snapshot),
-                              const SizedBox(height: 22),
-                              KeyedSubtree(
-                                key: _eventsKey,
-                                child: const _SectionTitle(
-                                  title: 'Top Performing Events',
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              if (loading)
-                                const _EventSkeletonList()
-                              else if (events.isEmpty)
-                                _MobileEmptyState(
-                                  icon: Icons.local_activity_outlined,
-                                  title: 'No events to promote yet',
-                                  message:
-                                      'When venues publish active events, your share cards will appear here.',
-                                  actionLabel: 'Copy general link',
-                                  onAction: () => _copy(
-                                    context,
-                                    snapshot.referralLink,
-                                    message: 'Referral link copied',
-                                  ),
-                                )
-                              else
-                                ...snapshot.topEvents.map(
-                                  (item) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 14),
-                                    child: _TopEventCard(
-                                      item: item,
-                                      onCopy: () => _copy(
-                                        context,
-                                        _eventReferralLink(
-                                          item.event,
-                                          widget.promoter.referralCode.trim(),
-                                        ),
-                                        message: 'Event link copied',
-                                      ),
-                                      onShare: () => _shareEvent(
-                                        _eventReferralLink(
-                                          item.event,
-                                          widget.promoter.referralCode.trim(),
-                                        ),
-                                        item.event,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              const SizedBox(height: 8),
-                              KeyedSubtree(
-                                key: _activityKey,
-                                child: const _SectionTitle(
-                                  title: 'Recent Activity',
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              if (loading)
-                                const _ActivitySkeletonList()
-                              else if (snapshot.activities.isEmpty)
-                                _MobileEmptyState(
-                                  icon: Icons.bolt_outlined,
-                                  title: 'No activity yet',
-                                  message:
-                                      'Share a link and fresh RSVP activity will start showing up here.',
-                                  actionLabel: 'Copy referral link',
-                                  onAction: () => _copy(
-                                    context,
-                                    snapshot.referralLink,
-                                    message: 'Referral link copied',
-                                  ),
-                                )
-                              else
-                                ...snapshot.activities.map(
-                                  (activity) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 10),
-                                    child: _ActivityCard(activity: activity),
-                                  ),
-                                ),
+                _MobileHeader(
+                  name: snapshot.promoterName,
+                  onMenu: () => _showPromoterProfile(
+                    context,
+                    widget.promoter,
+                    widget.currentUser,
+                  ),
+                  onProfile: () => _showPromoterProfile(
+                    context,
+                    widget.promoter,
+                    widget.currentUser,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Focal point: real referral code + share.
+                if (loading)
+                  const _HeroSkeleton()
+                else
+                  _ReferralHeroCard(
+                    referralCode: widget.promoter.referralCode.trim(),
+                    referralLink: snapshot.referralLink,
+                    isActive: widget.promoter.isActive,
+                    onCopy: () => _copy(
+                      context,
+                      widget.promoter.referralCode.trim(),
+                      message: 'Referral code copied',
+                    ),
+                    onShare: () => _shareReferral(snapshot.referralLink),
+                  ),
+                const SizedBox(height: 14),
+                // Real RSVP-derived counts only — no earnings.
+                _StatCardRow(stats: stats),
+                const SizedBox(height: 18),
+                if (loading)
+                  const _HeroSkeleton()
+                else
+                  _ImpactHeroCard(snapshot: snapshot),
+                const SizedBox(height: 18),
+                _QuickActionGrid(
+                  onReferralLinks: () => _copy(
+                    context,
+                    snapshot.referralLink,
+                    message: 'Referral link copied',
+                  ),
+                  onEvents: () => _selectTab(1),
+                  onRsvps: () => _selectTab(2),
+                ),
+                const SizedBox(height: 22),
+                _SectionTitle(
+                  title: "Today's Performance",
+                  trailing: 'Swipe',
+                ),
+                const SizedBox(height: 10),
+                _TodayPerformanceStrip(snapshot: snapshot),
+                const SizedBox(height: 22),
+                KeyedSubtree(
+                  key: _eventsKey,
+                  child: const _SectionTitle(
+                    title: 'Top Performing Events',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (loading)
+                  const _EventSkeletonList()
+                else if (events.isEmpty)
+                  _MobileEmptyState(
+                    icon: Icons.local_activity_outlined,
+                    title: 'No events to promote yet',
+                    message:
+                        'When venues publish active events, your share cards will appear here.',
+                    actionLabel: 'Copy general link',
+                    onAction: () => _copy(
+                      context,
+                      snapshot.referralLink,
+                      message: 'Referral link copied',
+                    ),
+                  )
+                else
+                  ...snapshot.topEvents.map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: _TopEventCard(
+                        item: item,
+                        onCopy: () => _copy(
+                          context,
+                          _eventReferralLink(
+                            item.event,
+                            widget.promoter.referralCode.trim(),
+                          ),
+                          message: 'Event link copied',
+                        ),
+                        onShare: () => _shareEvent(
+                          _eventReferralLink(
+                            item.event,
+                            widget.promoter.referralCode.trim(),
+                          ),
+                          item.event,
+                        ),
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                KeyedSubtree(
+                  key: _activityKey,
+                  child: const _SectionTitle(
+                    title: 'Recent Activity',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (loading)
+                  const _ActivitySkeletonList()
+                else if (snapshot.activities.isEmpty)
+                  _MobileEmptyState(
+                    icon: Icons.bolt_outlined,
+                    title: 'No activity yet',
+                    message:
+                        'Share a link and fresh RSVP activity will start showing up here.',
+                    actionLabel: 'Copy referral link',
+                    onAction: () => _copy(
+                      context,
+                      snapshot.referralLink,
+                      message: 'Referral link copied',
+                    ),
+                  )
+                else
+                  ...snapshot.activities.map(
+                    (activity) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _ActivityCard(activity: activity),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -583,7 +567,7 @@ class _DashboardSnapshot {
             subtitle: 'For $eventTitle',
             value: Formatters.titleCase(rsvp.status),
             time: _relativeTime(rsvp.createdAt),
-            accent: approved ? AppTheme.neonLime : AppTheme.neonViolet,
+            approved: approved,
           );
         })
         .toList(growable: false);
@@ -614,7 +598,7 @@ class _ActivityItem {
     required this.subtitle,
     required this.value,
     required this.time,
-    required this.accent,
+    required this.approved,
   });
 
   final IconData icon;
@@ -622,7 +606,10 @@ class _ActivityItem {
   final String subtitle;
   final String value;
   final String time;
-  final Color accent;
+
+  /// Approved/confirmed RSVPs read at full champagne emphasis; still-pending
+  /// ones use the low-emphasis ivory tone. Single-accent Nocturne palette.
+  final bool approved;
 }
 
 /// EVENTS TAB — the promoter's core tool. Lists ALL active events (from the
@@ -701,21 +688,21 @@ class _PromoterEventsTabState extends State<_PromoterEventsTab> {
       ),
       children: [
         const _TabTitle(
-          title: 'Events to promote',
-          subtitle: 'Share any event with your code attached.',
+          title: 'Active Nights',
+          subtitle: 'Share any night with your code attached.',
         ),
         const SizedBox(height: 14),
         _SearchField(
           controller: _searchController,
-          hint: 'Search events or venues',
+          hint: 'Search title or venue',
           onChanged: (value) => setState(() => _query = value),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         _CityFilterChips(
           selected: _city,
           onSelected: (city) => setState(() => _city = city),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         if (widget.loading)
           const _EventSkeletonList()
         else if (widget.events.isEmpty)
@@ -748,8 +735,9 @@ class _PromoterEventsTabState extends State<_PromoterEventsTab> {
   }
 }
 
-/// A single shareable event card for the Events tab: real poster, title, venue,
-/// date, plus Copy + Share (per-event referral link) actions.
+/// A single shareable event card for the Events tab: real poster, tracked
+/// eyebrow, Playfair title, venue, date, plus Copy + Share (per-event referral
+/// link) actions.
 class _PromoterEventCard extends StatelessWidget {
   const _PromoterEventCard({
     required this.event,
@@ -769,16 +757,16 @@ class _PromoterEventCard extends StatelessWidget {
     final venueLine = [
       if (venue.isNotEmpty) venue,
       if (city.isNotEmpty) city,
-    ].join(' • ');
+    ].join(' · ');
 
-    return _GlassPanel(
+    return _Panel(
       padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AspectRatio(
             aspectRatio: 1.72,
-            child: EventPoster(event: event, borderRadius: 8),
+            child: EventPoster(event: event, borderRadius: 4),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -789,11 +777,7 @@ class _PromoterEventCard extends StatelessWidget {
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: AppTypography.headlineMedium.copyWith(fontSize: 18),
                 ),
                 if (venueLine.isNotEmpty) ...[
                   const SizedBox(height: 4),
@@ -801,20 +785,18 @@ class _PromoterEventCard extends StatelessWidget {
                     venueLine,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textCaption,
                     ),
                   ),
                 ],
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     const Icon(
                       Icons.event_outlined,
                       size: 14,
-                      color: AppTheme.textMuted,
+                      color: AppColors.textSecondary,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
@@ -822,10 +804,9 @@ class _PromoterEventCard extends StatelessWidget {
                         Formatters.eventDate(event.dateTime),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppTheme.textMuted,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textCaption,
                           fontSize: 12,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -843,8 +824,8 @@ class _PromoterEventCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _GlowButton(
-                        icon: Icons.send_rounded,
+                      child: _PrimaryButton(
+                        icon: Icons.ios_share_rounded,
                         label: 'Share',
                         onPressed: onShare,
                       ),
@@ -898,7 +879,7 @@ class _PromoterActivityTab extends StatelessWidget {
         padding: padding,
         children: const [
           _TabTitle(
-            title: 'RSVP activity',
+            title: 'Activity',
             subtitle: 'Every RSVP driven by your referral code.',
           ),
           SizedBox(height: 14),
@@ -915,23 +896,23 @@ class _PromoterActivityTab extends StatelessWidget {
         ),
         children: [
           const _TabTitle(
-            title: 'RSVP activity',
+            title: 'Activity',
             subtitle: 'Every RSVP driven by your referral code.',
           ),
           const SizedBox(height: 24),
           const EmptyView(
-            title: 'No RSVPs yet',
-            message: 'Share your events to get started — RSVPs from your '
-                'referral code will show up here.',
-            icon: Icons.fact_check_outlined,
+            title: 'Your code is ready to work',
+            message: 'The moment someone RSVPs with your code, it lands here. '
+                'Share it and watch the room fill.',
+            icon: Icons.bolt_outlined,
           ),
           const SizedBox(height: 14),
           Center(
             child: SizedBox(
-              width: 220,
-              child: _GlowButton(
-                icon: Icons.send_rounded,
-                label: 'Share referral link',
+              width: 240,
+              child: _PrimaryButton(
+                icon: Icons.ios_share_rounded,
+                label: 'Share your code',
                 onPressed: onShareReferral,
               ),
             ),
@@ -951,7 +932,7 @@ class _PromoterActivityTab extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(bottom: 14),
             child: _TabTitle(
-              title: 'RSVP activity',
+              title: 'Activity',
               subtitle: '${rsvps.length} total from your referral code.',
             ),
           );
@@ -980,28 +961,15 @@ class _RsvpActivityRow extends StatelessWidget {
         : rsvp.eventTitle.trim();
     final status = rsvp.status.toLowerCase();
     final approved = status == 'approved' || status == 'confirmed';
-    final accent = approved ? _kActiveGreen : _kViolet;
 
-    return _GlassPanel(
+    return _Panel(
       padding: const EdgeInsets.all(12),
-      glow: accent.withValues(alpha: 0.12),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.13),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: accent.withValues(alpha: 0.35)),
-            ),
-            child: Icon(
-              approved
-                  ? Icons.verified_outlined
-                  : Icons.check_circle_outline,
-              color: accent,
-              size: 22,
-            ),
+          _RoundIcon(
+            icon: approved
+                ? Icons.verified_outlined
+                : Icons.check_circle_outline,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1012,20 +980,16 @@ class _RsvpActivityRow extends StatelessWidget {
                   '$name RSVP\'d',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: AppTypography.titleMedium.copyWith(fontSize: 15),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   'For $eventTitle',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textCaption,
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -1036,19 +1000,23 @@ class _RsvpActivityRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                Formatters.titleCase(rsvp.status),
+                Formatters.titleCase(rsvp.status).toUpperCase(),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: accent,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
+                style: AppTypography.labelSmall.copyWith(
+                  fontSize: 10,
+                  color: approved
+                      ? AppColors.champagne
+                      : AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 3),
               Text(
                 _relativeTime(rsvp.createdAt),
-                style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textCaption,
+                  fontSize: 11,
+                ),
               ),
             ],
           ),
@@ -1058,7 +1026,7 @@ class _RsvpActivityRow extends StatelessWidget {
   }
 }
 
-/// Shared tab heading (title + subtitle) for the Events and Activity tabs.
+/// Shared tab heading — Playfair display title + low-emphasis subtitle.
 class _TabTitle extends StatelessWidget {
   const _TabTitle({required this.title, required this.subtitle});
 
@@ -1072,19 +1040,13 @@ class _TabTitle extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-          ),
+          style: AppTypography.displayMedium.copyWith(fontSize: 30),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 4),
         Text(
           subtitle,
-          style: const TextStyle(
-            color: AppTheme.textMuted,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+          style: AppTypography.bodySmall.copyWith(
+            color: AppColors.textCaption,
           ),
         ),
       ],
@@ -1108,21 +1070,27 @@ class _SearchField extends StatelessWidget {
     return TextField(
       controller: controller,
       onChanged: onChanged,
-      style: const TextStyle(color: Colors.white),
+      style: AppTypography.bodyMedium.copyWith(color: AppColors.textHigh),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppTheme.textMuted),
-        prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textMuted),
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.textCaption,
+        ),
+        prefixIcon: const Icon(
+          Icons.search_rounded,
+          color: AppColors.textSecondary,
+          size: 20,
+        ),
         filled: true,
-        fillColor: _kPanel.withValues(alpha: 0.7),
+        fillColor: AppColors.surfaceEspresso,
         contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 14),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.10)),
+          borderRadius: BorderRadius.circular(100),
+          borderSide: const BorderSide(color: AppColors.goldBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: _kViolet.withValues(alpha: 0.6)),
+          borderRadius: BorderRadius.circular(100),
+          borderSide: const BorderSide(color: AppColors.champagne),
         ),
       ),
     );
@@ -1138,7 +1106,7 @@ class _CityFilterChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 36,
+      height: 34,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -1147,6 +1115,7 @@ class _CityFilterChips extends StatelessWidget {
         itemBuilder: (context, index) {
           final city = AppConstants.cities[index];
           final isSelected = city == selected;
+          // Selected pill = solid gold with obsidian text; others = ghost gold.
           return GestureDetector(
             onTap: () {
               HapticFeedback.selectionClick();
@@ -1156,22 +1125,21 @@ class _CityFilterChips extends StatelessWidget {
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? _kViolet.withValues(alpha: 0.24)
-                    : _kPanel.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(999),
+                color: isSelected ? AppColors.champagne : Colors.transparent,
+                borderRadius: BorderRadius.circular(100),
                 border: Border.all(
                   color: isSelected
-                      ? _kViolet.withValues(alpha: 0.7)
-                      : Colors.white.withValues(alpha: 0.1),
+                      ? AppColors.champagne
+                      : AppColors.goldBorder,
                 ),
               ),
               child: Text(
-                city,
-                style: TextStyle(
-                  color: isSelected ? Colors.white : AppTheme.textMuted,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                city.toUpperCase(),
+                style: AppTypography.labelSmall.copyWith(
+                  fontSize: 10,
+                  color: isSelected
+                      ? AppColors.obsidian
+                      : AppColors.textSecondary,
                 ),
               ),
             ),
@@ -1197,42 +1165,32 @@ class _MobileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _CircleIconButton(
-          tooltip: 'Menu',
-          icon: Icons.menu_rounded,
-          onPressed: onMenu,
-        ),
-        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _greeting(),
-                style: const TextStyle(
-                  color: AppTheme.textMuted,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                _greeting().toUpperCase(),
+                style: AppTypography.labelSmall.copyWith(
+                  fontSize: 10,
+                  letterSpacing: 0.28 * 10,
+                  color: AppColors.textCaption,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0,
-                ),
+                style: AppTypography.displayMedium.copyWith(fontSize: 26),
               ),
             ],
           ),
         ),
+        const SizedBox(width: 12),
         GestureDetector(
           onTap: onProfile,
-          child: _PromoterAvatar(name: name, size: 42),
+          child: _PromoterAvatar(name: name, size: 44),
         ),
       ],
     );
@@ -1240,7 +1198,8 @@ class _MobileHeader extends StatelessWidget {
 }
 
 /// Focal hero: the promoter's real referral code, ACTIVE badge, copy button,
-/// short link, and the violet→pink "Share your code" gradient button.
+/// short link, and the ivory "Share your code" button — over the Nocturne gold
+/// gradient-tint card.
 class _ReferralHeroCard extends StatelessWidget {
   const _ReferralHeroCard({
     required this.referralCode,
@@ -1263,73 +1222,36 @@ class _ReferralHeroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
+        borderRadius: BorderRadius.circular(10),
+        // Gold-tint → oxblood gradient (design promoter referral hero).
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1B1230), Color(0xFF221141)],
+          colors: [
+            AppColors.champagne.withValues(alpha: 0.16),
+            AppColors.oxblood.withValues(alpha: 0.4),
+          ],
         ),
-        border: Border.all(color: _kViolet.withValues(alpha: 0.45)),
-        boxShadow: [
-          BoxShadow(
-            color: _kViolet.withValues(alpha: 0.34),
-            blurRadius: 34,
-            offset: const Offset(0, 18),
-          ),
-        ],
+        border: Border.all(
+          color: AppColors.champagne.withValues(alpha: 0.35),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'YOUR REFERRAL CODE',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.4,
+                  style: AppTypography.labelSmall.copyWith(
+                    fontSize: 10,
+                    letterSpacing: 0.28 * 10,
+                    color: AppColors.textBodyDim,
                   ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: _kActiveGreen.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: _kActiveGreen.withValues(alpha: 0.4),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: isActive ? _kActiveGreen : AppTheme.textMuted,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      isActive ? 'ACTIVE' : 'INACTIVE',
-                      style: TextStyle(
-                        color: isActive ? _kActiveGreen : AppTheme.textMuted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _StatusPill(isActive: isActive),
             ],
           ),
           const SizedBox(height: 14),
@@ -1341,12 +1263,12 @@ class _ReferralHeroCard extends StatelessWidget {
                   code,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 40,
-                    height: 1.0,
-                    fontWeight: FontWeight.w900,
+                  // Playfair-gold code, the design's signature figure.
+                  style: AppTypography.displayMedium.copyWith(
+                    fontSize: 34,
+                    color: AppColors.champagne,
                     letterSpacing: 2,
+                    height: 1,
                   ),
                 ),
               ),
@@ -1354,7 +1276,7 @@ class _ReferralHeroCard extends StatelessWidget {
               Tooltip(
                 message: 'Copy code',
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(4),
                   onTap: () {
                     HapticFeedback.lightImpact();
                     onCopy();
@@ -1363,15 +1285,13 @@ class _ReferralHeroCard extends StatelessWidget {
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.16),
-                      ),
+                      color: AppColors.goldWash,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppColors.goldBorder),
                     ),
                     child: const Icon(
                       Icons.copy_rounded,
-                      color: Colors.white,
+                      color: AppColors.champagne,
                       size: 20,
                     ),
                   ),
@@ -1384,59 +1304,53 @@ class _ReferralHeroCard extends StatelessWidget {
             referralLink,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white60,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textBodyDim,
               fontSize: 13,
-              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
+          _PrimaryButton(
+            icon: Icons.ios_share_rounded,
+            label: 'Share your code',
+            onPressed: onShare,
             height: 50,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: _kShareGradient,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: _kPink.withValues(alpha: 0.4),
-                    blurRadius: 22,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: () {
-                    HapticFeedback.mediumImpact();
-                    onShare();
-                  },
-                  child: const Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.ios_share_rounded,
-                          color: Colors.white,
-                          size: 19,
-                        ),
-                        SizedBox(width: 9),
-                        Text(
-                          'Share your code',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.isActive});
+
+  final bool isActive;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isActive ? AppColors.champagne : AppColors.textSecondary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isActive ? AppColors.goldWash : Colors.transparent,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isActive ? 'ACTIVE' : 'INACTIVE',
+            style: AppTypography.labelSmall.copyWith(
+              fontSize: 10,
+              color: color,
             ),
           ),
         ],
@@ -1460,7 +1374,6 @@ class _StatCardRow extends StatelessWidget {
           child: _StatCard(
             value: stats.total.toString(),
             label: 'Total RSVPs',
-            accent: _kViolet,
           ),
         ),
         const SizedBox(width: 10),
@@ -1468,7 +1381,6 @@ class _StatCardRow extends StatelessWidget {
           child: _StatCard(
             value: stats.approved.toString(),
             label: 'Approved',
-            accent: _kPink,
           ),
         ),
         const SizedBox(width: 10),
@@ -1476,7 +1388,6 @@ class _StatCardRow extends StatelessWidget {
           child: _StatCard(
             value: stats.thisWeekRsvps.toString(),
             label: 'This week',
-            accent: _kActiveGreen,
           ),
         ),
       ],
@@ -1488,44 +1399,42 @@ class _StatCard extends StatelessWidget {
   const _StatCard({
     required this.value,
     required this.label,
-    required this.accent,
   });
 
   final String value;
   final String label;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       decoration: BoxDecoration(
-        color: _kPanel.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: 0.28)),
+        color: AppColors.surfaceEspresso,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Playfair-gold figure.
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
+            style: AppTypography.displayMedium.copyWith(
+              fontSize: 30,
+              color: AppColors.champagne,
+              height: 1,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
-            label,
+            label.toUpperCase(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+            style: AppTypography.labelSmall.copyWith(
+              fontSize: 9,
+              letterSpacing: 0.16 * 9,
             ),
           ),
         ],
@@ -1565,38 +1474,33 @@ class _ImpactHeroCardState extends State<_ImpactHeroCard>
   @override
   Widget build(BuildContext context) {
     final stats = widget.snapshot.stats;
-    return _GlassPanel(
+    return _Panel(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-      glow: AppTheme.neonViolet.withValues(alpha: 0.36),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Your Impact',
-            style: TextStyle(
-              color: AppTheme.textMuted,
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
+          Text(
+            'YOUR IMPACT',
+            style: AppTypography.labelSmall.copyWith(
+              fontSize: 10,
+              letterSpacing: 0.26 * 10,
+              color: AppColors.textCaption,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             stats.total.toString(),
-            style: const TextStyle(
-              color: Colors.white,
+            style: AppTypography.displayLarge.copyWith(
               fontSize: 48,
+              color: AppColors.champagne,
               height: 0.95,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Total RSVPs Generated',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
+          Text(
+            'Total RSVPs generated',
+            style: AppTypography.bodyMedium.copyWith(
+              color: AppColors.textBody,
             ),
           ),
           const SizedBox(height: 14),
@@ -1607,17 +1511,14 @@ class _ImpactHeroCardState extends State<_ImpactHeroCard>
               _ImpactChip(
                 label: 'Confirmed',
                 value: stats.approved.toString(),
-                color: AppTheme.neonLime,
               ),
               _ImpactChip(
                 label: 'Pending',
                 value: stats.pending.toString(),
-                color: AppTheme.neonViolet,
               ),
               _ImpactChip(
                 label: 'This week',
                 value: stats.thisWeekRsvps.toString(),
-                color: AppTheme.accentPink,
               ),
             ],
           ),
@@ -1667,19 +1568,16 @@ class _QuickActionGrid extends StatelessWidget {
         _QuickActionTile(
           icon: Icons.link_rounded,
           label: 'My Referral Links',
-          gradient: const [Color(0xFF7C3AED), Color(0xFFFF3D8B)],
           onPressed: onReferralLinks,
         ),
         _QuickActionTile(
           icon: Icons.local_activity_outlined,
           label: 'My Events',
-          gradient: const [Color(0xFF2563EB), Color(0xFFA855F7)],
           onPressed: onEvents,
         ),
         _QuickActionTile(
           icon: Icons.fact_check_outlined,
           label: 'My RSVPs',
-          gradient: const [Color(0xFF10B981), Color(0xFF7C3AED)],
           onPressed: onRsvps,
         ),
       ],
@@ -1700,25 +1598,21 @@ class _TodayPerformanceStrip extends StatelessWidget {
         label: "Today's RSVPs",
         value: stats.today.toString(),
         icon: Icons.today_outlined,
-        color: AppTheme.neonViolet,
       ),
       _MetricCardData(
         label: 'This Week RSVPs',
         value: stats.thisWeekRsvps.toString(),
         icon: Icons.calendar_view_week_outlined,
-        color: AppTheme.accentPink,
       ),
       _MetricCardData(
         label: 'Top Event',
         value: snapshot.bestEvent,
         icon: Icons.local_fire_department_outlined,
-        color: AppTheme.neonLime,
       ),
       _MetricCardData(
         label: 'Conversion Rate',
         value: '${stats.conversionRate}%',
         icon: Icons.insights_outlined,
-        color: const Color(0xFF38BDF8),
       ),
     ];
 
@@ -1749,11 +1643,8 @@ class _TopEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = (item.conversion / 100).clamp(0.0, 1.0);
-    return _GlassPanel(
+    return _Panel(
       padding: EdgeInsets.zero,
-      glow: item.rsvps > 0
-          ? AppTheme.accentPink.withValues(alpha: 0.22)
-          : AppTheme.neonViolet.withValues(alpha: 0.14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1762,22 +1653,7 @@ class _TopEventCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                EventPoster(event: item.event, borderRadius: 8),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(8),
-                    ),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.08),
-                        Colors.black.withValues(alpha: 0.76),
-                      ],
-                    ),
-                  ),
-                ),
+                EventPoster(event: item.event, borderRadius: 4),
                 Positioned(
                   left: 12,
                   right: 12,
@@ -1787,21 +1663,15 @@ class _TopEventCard extends StatelessWidget {
                     children: [
                       _Pill(
                         text: item.rsvps >= 5 ? 'Hot event' : 'Ready to push',
-                        color: item.rsvps >= 5
-                            ? AppTheme.neonLime
-                            : AppTheme.neonViolet,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         item.title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 21,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0,
-                          shadows: [
+                        style: AppTypography.headlineMedium.copyWith(
+                          fontSize: 20,
+                          shadows: const [
                             Shadow(color: Colors.black87, blurRadius: 12),
                           ],
                         ),
@@ -1840,12 +1710,12 @@ class _TopEventCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(100),
                   child: LinearProgressIndicator(
                     value: progress,
-                    minHeight: 7,
-                    backgroundColor: Colors.white.withValues(alpha: 0.08),
-                    color: AppTheme.neonViolet,
+                    minHeight: 5,
+                    backgroundColor: AppColors.goldWash,
+                    color: AppColors.champagne,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1860,8 +1730,8 @@ class _TopEventCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _GlowButton(
-                        icon: Icons.send_rounded,
+                      child: _PrimaryButton(
+                        icon: Icons.ios_share_rounded,
                         label: 'Share',
                         onPressed: onShare,
                       ),
@@ -1884,23 +1754,11 @@ class _ActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _GlassPanel(
+    return _Panel(
       padding: const EdgeInsets.all(12),
-      glow: activity.accent.withValues(alpha: 0.12),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: activity.accent.withValues(alpha: 0.13),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: activity.accent.withValues(alpha: 0.35),
-              ),
-            ),
-            child: Icon(activity.icon, color: activity.accent, size: 22),
-          ),
+          _RoundIcon(icon: activity.icon),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1910,20 +1768,16 @@ class _ActivityCard extends StatelessWidget {
                   activity.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: AppTypography.titleMedium.copyWith(fontSize: 15),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   activity.subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textCaption,
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -1934,18 +1788,23 @@ class _ActivityCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                activity.value,
+                activity.value.toUpperCase(),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
+                style: AppTypography.labelSmall.copyWith(
+                  fontSize: 10,
+                  color: activity.approved
+                      ? AppColors.champagne
+                      : AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 3),
               Text(
                 activity.time,
-                style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textCaption,
+                  fontSize: 11,
+                ),
               ),
             ],
           ),
@@ -1974,55 +1833,42 @@ class _FloatingBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-        child: Container(
-          height: 72,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.68),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.neonViolet.withValues(alpha: 0.28),
-                blurRadius: 28,
-                offset: const Offset(0, 12),
-              ),
-            ],
+    return Container(
+      height: 68,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.obsidianDeep,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.goldBorder),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _NavIcon(
+            icon: Icons.home_rounded,
+            tooltip: 'Home',
+            selected: selectedIndex == 0,
+            onTap: onHome,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NavIcon(
-                icon: Icons.home_rounded,
-                tooltip: 'Home',
-                selected: selectedIndex == 0,
-                onTap: onHome,
-              ),
-              _NavIcon(
-                icon: Icons.local_activity_outlined,
-                tooltip: 'Events',
-                selected: selectedIndex == 1,
-                onTap: onEvents,
-              ),
-              _NavIcon(
-                icon: Icons.bar_chart_rounded,
-                tooltip: 'Activity',
-                selected: selectedIndex == 2,
-                onTap: onAnalytics,
-              ),
-              _NavIcon(
-                icon: Icons.person_outline_rounded,
-                tooltip: 'Profile',
-                selected: false,
-                onTap: onProfile,
-              ),
-            ],
+          _NavIcon(
+            icon: Icons.local_activity_outlined,
+            tooltip: 'Events',
+            selected: selectedIndex == 1,
+            onTap: onEvents,
           ),
-        ),
+          _NavIcon(
+            icon: Icons.bolt_outlined,
+            tooltip: 'Activity',
+            selected: selectedIndex == 2,
+            onTap: onAnalytics,
+          ),
+          _NavIcon(
+            icon: Icons.person_outline_rounded,
+            tooltip: 'Profile',
+            selected: false,
+            onTap: onProfile,
+          ),
+        ],
       ),
     );
   }
@@ -2032,13 +1878,11 @@ class _QuickActionTile extends StatefulWidget {
   const _QuickActionTile({
     required this.icon,
     required this.label,
-    required this.gradient,
     required this.onPressed,
   });
 
   final IconData icon;
   final String label;
-  final List<Color> gradient;
   final VoidCallback onPressed;
 
   @override
@@ -2064,22 +1908,9 @@ class _QuickActionTileState extends State<_QuickActionTile> {
         child: Container(
           padding: const EdgeInsets.all(13),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                widget.gradient.first.withValues(alpha: 0.94),
-                widget.gradient.last.withValues(alpha: 0.74),
-              ],
-            ),
+            color: AppColors.surfaceEspresso,
             borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: widget.gradient.last.withValues(alpha: 0.26),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
-              ),
-            ],
+            border: Border.all(color: AppColors.goldBorder),
           ),
           child: Row(
             children: [
@@ -2087,10 +1918,11 @@ class _QuickActionTileState extends State<_QuickActionTile> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.goldWash,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: AppColors.goldBorder),
                 ),
-                child: Icon(widget.icon, color: Colors.white, size: 22),
+                child: Icon(widget.icon, color: AppColors.champagne, size: 22),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -2098,11 +1930,7 @@ class _QuickActionTileState extends State<_QuickActionTile> {
                   widget.label,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: AppTypography.titleMedium.copyWith(fontSize: 14),
                 ),
               ),
             ],
@@ -2122,9 +1950,8 @@ class _MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 156,
-      child: _GlassPanel(
+      child: _Panel(
         padding: const EdgeInsets.all(13),
-        glow: data.color.withValues(alpha: 0.12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2132,34 +1959,28 @@ class _MetricCard extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: data.color.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: data.color.withValues(alpha: 0.34)),
+                color: AppColors.goldWash,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: AppColors.goldBorder),
               ),
-              child: Icon(data.icon, color: data.color, size: 21),
+              child: Icon(data.icon, color: AppColors.champagne, size: 21),
             ),
             const Spacer(),
             Text(
               data.value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
+              style: AppTypography.headlineMedium.copyWith(
                 fontSize: 22,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0,
+                color: AppColors.champagne,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              data.label,
+              data.label.toUpperCase(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppTheme.textMuted,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
+              style: AppTypography.labelSmall.copyWith(fontSize: 9),
             ),
           ],
         ),
@@ -2173,15 +1994,15 @@ class _MetricCardData {
     required this.label,
     required this.value,
     required this.icon,
-    required this.color,
   });
 
   final String label;
   final String value;
   final IconData icon;
-  final Color color;
 }
 
+/// Section eyebrow — tracked uppercase gold label + fading gold hairline
+/// (design §11). [trailing] renders a small low-emphasis hint on the right.
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({required this.title, this.trailing});
 
@@ -2192,26 +2013,31 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        Text(
+          title.toUpperCase(),
+          style: AppTypography.labelLarge.copyWith(color: AppColors.champagne),
+        ),
+        const SizedBox(width: 14),
         Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0,
+          child: Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.champagne.withValues(alpha: 0.5),
+                  Colors.transparent,
+                ],
+              ),
             ),
           ),
         ),
-        if (trailing != null)
+        if (trailing != null) ...[
+          const SizedBox(width: 12),
           Text(
-            trailing!,
-            style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
+            trailing!.toUpperCase(),
+            style: AppTypography.labelSmall.copyWith(fontSize: 9),
           ),
+        ],
       ],
     );
   }
@@ -2221,46 +2047,36 @@ class _ImpactChip extends StatelessWidget {
   const _ImpactChip({
     required this.label,
     required this.value,
-    required this.color,
   });
 
   final String label;
   final String value;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.055),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.26)),
+        color: AppColors.goldWash,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: AppColors.goldBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 7),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
+            style: AppTypography.titleMedium.copyWith(
+              fontSize: 13,
+              color: AppColors.champagne,
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 6),
           Text(
-            label,
-            style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
+            label.toUpperCase(),
+            style: AppTypography.labelSmall.copyWith(
+              fontSize: 9,
+              color: AppColors.textSecondary,
             ),
           ),
         ],
@@ -2284,20 +2100,15 @@ class _EventStat extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Colors.white,
+          style: AppTypography.headlineMedium.copyWith(
             fontSize: 16,
-            fontWeight: FontWeight.w900,
+            color: AppColors.champagne,
           ),
         ),
         const SizedBox(height: 3),
         Text(
-          label,
-          style: const TextStyle(
-            color: AppTheme.textMuted,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
+          label.toUpperCase(),
+          style: AppTypography.labelSmall.copyWith(fontSize: 9),
         ),
       ],
     );
@@ -2321,7 +2132,7 @@ class _MobileEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _GlassPanel(
+    return _Panel(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2330,27 +2141,27 @@ class _MobileEmptyState extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              gradient: AppTheme.premiumGradient,
-              borderRadius: BorderRadius.circular(8),
+              color: AppColors.goldWash,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: AppColors.goldBorder),
             ),
-            child: Icon(icon, color: Colors.white),
+            child: Icon(icon, color: AppColors.champagne),
           ),
           const SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-            ),
+            style: AppTypography.headlineMedium.copyWith(fontSize: 18),
           ),
           const SizedBox(height: 6),
           Text(
             message,
-            style: const TextStyle(color: AppTheme.textMuted, height: 1.35),
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textCaption,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 14),
-          _GlowButton(
+          _PrimaryButton(
             icon: Icons.link_rounded,
             label: actionLabel,
             onPressed: onAction,
@@ -2366,26 +2177,21 @@ class _PromoterDashboardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Stack(
-      children: [
-        Positioned.fill(child: _PremiumMobileBackdrop()),
-        SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, 18, 16, 0),
-            child: Column(
-              children: [
-                _SkeletonLine(width: double.infinity, height: 54),
-                SizedBox(height: 18),
-                _HeroSkeleton(),
-                SizedBox(height: 18),
-                _SkeletonLine(width: double.infinity, height: 88),
-                SizedBox(height: 12),
-                PremiumLoader(message: 'Loading promoter dashboard...'),
-              ],
-            ),
-          ),
+    return const SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 18, 16, 0),
+        child: Column(
+          children: [
+            _SkeletonLine(width: double.infinity, height: 54),
+            SizedBox(height: 18),
+            _HeroSkeleton(),
+            SizedBox(height: 18),
+            _SkeletonLine(width: double.infinity, height: 88),
+            SizedBox(height: 12),
+            PremiumLoader(message: 'Loading promoter dashboard...'),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -2395,7 +2201,7 @@ class _HeroSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _GlassPanel(
+    return const _Panel(
       padding: EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2428,7 +2234,7 @@ class _EventSkeletonList extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Column(
       children: [
-        _GlassPanel(
+        _Panel(
           padding: EdgeInsets.all(12),
           child: Column(
             children: [
@@ -2470,98 +2276,38 @@ class _SkeletonLine extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: AppColors.surfaceEspresso,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: AppColors.goldBorder),
       ),
     );
   }
 }
 
-class _GlassPanel extends StatelessWidget {
-  const _GlassPanel({
+/// Flat espresso panel with a gold hairline — the Nocturne card surface used
+/// throughout this screen (design §9). Replaces the old glass/blur panel.
+class _Panel extends StatelessWidget {
+  const _Panel({
     required this.child,
     this.padding = const EdgeInsets.all(14),
-    this.glow,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
-  final Color? glow;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          width: double.infinity,
-          padding: padding,
-          decoration: BoxDecoration(
-            color: const Color(0xFF14121F).withValues(alpha: 0.68),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.09)),
-            boxShadow: [
-              BoxShadow(
-                color: glow ?? AppTheme.neonViolet.withValues(alpha: 0.12),
-                blurRadius: 28,
-                offset: const Offset(0, 16),
-              ),
-            ],
-          ),
-          child: child,
-        ),
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceEspresso,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.goldBorder),
       ),
+      child: child,
     );
   }
-}
-
-class _PremiumMobileBackdrop extends StatelessWidget {
-  const _PremiumMobileBackdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [_kBackdropTop, _kBackdropMid, _kBackdropTop],
-        ),
-      ),
-      child: CustomPaint(painter: _BackdropPainter()),
-    );
-  }
-}
-
-class _BackdropPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final violet = Paint()
-      ..color = _kViolet.withValues(alpha: 0.26)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 70);
-    canvas.drawCircle(
-      Offset(size.width * 0.80, size.height * 0.12),
-      112,
-      violet,
-    );
-
-    final pink = Paint()
-      ..color = _kPink.withValues(alpha: 0.13)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 86);
-    canvas.drawCircle(Offset(size.width * 0.10, size.height * 0.38), 140, pink);
-
-    final line = Paint()
-      ..color = Colors.white.withValues(alpha: 0.025)
-      ..strokeWidth = 1;
-    for (var y = 0.0; y < size.height; y += 42) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y + 28), line);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _RsvpLineChartPainter extends CustomPainter {
@@ -2594,8 +2340,8 @@ class _RsvpLineChartPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          AppTheme.neonViolet.withValues(alpha: 0.25),
-          AppTheme.neonViolet.withValues(alpha: 0.00),
+          AppColors.champagne.withValues(alpha: 0.22),
+          AppColors.champagne.withValues(alpha: 0.0),
         ],
       ).createShader(Offset.zero & size);
     canvas.drawPath(areaPath, fillPaint);
@@ -2615,30 +2361,16 @@ class _RsvpLineChartPainter extends CustomPainter {
       );
     }
 
-    final glowPaint = Paint()
-      ..color = AppTheme.neonViolet.withValues(alpha: 0.34 + pulse * 0.18)
-      ..strokeWidth = 8
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 11);
-    canvas.drawPath(path, glowPaint);
-
     final linePaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [AppTheme.accentPink, AppTheme.neonViolet, Color(0xFF38BDF8)],
-      ).createShader(Offset.zero & size)
-      ..strokeWidth = 3.2
+      ..color = AppColors.champagne
+      ..strokeWidth = 2.4
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
     canvas.drawPath(path, linePaint);
 
     final point = points.last;
-    final dotPaint = Paint()..color = Colors.white;
-    canvas.drawCircle(point, 4 + pulse * 1.5, dotPaint);
-    final dotGlow = Paint()
-      ..color = AppTheme.neonViolet.withValues(alpha: 0.36)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-    canvas.drawCircle(point, 11 + pulse * 4, dotGlow);
+    final dotPaint = Paint()..color = AppColors.champagne;
+    canvas.drawCircle(point, 3.5 + pulse * 1.5, dotPaint);
   }
 
   @override
@@ -2647,35 +2379,23 @@ class _RsvpLineChartPainter extends CustomPainter {
   }
 }
 
-class _CircleIconButton extends StatelessWidget {
-  const _CircleIconButton({
-    required this.tooltip,
-    required this.icon,
-    required this.onPressed,
-  });
+/// Gold-ring circle icon tile used on activity rows (design activity feed).
+class _RoundIcon extends StatelessWidget {
+  const _RoundIcon({required this.icon});
 
-  final String tooltip;
   final IconData icon;
-  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onPressed,
-        child: Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          ),
-          child: Icon(icon, color: Colors.white, size: 21),
-        ),
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: AppColors.goldWash,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.goldBorder),
       ),
+      child: Icon(icon, color: AppColors.champagne, size: 20),
     );
   }
 }
@@ -2692,23 +2412,16 @@ class _PromoterAvatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        gradient: AppTheme.premiumGradient,
+        color: AppColors.surfaceEspresso,
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.neonViolet.withValues(alpha: 0.36),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: AppColors.champagne, width: 1),
       ),
       child: Center(
         child: Text(
           _initials(name),
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w900,
+          style: AppTypography.headlineMedium.copyWith(
+            fontSize: size * 0.38,
+            color: AppColors.champagne,
           ),
         ),
       ),
@@ -2716,37 +2429,69 @@ class _PromoterAvatar extends StatelessWidget {
   }
 }
 
-class _GlowButton extends StatelessWidget {
-  const _GlowButton({
+/// Ivory primary button (design §7): warm-white fill, obsidian label, crisp
+/// corners, tracked uppercase.
+class _PrimaryButton extends StatelessWidget {
+  const _PrimaryButton({
     required this.icon,
     required this.label,
     required this.onPressed,
+    this.height = 46,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 46,
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 18),
-        label: Text(label),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.neonViolet,
-          foregroundColor: Colors.white,
-          shadowColor: AppTheme.neonViolet.withValues(alpha: 0.45),
-          elevation: 10,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      height: height,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.ivory,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(4),
+            splashColor: Colors.transparent,
+            highlightColor: AppColors.obsidian.withValues(alpha: 0.08),
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              onPressed();
+            },
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 18, color: AppColors.obsidian),
+                  const SizedBox(width: 9),
+                  Flexible(
+                    child: Text(
+                      label.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.obsidian,
+                        letterSpacing: 0.16 * 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
+/// Ghost / secondary button (design §7): transparent fill, champagne outline
+/// and label.
 class _GhostButton extends StatelessWidget {
   const _GhostButton({
     required this.icon,
@@ -2765,11 +2510,16 @@ class _GhostButton extends StatelessWidget {
       child: OutlinedButton.icon(
         onPressed: onPressed,
         icon: Icon(icon, size: 18),
-        label: Text(label),
+        label: Text(
+          label.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.white,
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.16)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          foregroundColor: AppColors.champagne,
+          side: const BorderSide(color: AppColors.champagne, width: 1),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          textStyle: AppTypography.labelMedium,
         ),
       ),
     );
@@ -2799,36 +2549,32 @@ class _NavIcon extends StatelessWidget {
           onTap();
         },
         icon: Icon(icon),
-        color: selected
-            ? AppTheme.neonViolet
-            : Colors.white.withValues(alpha: 0.7),
-        iconSize: 25,
+        color: selected ? AppColors.champagne : AppColors.textSecondary,
+        iconSize: 24,
       ),
     );
   }
 }
 
 class _Pill extends StatelessWidget {
-  const _Pill({required this.text, required this.color});
+  const _Pill({required this.text});
 
   final String text;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.38)),
+        color: AppColors.goldWash,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: AppColors.champagne.withValues(alpha: 0.4)),
       ),
       child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
+        text.toUpperCase(),
+        style: AppTypography.labelSmall.copyWith(
+          fontSize: 9,
+          color: AppColors.champagne,
         ),
       ),
     );

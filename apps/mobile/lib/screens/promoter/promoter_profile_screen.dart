@@ -8,7 +8,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../models/app_user.dart';
 import '../../models/promoter.dart';
 import '../../models/rsvp.dart';
@@ -270,7 +271,7 @@ class _PromoterProfileContentState extends State<_PromoterProfileContent> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppTheme.card,
+        backgroundColor: AppColors.espresso,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
@@ -451,10 +452,9 @@ class _ProfileHeader extends StatelessWidget {
                       name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppTheme.textHigh,
+                      // Playfair name (design promoter profile).
+                      style: AppTypography.headlineMedium.copyWith(
                         fontSize: 22,
-                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -462,9 +462,8 @@ class _ProfileHeader extends StatelessWidget {
                       email,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppTheme.textMuted,
-                        fontSize: 13,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textBodyDim,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -487,9 +486,10 @@ class _ProfileHeader extends StatelessWidget {
                     )
                   : const Icon(Icons.camera_alt_outlined, size: 17),
               label: Text(
-                uploading
-                    ? _uploadProgressLabel(uploadProgress)
-                    : 'Change photo',
+                (uploading
+                        ? _uploadProgressLabel(uploadProgress)
+                        : 'Change photo')
+                    .toUpperCase(),
               ),
             ),
           ),
@@ -514,46 +514,59 @@ class _ReferralCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Panel(
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        // Gold-tint → oxblood gradient (design promoter "Your code" card).
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.champagne.withValues(alpha: 0.14),
+            AppColors.oxblood.withValues(alpha: 0.35),
+          ],
+        ),
+        border: Border.all(
+          color: AppColors.champagne.withValues(alpha: 0.3),
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'REFERRAL CODE',
-            style: TextStyle(
-              color: AppTheme.textLow,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
+          Text(
+            'YOUR CODE',
+            style: AppTypography.labelSmall.copyWith(
+              fontSize: 10,
+              letterSpacing: 0.28 * 10,
+              color: AppColors.textBodyDim,
             ),
           ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-            decoration: BoxDecoration(
-              color: AppTheme.goldSubtle,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.goldBorder, width: 0.8),
-            ),
+          const SizedBox(height: 12),
+          Center(
             child: Text(
               referralCode.isEmpty ? '—' : referralCode,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppTheme.gold,
-                fontSize: 30,
-                fontWeight: FontWeight.w900,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              // Playfair-gold code, the design's signature figure.
+              style: AppTypography.displayMedium.copyWith(
+                fontSize: 28,
+                color: AppColors.champagne,
                 letterSpacing: 2,
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             referralLink,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textBodyDim,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 14),
           Row(
@@ -562,7 +575,7 @@ class _ReferralCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onCopy,
                   icon: const Icon(Icons.copy_rounded, size: 17),
-                  label: const Text('Copy Code'),
+                  label: const Text('COPY CODE'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -570,7 +583,7 @@ class _ReferralCard extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: onShare,
                   icon: const Icon(Icons.ios_share_rounded, size: 17),
-                  label: const Text('Share Link'),
+                  label: const Text('SHARE LINK'),
                 ),
               ),
             ],
@@ -594,7 +607,7 @@ class _MetricsGrid extends StatelessWidget {
     const tiles = [
       _MetricTileData(
         icon: Icons.confirmation_number_outlined,
-        label: 'Total RSVPs',
+        label: 'RSVPs Driven',
       ),
       _MetricTileData(
         icon: Icons.trending_up_rounded,
@@ -659,16 +672,16 @@ class _MetricTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
       decoration: BoxDecoration(
-        color: AppTheme.elevated,
+        color: AppColors.surfaceEspresso,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: AppTheme.gold, size: 20),
+          Icon(icon, color: AppColors.champagne, size: 20),
           const SizedBox(height: 10),
           // FittedBox prevents the number overflowing in the narrow column.
           FittedBox(
@@ -676,23 +689,23 @@ class _MetricTile extends StatelessWidget {
             child: Text(
               value,
               maxLines: 1,
-              style: const TextStyle(
-                color: AppTheme.textHigh,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+              // Playfair-gold figure.
+              style: AppTypography.headlineMedium.copyWith(
+                fontSize: 24,
+                color: AppColors.champagne,
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
-            label,
+            label.toUpperCase(),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppTheme.textMuted,
-              fontSize: 11,
-              height: 1.2,
+            style: AppTypography.labelSmall.copyWith(
+              fontSize: 9,
+              letterSpacing: 0.16 * 9,
+              height: 1.3,
             ),
           ),
         ],
@@ -740,13 +753,13 @@ class _EditableAvatar extends StatelessWidget {
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                color: AppTheme.gold,
+                color: AppColors.champagne,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.background, width: 2),
+                border: Border.all(color: AppColors.obsidian, width: 2),
               ),
               child: const Icon(
                 Icons.edit_outlined,
-                color: AppTheme.background,
+                color: AppColors.obsidian,
                 size: 15,
               ),
             ),
@@ -783,9 +796,9 @@ class _InitialsAvatar extends StatelessWidget {
       height: size,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppTheme.goldSubtle,
+        color: AppColors.surfaceEspresso,
         shape: BoxShape.circle,
-        border: Border.all(color: AppTheme.goldBorder, width: 1),
+        border: Border.all(color: AppColors.champagne, width: 1),
       ),
       child: Stack(
         fit: StackFit.expand,
@@ -803,12 +816,13 @@ class _InitialsAvatar extends StatelessWidget {
             _AvatarFallback(name: name, radius: radius),
           if (uploading)
             ColoredBox(
-              color: Colors.black.withValues(alpha: 0.44),
+              color: AppColors.obsidian.withValues(alpha: 0.5),
               child: Center(
                 child: CircularProgressIndicator(
                   value: uploadProgress,
                   strokeWidth: 2.5,
-                  color: Colors.white,
+                  color: AppColors.champagne,
+                  backgroundColor: AppColors.goldWash,
                 ),
               ),
             ),
@@ -828,11 +842,11 @@ class _AvatarFallback extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
+        // Playfair monogram (design avatar).
         _initials(name),
-        style: TextStyle(
-          color: AppTheme.gold,
+        style: AppTypography.headlineMedium.copyWith(
           fontSize: radius * 0.66,
-          fontWeight: FontWeight.w800,
+          color: AppColors.champagne,
         ),
       ),
     );
@@ -846,20 +860,20 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? AppTheme.success : AppTheme.textMuted;
+    // Single-accent Nocturne palette: active = champagne, inactive = low ivory.
+    final color = active ? AppColors.champagne : AppColors.textSecondary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.13),
-        borderRadius: BorderRadius.circular(999),
+        color: active ? AppColors.goldWash : Colors.transparent,
+        borderRadius: BorderRadius.circular(100),
         border: Border.all(color: color.withValues(alpha: 0.42)),
       ),
       child: Text(
-        active ? 'Active Promoter' : 'Inactive Promoter',
-        style: TextStyle(
+        (active ? 'Active Promoter' : 'Inactive Promoter').toUpperCase(),
+        style: AppTypography.labelSmall.copyWith(
+          fontSize: 10,
           color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
         ),
       ),
     );
@@ -879,14 +893,30 @@ class _Section extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 2, bottom: 10),
-          child: Text(
-            title.toUpperCase(),
-            style: const TextStyle(
-              color: AppTheme.textLow,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-            ),
+          // Tracked uppercase gold eyebrow + fading hairline (design §11).
+          child: Row(
+            children: [
+              Text(
+                title.toUpperCase(),
+                style: AppTypography.labelLarge.copyWith(
+                  color: AppColors.champagne,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.champagne.withValues(alpha: 0.5),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         _Panel(child: child),
@@ -895,6 +925,8 @@ class _Section extends StatelessWidget {
   }
 }
 
+/// Flat espresso panel with a gold hairline — the Nocturne card surface
+/// (design §9).
 class _Panel extends StatelessWidget {
   const _Panel({required this.child, this.padding = const EdgeInsets.all(12)});
 
@@ -907,9 +939,9 @@ class _Panel extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
+        color: AppColors.surfaceEspresso,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
       ),
       child: child,
     );
@@ -931,17 +963,24 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive ? AppTheme.error : AppTheme.textHigh;
+    final color = destructive ? AppColors.destructive : AppColors.textBody;
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: destructive ? AppTheme.error : AppTheme.gold),
+      leading: Icon(
+        icon,
+        color: destructive ? AppColors.destructive : AppColors.champagne,
+      ),
       title: Text(
         title,
-        style: TextStyle(color: color, fontWeight: FontWeight.w500),
+        style: AppTypography.bodyMedium.copyWith(color: color),
       ),
       trailing: destructive
           ? null
-          : const Icon(Icons.chevron_right, color: AppTheme.textLow, size: 18),
+          : const Icon(
+              Icons.chevron_right,
+              color: AppColors.textSecondary,
+              size: 18,
+            ),
       onTap: onTap,
     );
   }
