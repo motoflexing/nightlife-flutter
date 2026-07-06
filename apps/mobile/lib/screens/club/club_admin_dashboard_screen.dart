@@ -3,7 +3,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/app_user.dart';
 import '../../models/event.dart';
@@ -103,16 +104,31 @@ class _ClubEvents extends StatelessWidget {
         return ListView(
           padding: compactScreenPadding(context),
           children: [
+            // Playfair title + real count eyebrow (design venue overview).
+            Text(
+              'Your Nights',
+              style: AppTypography.displayMedium.copyWith(fontSize: 30),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              events.isEmpty
+                  ? 'Publish a night to put it on the map.'
+                  : '${events.length} ${events.length == 1 ? 'event' : 'events'} in your house.',
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textCaption,
+              ),
+            ),
+            const SizedBox(height: 16),
             Align(
               alignment: Alignment.centerLeft,
               child: ElevatedButton.icon(
                 onPressed: () =>
                     _openEventForm(context, currentUser: currentUser),
-                icon: const Icon(Icons.add),
-                label: const Text('Create event'),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('CREATE EVENT'),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             if (events.isEmpty)
               const EmptyView(
                 title: 'No club events yet',
@@ -162,7 +178,11 @@ class _ClubEvents extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: AppTheme.surface,
+      backgroundColor: AppColors.surfaceEspresso,
+      barrierColor: AppColors.scrim,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
       builder: (_) => _ClubEventForm(currentUser: currentUser, event: event),
     );
   }
@@ -229,7 +249,9 @@ class _ClubEventTileState extends State<_ClubEventTile> {
                                   onPressed: () => Navigator.pop(ctx, true),
                                   child: const Text(
                                     'Delete',
-                                    style: TextStyle(color: Colors.red),
+                                    style: TextStyle(
+                                      color: AppColors.destructive,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -294,26 +316,167 @@ class _ClubRsvps extends StatelessWidget {
         }
         return ListView.separated(
           padding: compactScreenPadding(context),
-          itemCount: rsvps.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          // +1 leading item for the Playfair title + real "Door list · N".
+          itemCount: rsvps.length + 1,
+          separatorBuilder: (_, index) =>
+              SizedBox(height: index == 0 ? 16 : 10),
           itemBuilder: (context, index) {
-            final rsvp = rsvps[index];
-            return Card(
-              child: ListTile(
-                title: Text(
-                  rsvp.eventTitle,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-                subtitle: Text(
-                  '${rsvp.userName} - ${rsvp.userPhone} - ${Formatters.eventDate(rsvp.createdAt)}',
-                  style: const TextStyle(color: AppTheme.textMuted),
-                ),
-                trailing: Chip(label: Text(Formatters.titleCase(rsvp.status))),
-              ),
-            );
+            if (index == 0) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Door List',
+                    style: AppTypography.displayMedium.copyWith(fontSize: 30),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${rsvps.length} ${rsvps.length == 1 ? 'RSVP' : 'RSVPs'} across your nights.',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textCaption,
+                    ),
+                  ),
+                ],
+              );
+            }
+            return _ClubRsvpRow(rsvp: rsvps[index - 1]);
           },
         );
       },
+    );
+  }
+}
+
+/// One real door-list row: guest name, phone, RSVP date, and a status chip.
+/// All fields come straight off the [Rsvp] from clubRsvpsStream — no fabricated
+/// capacity or "on the list" numbers.
+class _ClubRsvpRow extends StatelessWidget {
+  const _ClubRsvpRow({required this.rsvp});
+
+  final Rsvp rsvp;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = rsvp.userName.trim().isEmpty ? 'A guest' : rsvp.userName.trim();
+    final phone = rsvp.userPhone.trim();
+    final meta = [
+      if (phone.isNotEmpty) phone,
+      Formatters.eventDate(rsvp.createdAt),
+    ].join(' · ');
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceEspresso,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Gold-ring monogram (design door-list avatar).
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.goldWash,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.goldBorder),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              _rsvpInitials(name),
+              style: AppTypography.headlineMedium.copyWith(
+                fontSize: 15,
+                color: AppColors.champagne,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  rsvp.eventTitle.trim().isEmpty
+                      ? 'Event'
+                      : rsvp.eventTitle.trim(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.titleMedium.copyWith(fontSize: 15),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textBodyDim,
+                    fontSize: 13,
+                  ),
+                ),
+                if (meta.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    meta,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textCaption,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          _RsvpStatusChip(status: rsvp.status),
+        ],
+      ),
+    );
+  }
+}
+
+/// RSVP status pill. Single-accent Nocturne palette: approved/confirmed states
+/// read in champagne, rejected/cancelled in destructive red, everything else
+/// (e.g. pending) in low-emphasis ivory.
+class _RsvpStatusChip extends StatelessWidget {
+  const _RsvpStatusChip({required this.status});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = status.toLowerCase();
+    final negative = normalized == 'rejected' || normalized == 'cancelled';
+    final positive = normalized == 'approved' || normalized == 'confirmed';
+    final Color color;
+    if (negative) {
+      color = AppColors.destructive;
+    } else if (positive) {
+      color = AppColors.champagne;
+    } else {
+      color = AppColors.textSecondary;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: negative
+            ? AppColors.destructive.withValues(alpha: 0.12)
+            : positive
+            ? AppColors.goldWash
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: color, width: 1),
+      ),
+      child: Text(
+        Formatters.titleCase(status).toUpperCase(),
+        style: AppTypography.labelSmall.copyWith(
+          fontSize: 9,
+          color: color,
+        ),
+      ),
     );
   }
 }
@@ -483,12 +646,10 @@ class _ClubEventFormState extends State<_ClubEventForm> {
             ),
             children: [
               Text(
-                _event.id.isEmpty ? 'Create event' : 'Edit event',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                _event.id.isEmpty ? 'New Night' : 'Edit Night',
+                style: AppTypography.headlineMedium.copyWith(fontSize: 24),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               _Field(controller: _title, label: 'Title'),
               DropdownButtonFormField<String>(
                 initialValue: _event.city,
@@ -591,8 +752,8 @@ class _ClubEventFormState extends State<_ClubEventForm> {
                 onPressed: _saving ? null : _save,
                 icon: _saving
                     ? const PremiumLoader.compact(size: 18)
-                    : const Icon(Icons.save),
-                label: const Text('Save event'),
+                    : const Icon(Icons.save, size: 18),
+                label: const Text('PUBLISH NIGHT'),
               ),
             ],
           ),
@@ -676,4 +837,10 @@ class _Field extends StatelessWidget {
       ),
     );
   }
+}
+
+String _rsvpInitials(String name) {
+  final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
+  final initials = parts.take(2).map((p) => p[0].toUpperCase()).join();
+  return initials.isEmpty ? '?' : initials;
 }

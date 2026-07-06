@@ -7,7 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../models/app_user.dart';
 import '../../models/club.dart';
 import '../../services/auth_service.dart';
@@ -316,7 +317,7 @@ class _ClubProfileContentState extends State<_ClubProfileContent> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppTheme.card,
+        backgroundColor: AppColors.espresso,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
@@ -534,9 +535,9 @@ class _HeaderCard extends StatelessWidget {
       height: 190,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
+        color: AppColors.surfaceEspresso,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.goldBorder, width: 1),
       ),
       child: Stack(
         fit: StackFit.expand,
@@ -544,17 +545,25 @@ class _HeaderCard extends StatelessWidget {
           if (cleanCover.isNotEmpty)
             Image.network(cleanCover, fit: BoxFit.cover)
           else
+            // Oxblood-tint → obsidian cover gradient (design venue header).
             const DecoratedBox(
-              decoration: BoxDecoration(gradient: AppTheme.goldGradient),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.oxblood, AppColors.obsidian],
+                ),
+              ),
             ),
+          // Bottom-up obsidian legibility scrim (design §9).
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withValues(alpha: 0.08),
-                  Colors.black.withValues(alpha: 0.80),
+                  Colors.transparent,
+                  AppColors.obsidianDeep.withValues(alpha: 0.85),
                 ],
               ),
             ),
@@ -576,16 +585,20 @@ class _HeaderCard extends StatelessWidget {
                         cleanName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppTheme.textHigh,
+                        // Playfair venue name (design venue header).
+                        style: AppTypography.headlineMedium.copyWith(
                           fontSize: 22,
-                          fontWeight: FontWeight.w900,
+                          shadows: const [
+                            Shadow(color: Colors.black87, blurRadius: 12),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         city,
-                        style: const TextStyle(color: AppTheme.textMuted),
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textBodyDim,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       _StatusBadge(status: status),
@@ -631,9 +644,9 @@ class _MediaTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AppTheme.elevated,
+          color: AppColors.surfaceEspresso,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
+          border: Border.all(color: AppColors.goldBorder, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -643,9 +656,9 @@ class _MediaTile extends StatelessWidget {
               child: Container(
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  color: AppTheme.goldSubtle,
+                  color: AppColors.goldWash,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.goldBorder, width: 0.5),
+                  border: Border.all(color: AppColors.goldBorder, width: 1),
                 ),
                 child: Stack(
                   fit: StackFit.expand,
@@ -655,18 +668,19 @@ class _MediaTile extends StatelessWidget {
                         cleanUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) =>
-                            Icon(icon, color: AppTheme.gold, size: 42),
+                            Icon(icon, color: AppColors.champagne, size: 42),
                       )
                     else
-                      Icon(icon, color: AppTheme.gold, size: 42),
+                      Icon(icon, color: AppColors.champagne, size: 42),
                     if (uploading)
                       ColoredBox(
-                        color: Colors.black.withValues(alpha: 0.46),
+                        color: AppColors.obsidian.withValues(alpha: 0.5),
                         child: Center(
                           child: CircularProgressIndicator(
                             value: uploadProgress,
                             strokeWidth: 2.5,
-                            color: Colors.white,
+                            color: AppColors.champagne,
+                            backgroundColor: AppColors.goldWash,
                           ),
                         ),
                       ),
@@ -677,15 +691,14 @@ class _MediaTile extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               title,
-              style: const TextStyle(
-                color: AppTheme.textHigh,
-                fontWeight: FontWeight.w800,
-              ),
+              style: AppTypography.titleMedium.copyWith(fontSize: 15),
             ),
             const SizedBox(height: 3),
             Text(
               uploading ? _uploadProgressLabel(uploadProgress) : subtitle,
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textCaption,
+              ),
             ),
             const SizedBox(height: 10),
             SizedBox(
@@ -693,7 +706,7 @@ class _MediaTile extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: uploading ? null : onTap,
                 icon: const Icon(Icons.upload_file_outlined, size: 17),
-                label: Text(cleanUrl.isEmpty ? 'Upload' : 'Replace'),
+                label: Text((cleanUrl.isEmpty ? 'Upload' : 'Replace')),
               ),
             ),
           ],
@@ -758,9 +771,9 @@ class _VenueAvatar extends StatelessWidget {
       height: 70,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: AppColors.surfaceEspresso,
         shape: BoxShape.circle,
-        border: Border.all(color: AppTheme.gold, width: 2),
+        border: Border.all(color: AppColors.champagne, width: 1),
       ),
       child: cleanUrl.isNotEmpty
           ? Image.network(
@@ -782,11 +795,11 @@ class _AvatarFallback extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Text(
+        // Playfair monogram (design avatar).
         _initials(name),
-        style: const TextStyle(
-          color: AppTheme.gold,
+        style: AppTypography.headlineMedium.copyWith(
           fontSize: 24,
-          fontWeight: FontWeight.w900,
+          color: AppColors.champagne,
         ),
       ),
     );
@@ -800,21 +813,25 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Reads the venue's REAL verificationStatus — champagne when approved,
+    // low-emphasis ivory otherwise. Single-accent Nocturne palette.
     final approved = status.toLowerCase() == 'approved';
-    final color = approved ? AppTheme.success : AppTheme.gold;
+    final color = approved ? AppColors.champagne : AppColors.textSecondary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
+        color: approved ? AppColors.goldWash : Colors.transparent,
+        borderRadius: BorderRadius.circular(100),
         border: Border.all(color: color.withValues(alpha: 0.42)),
       ),
       child: Text(
-        approved ? 'Approved Venue' : status.replaceAll('_', ' ').toUpperCase(),
-        style: TextStyle(
+        (approved
+                ? 'Approved Venue'
+                : status.replaceAll('_', ' '))
+            .toUpperCase(),
+        style: AppTypography.labelSmall.copyWith(
+          fontSize: 10,
           color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
         ),
       ),
     );
@@ -834,23 +851,39 @@ class _Section extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 2, bottom: 10),
-          child: Text(
-            title.toUpperCase(),
-            style: const TextStyle(
-              color: AppTheme.textLow,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-            ),
+          // Tracked uppercase gold eyebrow + fading gold hairline (design §11).
+          child: Row(
+            children: [
+              Text(
+                title.toUpperCase(),
+                style: AppTypography.labelLarge.copyWith(
+                  color: AppColors.champagne,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.champagne.withValues(alpha: 0.5),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppTheme.card,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppTheme.borderSubtle, width: 0.5),
+            color: AppColors.surfaceEspresso,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.goldBorder, width: 1),
           ),
           child: child,
         ),
@@ -874,14 +907,24 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = destructive ? AppTheme.error : AppTheme.textHigh;
+    final color = destructive ? AppColors.destructive : AppColors.textBody;
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: color),
+      leading: Icon(
+        icon,
+        color: destructive ? AppColors.destructive : AppColors.champagne,
+      ),
       title: Text(
         title,
-        style: TextStyle(color: color, fontWeight: FontWeight.w500),
+        style: AppTypography.bodyMedium.copyWith(color: color),
       ),
+      trailing: destructive
+          ? null
+          : const Icon(
+              Icons.chevron_right,
+              color: AppColors.textSecondary,
+              size: 18,
+            ),
       onTap: onTap,
     );
   }
