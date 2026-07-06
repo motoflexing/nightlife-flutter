@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/glass_card.dart';
 import '../../widgets/neon_scaffold.dart';
 
 class AccessStateScreen extends StatelessWidget {
@@ -24,37 +26,54 @@ class AccessStateScreen extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 460),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(icon, color: AppTheme.neonPink, size: 46),
-                    const SizedBox(height: 14),
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
+            child: GlassCard(
+              borderRadius: 8,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Denial/rejection state — destructive-red ring + icon.
+                  Container(
+                    width: 72,
+                    height: 72,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.destructive.withValues(alpha: 0.5),
+                        width: 1,
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      message,
-                      style: const TextStyle(color: AppTheme.textMuted),
-                      textAlign: TextAlign.center,
+                    child: Icon(icon, color: AppColors.destructive, size: 34),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    // Playfair heading.
+                    style: AppTypography.displayMedium.copyWith(fontSize: 26),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textBodyDim,
+                      height: 1.5,
                     ),
-                    const SizedBox(height: 18),
-                    OutlinedButton.icon(
+                  ),
+                  const SizedBox(height: 22),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
                       onPressed: () async {
                         await AuthService.instance.signOut();
                       },
-                      icon: const Icon(Icons.logout),
-                      label: const Text('Logout'),
+                      icon: const Icon(Icons.logout, size: 18),
+                      label: const Text('LOGOUT'),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

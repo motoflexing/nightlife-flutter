@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../widgets/nocturne_monogram.dart';
 import 'login_screen.dart';
 import 'signup_screen.dart';
 
@@ -64,7 +65,7 @@ class WelcomeScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // "N" monogram medallion — thin gold ring, Playfair N.
-                            const _MonogramMedallion(),
+                            const NocturneMonogram(size: 40),
                             const SizedBox(height: 40),
 
                             // Playfair hero.
@@ -193,32 +194,6 @@ class WelcomeScreen extends StatelessWidget {
             child: child,
           );
         },
-      ),
-    );
-  }
-}
-
-// ─── "N" monogram medallion ────────────────────────────────────────────────────
-
-class _MonogramMedallion extends StatelessWidget {
-  const _MonogramMedallion();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: AppColors.champagne, width: 1),
-      ),
-      child: Text(
-        'N',
-        style: AppTypography.headlineMedium.copyWith(
-          fontSize: 20,
-          color: AppColors.champagne,
-        ),
       ),
     );
   }

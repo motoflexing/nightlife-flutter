@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/compact_ui.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/neon_scaffold.dart';
+import '../../widgets/nocturne_monogram.dart';
 import '../../widgets/premium_gradient_button.dart';
 import '../../widgets/state_views.dart';
 
@@ -112,26 +114,35 @@ class _VerificationDetailsScreenState extends State<VerificationDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(
-                      Icons.storefront_outlined,
-                      color: AppTheme.accentPink,
-                      size: 34,
-                    ),
-                    const SizedBox(height: 10),
+                    const Center(child: NocturneMonogram(size: 52)),
+                    const SizedBox(height: 18),
                     Text(
-                      'Complete $roleLabel details',
+                      'Venue · Verification'.toUpperCase(),
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
+                      style: AppTypography.labelSmall.copyWith(
+                        fontSize: 10,
+                        letterSpacing: 0.28 * 10,
+                        color: AppColors.champagne,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Submit business details for manual admin review. Document upload is optional for now.',
+                    const SizedBox(height: 12),
+                    Text(
+                      'Verification details.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppTheme.textMuted),
+                      // Playfair heading (design venue verification).
+                      style: AppTypography.displayMedium.copyWith(fontSize: 28),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Submit your business details for manual admin review. '
+                      'Reviewed by hand, never shared.',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textBodyDim,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     _Field(
                       controller: _businessName,
                       label: 'Business / Venue name',
@@ -215,26 +226,55 @@ class _Field extends StatelessWidget {
   }
 }
 
+/// Honest notice: the actual ID/GST document upload is deferred (Storage is
+/// not enabled yet), so submitting here records `documentUploadStatus:
+/// pending_upload` rather than claiming a file was saved. No fake progress or
+/// success — this mirrors the design's dashed upload zone but tells the truth
+/// about the current best-effort state.
 class _DocumentUploadNotice extends StatelessWidget {
   const _DocumentUploadNotice();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.elevated.withValues(alpha: 0.58),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
+        color: AppColors.goldWash,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppColors.goldBorder),
       ),
-      child: const Row(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.upload_file_outlined, color: AppTheme.accentPink),
-          SizedBox(width: 10),
+          const Icon(
+            Icons.upload_file_outlined,
+            color: AppColors.champagne,
+            size: 22,
+          ),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              'ID/GST document upload is optional right now. If skipped, documentUploadStatus will be pending_upload.',
-              style: TextStyle(color: AppTheme.textMuted),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Business licence or ID',
+                  style: AppTypography.labelSmall.copyWith(
+                    fontSize: 10,
+                    letterSpacing: 0.24 * 10,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Document upload is optional right now. If skipped, your '
+                  'upload status stays "pending upload" and the team follows up '
+                  'during manual review.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textBodyDim,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

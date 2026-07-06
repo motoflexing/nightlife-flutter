@@ -4,7 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../models/app_user.dart';
 import '../../models/event.dart';
 import '../../services/location_service.dart';
@@ -112,8 +113,8 @@ class _MapViewScreenState extends State<MapViewScreen> {
                   bottom: _selectedEvent == null ? 24 : 168,
                   child: FloatingActionButton.small(
                     heroTag: 'locate_me',
-                    backgroundColor: AppTheme.accentPink,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.champagne,
+                    foregroundColor: AppColors.obsidian,
                     onPressed: _locating ? null : _locateMe,
                     child: _locating
                         ? const PremiumLoader.compact(size: 18)
@@ -263,28 +264,23 @@ class _MapLoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Positioned(
+    return Positioned(
       left: 16,
       right: 16,
       top: 86,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppTheme.glassSurface,
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-          border: Border.fromBorderSide(
-            BorderSide(color: AppTheme.glassBorder),
-          ),
+          color: AppColors.surfaceEspresso,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.goldBorder),
         ),
         child: Padding(
-          padding: EdgeInsets.all(14),
+          padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              PremiumLoader.compact(size: 18),
-              SizedBox(width: 10),
-              Text(
-                'Loading map...',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
+              const PremiumLoader.compact(size: 18),
+              const SizedBox(width: 10),
+              Text('Loading map...', style: AppTypography.bodyMedium),
             ],
           ),
         ),
@@ -303,23 +299,27 @@ class _MapHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppTheme.glassSurface,
+        color: AppColors.surfaceEspresso,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
+        border: Border.all(color: AppColors.goldBorder),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(
           children: [
-            const Icon(Icons.map_outlined, color: AppTheme.neonCyan),
+            const Icon(
+              Icons.map_outlined,
+              color: AppColors.champagne,
+              size: 20,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 '$eventCount venue markers',
-                style: const TextStyle(fontWeight: FontWeight.w900),
+                style: AppTypography.titleMedium.copyWith(fontSize: 15),
               ),
             ),
-            Chip(label: Text(hasLocation ? 'Live location' : 'City fallback')),
+            _MapPill(label: hasLocation ? 'Live location' : 'City fallback'),
           ],
         ),
       ),
@@ -372,16 +372,9 @@ class _UnavailableMapContent extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppTheme.elevated.withValues(alpha: 0.84),
+            color: AppColors.surfaceEspresso,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppTheme.glassBorder),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.neonCyan.withValues(alpha: 0.08),
-                blurRadius: 28,
-                offset: const Offset(0, 14),
-              ),
-            ],
+            border: Border.all(color: AppColors.goldBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,31 +385,31 @@ class _UnavailableMapContent extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppTheme.neonCyan.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppTheme.neonCyan.withValues(alpha: 0.28),
-                      ),
+                      color: AppColors.goldWash,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: AppColors.goldBorder),
                     ),
                     child: const Icon(
                       Icons.map_outlined,
-                      color: AppTheme.neonCyan,
+                      color: AppColors.champagne,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Maps unavailable',
-                          style: TextStyle(fontWeight: FontWeight.w900),
+                          style: AppTypography.titleMedium.copyWith(
+                            fontSize: 16,
+                          ),
                         ),
-                        SizedBox(height: 3),
+                        const SizedBox(height: 3),
                         Text(
                           'API key not configured',
-                          style: TextStyle(
-                            color: AppTheme.textMuted,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: AppColors.textCaption,
                             fontSize: 12,
                           ),
                         ),
@@ -426,12 +419,11 @@ class _UnavailableMapContent extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Interactive map will be available after Google Maps API configuration',
-                style: TextStyle(
-                  color: AppTheme.textMuted,
-                  height: 1.35,
-                  fontWeight: FontWeight.w700,
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textBodyDim,
+                  height: 1.4,
                 ),
               ),
               const SizedBox(height: 14),
@@ -453,24 +445,25 @@ class _UnavailableMapContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
+        // Tracked uppercase gold eyebrow (design §11).
         Text(
-          'Nearby venues',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          'Nearby Venues'.toUpperCase(),
+          style: AppTypography.labelLarge.copyWith(color: AppColors.champagne),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         if (sortedEvents.isEmpty)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.surface,
+              color: AppColors.surfaceEspresso,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.glassBorder),
+              border: Border.all(color: AppColors.goldBorder),
             ),
-            child: const Text(
+            child: Text(
               'No venues with coordinates are available yet.',
-              style: TextStyle(color: AppTheme.textMuted),
+              style: AppTypography.bodySmall.copyWith(
+                color: AppColors.textCaption,
+              ),
             ),
           )
         else
@@ -504,13 +497,13 @@ class _CoordinateRow extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.surface.withValues(alpha: 0.78),
+        color: AppColors.obsidian,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.glassBorder),
+        border: Border.all(color: AppColors.goldBorder),
       ),
       child: Row(
         children: [
-          const Icon(Icons.pin_drop_outlined, color: AppTheme.neonLime),
+          const Icon(Icons.pin_drop_outlined, color: AppColors.champagne),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -518,15 +511,17 @@ class _CoordinateRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textCaption,
                     fontSize: 12,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textHigh,
+                  ),
                 ),
               ],
             ),
@@ -553,68 +548,75 @@ class _FallbackVenueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasCoordinates = event.latitude != null && event.longitude != null;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    event.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceEspresso,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.goldBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  event.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  // Playfair title.
+                  style: AppTypography.titleMedium.copyWith(fontSize: 16),
                 ),
-                const SizedBox(width: 8),
-                Chip(
-                  label: Text(
-                    distanceKm == null
-                        ? hasCoordinates
-                              ? event.city
-                              : 'Location not added'
-                        : LocationService.instance.formatDistance(distanceKm!),
-                  ),
+              ),
+              const SizedBox(width: 8),
+              _MapPill(
+                label: distanceKm == null
+                    ? hasCoordinates
+                          ? event.city
+                          : 'Location not added'
+                    : LocationService.instance.formatDistance(distanceKm!),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${event.venueName} · ${event.city}',
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textBodyDim,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            hasCoordinates
+                ? '${event.latitude!.toStringAsFixed(5)}, ${event.longitude!.toStringAsFixed(5)}'
+                : 'Coordinates unavailable',
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textCaption,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onOpen,
+                  icon: const Icon(Icons.local_activity_outlined, size: 18),
+                  label: const Text('DETAILS'),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${event.venueName} - ${event.city}',
-              style: const TextStyle(color: AppTheme.textMuted),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              hasCoordinates
-                  ? '${event.latitude!.toStringAsFixed(5)}, ${event.longitude!.toStringAsFixed(5)}'
-                  : 'Coordinates unavailable',
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onOpen,
-                    icon: const Icon(Icons.local_activity_outlined),
-                    label: const Text('Details'),
-                  ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: onDirections,
+                  icon: const Icon(Icons.directions, size: 18),
+                  label: const Text('DIRECTIONS'),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: onDirections,
-                    icon: const Icon(Icons.directions),
-                    label: const Text('Directions'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -633,55 +635,88 @@ class _EventMapPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                color: AppTheme.accentPink.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.nightlife, color: AppTheme.accentPink),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceEspresso,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.goldBorder),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: AppColors.goldWash,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: AppColors.goldBorder),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    event.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w900),
+            child: const Icon(Icons.nightlife, color: AppColors.champagne),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  event.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  // Playfair title.
+                  style: AppTypography.titleMedium.copyWith(fontSize: 16),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  event.venueName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textBodyDim,
                   ),
+                ),
+                if (distanceKm != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    event.venueName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.textMuted),
-                  ),
-                  if (distanceKm != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      LocationService.instance.formatDistance(distanceKm!),
-                      style: const TextStyle(
-                        color: AppTheme.neonLime,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    LocationService.instance.formatDistance(distanceKm!),
+                    style: AppTypography.labelSmall.copyWith(
+                      fontSize: 11,
+                      color: AppColors.champagne,
                     ),
-                  ],
+                  ),
                 ],
-              ),
+              ],
             ),
-            const SizedBox(width: 8),
-            ElevatedButton(onPressed: onOpen, child: const Text('Open')),
-          ],
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(onPressed: onOpen, child: const Text('OPEN')),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small gold stadium pill for map status/distance chips (design filter pills).
+class _MapPill extends StatelessWidget {
+  const _MapPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.goldWash,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: AppColors.goldBorder),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        style: AppTypography.labelSmall.copyWith(
+          fontSize: 9,
+          color: AppColors.champagne,
         ),
       ),
     );

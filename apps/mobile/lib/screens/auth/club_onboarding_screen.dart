@@ -3,13 +3,15 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_constants.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../models/app_user.dart';
 import '../../services/auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/compact_ui.dart';
 import '../../widgets/glass_card.dart';
 import '../../widgets/neon_scaffold.dart';
+import '../../widgets/nocturne_monogram.dart';
 import '../../widgets/premium_loader.dart';
 import '../../widgets/state_views.dart';
 
@@ -109,18 +111,35 @@ class _ClubOnboardingScreenState extends State<ClubOnboardingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const Center(child: NocturneMonogram(size: 52)),
+                    const SizedBox(height: 18),
                     Text(
-                      'Verify your club',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
+                      'Venue · Verification'.toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: AppTypography.labelSmall.copyWith(
+                        fontSize: 10,
+                        letterSpacing: 0.28 * 10,
+                        color: AppColors.champagne,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Dashboard access unlocks after manual approval.',
-                      style: TextStyle(color: AppTheme.textMuted),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Verify your club.',
+                      textAlign: TextAlign.center,
+                      // Playfair heading (design venue verification).
+                      style: AppTypography.displayMedium.copyWith(fontSize: 28),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Dashboard access unlocks after manual approval. '
+                      'Reviewed by hand, never shared.',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textBodyDim,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     _Field(controller: _clubName, label: 'Club name'),
                     _Field(controller: _ownerName, label: 'Owner name'),
                     _Field(controller: _businessEmail, label: 'Business email'),
@@ -162,8 +181,8 @@ class _ClubOnboardingScreenState extends State<ClubOnboardingScreen> {
                       onPressed: _saving ? null : _submit,
                       icon: _saving
                           ? const PremiumLoader.compact(size: 18)
-                          : const Icon(Icons.verified_outlined),
-                      label: const Text('Submit for approval'),
+                          : const Icon(Icons.verified_outlined, size: 18),
+                      label: const Text('SUBMIT FOR REVIEW'),
                     ),
                   ],
                 ),

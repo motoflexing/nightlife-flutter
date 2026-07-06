@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../services/version_service.dart';
+import '../../widgets/nocturne_monogram.dart';
 import 'force_update_screen.dart';
 import 'maintenance_screen.dart';
 import 'role_router_screen.dart';
@@ -68,46 +71,56 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     if (_ready) return const RoleRouterScreen();
+    // Nocturne "logo reveal": obsidian canvas, the "N" monogram, the Nightlife
+    // wordmark in wide-tracked ivory, a tracked "members only" eyebrow, and a
+    // gold spinner. (App name stays "Nightlife" — the design's "Nocturne"
+    // wordmark is the design tool's own brand, not this app's.)
     return Scaffold(
-      backgroundColor: const Color(0xFF080809),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFF59E0B)),
-              ),
-              child: const Icon(
-                Icons.nightlife,
-                size: 28,
-                color: Color(0xFFF59E0B),
+      backgroundColor: AppColors.obsidianDeep,
+      body: Stack(
+        children: [
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const NocturneMonogram(size: 96, innerRing: true),
+                const SizedBox(height: 34),
+                // "Nightlife" wordmark — wide-tracked ivory (design wordmark).
+                Text(
+                  AppConstants.appName.toUpperCase(),
+                  style: AppTypography.labelMedium.copyWith(
+                    fontSize: 13,
+                    letterSpacing: 0.5 * 13,
+                    color: AppColors.ivory,
+                  ),
+                ),
+                const SizedBox(height: 48),
+                const SizedBox(
+                  width: 26,
+                  height: 26,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                    color: AppColors.champagne,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 56,
+            child: Text(
+              'Members Only'.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: AppTypography.labelSmall.copyWith(
+                fontSize: 9,
+                letterSpacing: 0.3 * 9,
+                color: AppColors.textDisabled,
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              AppConstants.appName.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 13,
-                letterSpacing: 4.0,
-                color: Color(0x66FFFFFF),
-                fontWeight: FontWeight.w300,
-              ),
-            ),
-            const SizedBox(height: 48),
-            const SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(
-                strokeWidth: 1.5,
-                color: Color(0xFFF59E0B),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
